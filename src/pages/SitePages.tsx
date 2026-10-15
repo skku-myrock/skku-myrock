@@ -133,7 +133,7 @@ export function News({ canWrite, onWrite, openNotice, notices, loading, error, h
   const search = query.trim().toLocaleLowerCase('ko');
   const filtered = notices.filter(post =>
     (category === '전체' || post.category === category) &&
-    (post.title + post.description + post.body).toLocaleLowerCase('ko').includes(search)
+    (post.title + post.description).toLocaleLowerCase('ko').includes(search)
   );
   return <>
     <PageHeading tag="NOTICE" title="공지사항" description="공연, 행사, 동아리 운영에 관한 소식을 확인하세요." />
