@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { User } from 'firebase/auth';
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { doc, getDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
@@ -373,6 +373,11 @@ function App() {
   const [accountOpen,setAccountOpen] = useState(false);
   const [loginOpen,setLoginOpen] = useState(false);
   const [toast,setToast] = useState('');
+  const [aboutSaveNotice,setAboutSaveNotice]=useState('');
+  const leaveGuardRef=useRef<(()=>boolean)|null>(null);
+  const editorPathRef=useRef(window.location.pathname);
+  const registerEditorLeaveGuard=useCallback((guard:(()=>boolean)|null)=>{leaveGuardRef.current=guard;},[]);
+  const canLeaveEditor=()=>leaveGuardRef.current?.()??true;
   const [user,setUser] = useState<User | null>(null);
   const [profile,setProfile] = useState<MemberProfile | null>(null);
   const [authPending,setAuthPending] = useState(true);
@@ -409,15 +414,16 @@ function App() {
     });
     return()=>{live=false;unsub();};
   },[]);
-  useEffect(()=>{const onPop=()=>{setPage(pathToPage());setActiveNoticeId(noticeIdFromPath()??noticeEditIdFromPath());setActiveScheduleId(scheduleIdFromPath());};window.addEventListener('popstate',onPop);return()=>window.removeEventListener('popstate',onPop);},[]);
+  useEffect(()=>{const onPop=()=>{if(leaveGuardRef.current&&!leaveGuardRef.current()){window.history.pushState(null,'',editorPathRef.current);return;}editorPathRef.current=window.location.pathname;setPage(pathToPage());setActiveNoticeId(noticeIdFromPath()??noticeEditIdFromPath());setActiveScheduleId(scheduleIdFromPath());};window.addEventListener('popstate',onPop);return()=>window.removeEventListener('popstate',onPop);},[]);
   useEffect(()=>{document.title=`${page==='notice-compose' ? '공지사항 글쓰기' : page==='notice-edit' ? '공지사항 수정하기' : page==='notice-detail' ? (notices.find(item=>item.id===activeNoticeId)?.title??'공지사항') : page==='schedule-detail' ? (findSchedule(activeScheduleId ?? '')?.title ?? '합주 시간표') : page==='donations' ? '후원 내역' : page==='expense-manage' ? '회비 집행 내역 관리' : page==='expenses' ? '회비 집행 내역' : page==='about-manage' ? '동아리 소개 수정' : page==='home' ? '모여락' : allNav.find(n=>n.id===page)?.label ?? '모여락'} | MYROCK`;},[page,activeNoticeId,activeScheduleId]);
   useEffect(()=>{document.body.style.overflow=loginOpen?'hidden':'';return()=>{document.body.style.overflow='';};},[loginOpen]);
   useEffect(()=>{const onEscape=(e:KeyboardEvent)=>{if(e.key==='Escape'){setOpenGroup(null);setAccountOpen(false);setMenuOpen(false);}};window.addEventListener('keydown',onEscape);return()=>window.removeEventListener('keydown',onEscape);},[]);
-  const navigate: Navigate = next => { if(window.location.pathname!==pathFor(next))window.history.pushState(null,'',pathFor(next));setPage(next);setOpenGroup(null);setAccountOpen(false);setMenuOpen(false);window.scrollTo({top:0,behavior:'instant'});};
+  const navigate: Navigate = next => { if(!canLeaveEditor())return; if(window.location.pathname!==pathFor(next))window.history.pushState(null,'',pathFor(next));editorPathRef.current=window.location.pathname;setPage(next);setOpenGroup(null);setAccountOpen(false);setMenuOpen(false);window.scrollTo({top:0,behavior:'instant'});};
   const openNotice = (id: string) => {
-    
+    if(!canLeaveEditor())return;
     const path = '/news/' + encodeURIComponent(id);
     if (window.location.pathname !== path) window.history.pushState(null, '', path);
+    editorPathRef.current=window.location.pathname;
     setActiveNoticeId(id);
     setPage('notice-detail');
     setOpenGroup(null);setAccountOpen(false);setMenuOpen(false);
@@ -425,8 +431,10 @@ function App() {
   };
 
   const editNotice=(id:string)=>{
+    if(!canLeaveEditor())return;
     const path='/news/'+encodeURIComponent(id)+'/edit';
     if(window.location.pathname!==path)window.history.pushState(null,'',path);
+    editorPathRef.current=window.location.pathname;
     setActiveNoticeId(id);setPage('notice-edit');window.scrollTo({top:0,behavior:'instant'});
   };
   const savedNotice=(post:NoticePost)=>{
@@ -439,9 +447,10 @@ function App() {
     catch(e){notify(e instanceof Error?e.message:'공지사항 삭제 실패');}
   };
   const openSchedule = (id: string) => {
-    if (!findSchedule(id)) return;
+    if (!findSchedule(id)||!canLeaveEditor()) return;
     const path = '/schedule/' + encodeURIComponent(id);
     if (window.location.pathname !== path) window.history.pushState(null, '', path);
+    editorPathRef.current=window.location.pathname;
     setActiveScheduleId(id);
     setPage('schedule-detail');
     setOpenGroup(null);setAccountOpen(false);setMenuOpen(false);
@@ -562,10 +571,10 @@ function App() {
     <main key={page}>
       {page==='home'&&<Home key={aboutRevision} navigate={navigate} openNotice={openNotice} notices={notices}/>}
       {page==='about'&&<About key={aboutRevision} navigate={navigate} canEdit={Boolean(user&&!authPending&&canManageDonations)}/>}
-       {page==='about-manage'&&(authPending?<section className="container section-block"><EmptyState title="권한 확인 중" description="로그인 상태를 확인하고 있습니다."/></section>:user&&canManageDonations?<AboutManagement onBack={()=>navigate('about')}/>:<section className="container section-block"><EmptyState icon={<LockKeyhole size={26}/>} title="접근 권한이 없습니다" description="동아리 소개 수정은 실무단 이상만 가능합니다."/></section>)}
+       {page==='about-manage'&&(authPending?<section className="container section-block"><EmptyState title="권한 확인 중" description="로그인 상태를 확인하고 있습니다."/></section>:user&&canManageDonations?<AboutManagement onBack={()=>navigate('about')} registerLeaveGuard={registerEditorLeaveGuard} onSaved={()=>{navigate('about');setAboutSaveNotice('변경 사항을 저장했습니다. 새 사진은 Cloudflare 이미지 배포 후 공개 화면에 표시됩니다.');}}/>:<section className="container section-block"><EmptyState icon={<LockKeyhole size={26}/>} title="접근 권한이 없습니다" description="동아리 소개 수정은 실무단 이상만 가능합니다."/></section>)}
       {page==='news'&&<News canWrite={Boolean(user && !authPending && currentLevel)} onWrite={() => navigate('notice-compose')} openNotice={openNotice} notices={notices} loading={noticeLoading} error={noticeError}/>}
-      {page==='notice-compose'&&(authPending ? <section className="container section-block"><EmptyState title="권한 확인 중" description="로그인 상태를 확인하고 있습니다." /></section> : user && currentLevel ? <NoticeComposer onBack={() => navigate('news')} onSaved={savedNotice}/> : <section className="container section-block"><EmptyState icon={<LockKeyhole size={26}/>} title="접근 권한이 없습니다" description="공지사항 글쓰기는 파트장 이상 운영진만 사용할 수 있습니다." /></section>)}
-      {page==='notice-edit'&&(authPending?<section className="container section-block"><EmptyState title="권한 확인 중" description="로그인 상태를 확인하고 있습니다."/></section>:user&&currentLevel&&notices.some(n=>n.id===activeNoticeId)?<NoticeComposer key={activeNoticeId} initial={notices.find(n=>n.id===activeNoticeId)!} onBack={()=>activeNoticeId?openNotice(activeNoticeId):navigate('news')} onSaved={savedNotice}/>:<section className="container section-block"><EmptyState title="접근 권한이 없습니다" description="공지사항 수정은 파트장 이상만 가능합니다."/></section>)}
+      {page==='notice-compose'&&(authPending ? <section className="container section-block"><EmptyState title="권한 확인 중" description="로그인 상태를 확인하고 있습니다." /></section> : user && currentLevel ? <NoticeComposer onBack={() => navigate('news')} onSaved={savedNotice} registerLeaveGuard={registerEditorLeaveGuard}/> : <section className="container section-block"><EmptyState icon={<LockKeyhole size={26}/>} title="접근 권한이 없습니다" description="공지사항 글쓰기는 파트장 이상 운영진만 사용할 수 있습니다." /></section>)}
+      {page==='notice-edit'&&(authPending?<section className="container section-block"><EmptyState title="권한 확인 중" description="로그인 상태를 확인하고 있습니다."/></section>:user&&currentLevel&&notices.some(n=>n.id===activeNoticeId)?<NoticeComposer key={activeNoticeId} initial={notices.find(n=>n.id===activeNoticeId)!} onBack={()=>activeNoticeId?openNotice(activeNoticeId):navigate('news')} onSaved={savedNotice} registerLeaveGuard={registerEditorLeaveGuard}/>:<section className="container section-block"><EmptyState title="접근 권한이 없습니다" description="공지사항 수정은 파트장 이상만 가능합니다."/></section>)}
       {page==='notice-detail'&&(noticeLoading?<section className="container section-block"><p>공지사항을 불러오는 중입니다.</p></section>:<NoticeDetail key={activeNoticeId} notice={notices.find(n=>n.id===activeNoticeId)} canManage={Boolean(user&&!authPending&&currentLevel)} backToList={()=>navigate('news')} onEdit={()=>activeNoticeId&&editNotice(activeNoticeId)} onDelete={()=>{const item=notices.find(n=>n.id===activeNoticeId);if(item)void removeNotice(item);}}/>)}
       {page==='schedule'&&<ScheduleLanding
         canCreateTeam={Boolean(user && !authPending && currentLevel)}
@@ -622,6 +631,7 @@ function App() {
       </div>
     </div>}
     {loginOpen&&<LoginDialog close={()=>setLoginOpen(false)} notify={notify}/>}
+    {aboutSaveNotice&&<div className="site-bottom-toast is-success" role="status" aria-live="polite"><span>{aboutSaveNotice}</span><button type="button" aria-label="알림 닫기" onClick={()=>setAboutSaveNotice('')}>닫기</button></div>}
     {toast&&<div className="toast" role="status"><CircleHelp size={17}/><span>{toast}</span><button type="button" aria-label="알림 닫기" onClick={()=>setToast('')}><X size={15}/></button></div>}
   </div>;
 }
