@@ -56,6 +56,7 @@ test('gallery lightbox management controls respect role and expose editor and de
   assert.match(viewer,/window\.confirm/);
   assert.match(viewer,/<GalleryUploadDialog initialAlbum=\{editingAlbum\}/);
   assert.match(viewer,/editingRef\.current/);
+  assert.match(editor,/event\.stopPropagation\(\)/);
   assert.match(editor,/initialAlbum\?\.photos\.map/);
   assert.match(editor,/photo\.file\?uploaded\[next\+\+\]:photo\.url/);
   assert.match(editor,/await updateGalleryAlbum\(initialAlbum,category,title\.trim\(\),urls\)/);
