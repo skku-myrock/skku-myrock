@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {clearImageFolder} from '../functions/_lib/githubImages.js';
+import {withoutAboutPhotoUrls,DEFAULT_ABOUT} from '../functions/_lib/aboutContent.js';
 const source=path=>readFile(new URL('../'+path,import.meta.url),'utf8');
 
 test('notice management action stays aligned with author and date',async()=>{
@@ -68,4 +69,37 @@ test('GitHub cleanup replaces only the requested image directory',async()=>{
   }
   await assert.rejects(clearImageFolder({GITHUB_IMAGES_TOKEN:'fake'},'gallery'),/허용되지 않은 이미지 폴더/);
  }finally{globalThis.fetch=original;}
+});
+
+test('asset cleanup clears all Firestore intro photo references but preserves club content',()=>{
+ const original={
+  ...DEFAULT_ABOUT,homeImage:'https://images.example/site/home.jpg',
+  heroImage:'https://images.example/site/intro.jpg',
+  officers:DEFAULT_ABOUT.officers.map((person,index)=>({...person,photoUrl:index%2===0?'https://images.example/site/member.jpg':''}))
+ };
+ const cleaned=withoutAboutPhotoUrls(original);
+ assert.equal(cleaned.homeImage,'');
+ assert.equal(cleaned.heroImage,'');
+ assert.ok(cleaned.officers.every(person=>person.photoUrl===''));
+ assert.deepEqual(cleaned.officers.map(({photoUrl,...person})=>person),original.officers.map(({photoUrl,...person})=>person));
+ assert.equal(cleaned.cohortLabel,original.cohortLabel);
+ assert.deepEqual(cleaned.history,original.history);
+ assert.deepEqual(withoutAboutPhotoUrls(cleaned),cleaned);
+ assert.deepEqual(original.officers[0].photoUrl,'https://images.example/site/member.jpg');
+});
+
+test('asset reset checks legacy notice references before GitHub reset, then clears Firestore URLs',async()=>{
+ const handler=await source('functions/api/images/reset.js');
+ assert.match(handler,/getAbout\(env\)/);
+ assert.match(handler,/withoutAboutPhotoUrls\(content\)/);
+ assert.match(handler,/saveAbout\(env,withoutPhotos,updateTime\)/);
+ assert.match(handler,/if\(photosPresent\)/);
+ assert.ok(handler.indexOf('if(referenced)reject')<handler.indexOf('clearImageFolder(env,\'site\')'));
+ assert.ok(handler.indexOf('clearImageFolder(env,\'site\')')<handler.indexOf('saveAbout(env,withoutPhotos,updateTime)'));
+ const app=await source('src/App.tsx');
+ assert.match(app,/await resetSiteAssets\(\);\s*setAboutRevision\(v=>v\+1\)/);
+ assert.match(app,/page==='home'&&<Home key=\{aboutRevision\}/);
+ const notices=await source('functions/api/notices/purge.js');
+ assert.doesNotMatch(notices,/getAbout|saveAbout|withoutAboutPhotoUrls/);
+ assert.match(notices,/clearImageFolder\(env,'notices'\)/);
 });

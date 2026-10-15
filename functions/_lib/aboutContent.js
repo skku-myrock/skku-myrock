@@ -49,6 +49,14 @@ export function normalizeAbout(input){
   }));
   return {homeImage,heroImage,cohortLabel,officers,history};
 }
+/** Erase only image links; preserve descriptions, membership and history. */
+export function withoutAboutPhotoUrls(content){
+  const valid=normalizeAbout(content);
+  return {
+    ...valid,homeImage:'',heroImage:'',
+    officers:valid.officers.map(person=>({...person,photoUrl:''}))
+  };
+}
 export async function getAbout(env){
   const res=await googleRequest(env,ABOUT_DOC);
   if(res.status===404)return {content:DEFAULT_ABOUT,updateTime:null};
