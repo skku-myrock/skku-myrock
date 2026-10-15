@@ -1825,6 +1825,8 @@ body:has([data-async-busy="true"]),body:has([data-async-busy="true"]) *{
 .notice-composer-image-picker.is-new-image{margin-top:16px}
 
 .home-hero-image{display:block;width:100%;height:100%;object-fit:cover;background:#eff2f1}
+/* Apply a subtle lifted-card shadow to the two editable feature photos only. */
+.home-hero-image,.about-hero-image{box-shadow:0 12px 30px rgba(31,53,47,.14),0 3px 8px rgba(31,53,47,.07)}
 
 .notice-detail-meta{display:flex;align-items:center;justify-content:space-between;gap:12px 20px;width:100%;min-height:39px}
 .notice-detail-byline{display:flex;align-items:center;gap:12px 22px;flex-wrap:wrap;min-width:0}
