@@ -11,3 +11,4 @@ export const purgeNotices=()=>request<{deleted:number;done:boolean;imagesCleared
 export const resetClubIntroduction=()=>request<{reset:boolean}>('/api/about/reset','모여락 소개 초기화');
 
 export const resetSiteAssets=()=>request<{reset:boolean;changed:boolean;commit:string|null}>('/api/images/reset','에셋 초기화');
+export const purgeGallery=()=>request<{deleted:number;done:boolean;imagesCleared:boolean;commit?:string|null}>('/api/gallery/purge','갤러리 초기화');

@@ -16,7 +16,7 @@ import ExpenseManagement from './ExpenseManagement';
 import DonationManagement from './DonationManagement';
 import AboutManagement from './AboutManagement';
 import {purgeDonations} from './donationApi';
-import {purgeNotices,resetClubIntroduction,resetSiteAssets} from './adminResets';
+import {purgeNotices,resetClubIntroduction,resetSiteAssets,purgeGallery} from './adminResets';
 import {invalidateAboutCache} from './aboutContent';
 import {listNoticesPage,getNotice,deleteNotice} from './noticesData';
 import type {NoticePost} from './noticesData';
@@ -94,6 +94,8 @@ function App() {
   const [noticeResetting,setNoticeResetting]=useState(false);
   const [aboutResetting,setAboutResetting]=useState(false);
   const [assetResetting,setAssetResetting]=useState(false);
+  const [galleryResetting,setGalleryResetting]=useState(false);
+  const [galleryRevision,setGalleryRevision]=useState(0);
   const [aboutRevision,setAboutRevision]=useState(0);
   const [financeRevision,setFinanceRevision] = useState(0);
   const [rosterRevision,setRosterRevision] = useState(0);
@@ -173,7 +175,7 @@ function App() {
     }
   }
   async function resetDonationFinance() {
-    if(financeResetting||rosterResetting||noticeResetting||aboutResetting||assetResetting||!user||!profile?.superadmin||!hasSystemClaim)return;
+    if(financeResetting||rosterResetting||noticeResetting||aboutResetting||assetResetting||galleryResetting||!user||!profile?.superadmin||!hasSystemClaim)return;
     if(!window.confirm('경고: 모든 후원 기록, 회비 집행 내역 및 익명자 명단을 영구 삭제합니다. 복구할 수 없습니다. 계속하시겠습니까?'))return;
     setFinanceResetting(true);setAccountOpen(false);setMenuOpen(false);
     let removed=0;
@@ -193,7 +195,7 @@ function App() {
     }finally{setFinanceResetting(false);}
   }
   async function resetAllNotices(){
-    if(rosterResetting||financeResetting||noticeResetting||aboutResetting||assetResetting||!user||!profile?.superadmin||!hasSystemClaim)return;
+    if(rosterResetting||financeResetting||noticeResetting||aboutResetting||assetResetting||galleryResetting||!user||!profile?.superadmin||!hasSystemClaim)return;
     if(!window.confirm('경고: 모든 공지사항과 GitHub notices/ 폴더의 사진을 영구 삭제합니다. gallery/와 site/는 유지됩니다. 계속하시겠습니까?'))return;
     setNoticeResetting(true);setAccountOpen(false);setMenuOpen(false);
     let removed=0;
@@ -212,7 +214,7 @@ function App() {
     }finally{setNoticeResetting(false);}
   }
   async function resetIntroduction(){
-    if(rosterResetting||financeResetting||noticeResetting||aboutResetting||assetResetting||!user||!profile?.superadmin||!hasSystemClaim)return;
+    if(rosterResetting||financeResetting||noticeResetting||aboutResetting||assetResetting||galleryResetting||!user||!profile?.superadmin||!hasSystemClaim)return;
     if(!window.confirm('경고: 모여락 소개의 운영진 정보와 연혁을 28기 기본값으로 되돌립니다. 메인 페이지·동아리 소개·운영진 사진 URL과 GitHub 이미지 파일은 유지됩니다. 계속하시겠습니까?'))return;
     setAboutResetting(true);setAccountOpen(false);setMenuOpen(false);
     try{
@@ -226,7 +228,7 @@ function App() {
     }finally{setAboutResetting(false);}
   }
   async function resetAssets(){
-    if(rosterResetting||financeResetting||noticeResetting||aboutResetting||assetResetting||!user||!profile?.superadmin||!hasSystemClaim)return;
+    if(rosterResetting||financeResetting||noticeResetting||aboutResetting||assetResetting||galleryResetting||!user||!profile?.superadmin||!hasSystemClaim)return;
     if(!window.confirm('경고: GitHub site/ 사진과 Firestore의 메인·동아리 소개·운영진 사진 URL을 삭제합니다. gallery/, notices/, 운영진 정보와 연혁은 유지됩니다. 계속하시겠습니까?'))return;
     setAssetResetting(true);setAccountOpen(false);setMenuOpen(false);
     try{
@@ -238,6 +240,26 @@ function App() {
       window.alert('에셋 초기화가 완료되지 않았습니다. GitHub 파일 정리가 먼저 완료되었을 수도 있으니 저장소를 확인하고 다시 시도해 주세요. '+(error instanceof Error?error.message:'서버 오류'));
     }finally{setAssetResetting(false);}
   }
+  async function resetGallery(){
+    if(galleryResetting||rosterResetting||financeResetting||noticeResetting||aboutResetting||assetResetting||!user||!profile?.superadmin||!hasSystemClaim)return;
+    if(!window.confirm('경고: 모든 갤러리 앨범 데이터와 GitHub 이미지 저장소 gallery/ 폴더의 사진을 삭제합니다. 영구 삭제이며 다른 페이지 사진은 유지됩니다. 계속하시겠습니까?'))return;
+    setGalleryResetting(true);setAccountOpen(false);setMenuOpen(false);
+    let deleted=0;
+    try{
+      let done=false;
+      for(let attempt=0;attempt<200;attempt++){
+        const result=await purgeGallery();
+        deleted+=result.deleted;
+        if(result.done){done=true;break;}
+      }
+      if(!done)throw Error('처리 한도를 초과했습니다. 초기화를 다시 실행해 주세요.');
+      setGalleryRevision(value=>value+1);
+      window.alert('갤러리 초기화를 완료했습니다. 삭제한 앨범: '+deleted+'개. 이미지 repo gallery/ 파일도 정리했습니다.');
+    }catch(error){
+      setGalleryRevision(value=>value+1);
+      window.alert('갤러리 초기화가 중단되었습니다. 삭제한 앨범: '+deleted+'개. 다시 초기화를 실행하면 남은 데이터를 정리합니다. '+(error instanceof Error?error.message:'서버 오류'));
+    }finally{setGalleryResetting(false);}
+  }
   const isDeveloperSuperadmin=Boolean(user && profile?.superadmin && hasSystemClaim);
   const currentLevel=managementLevel(profile,hasSystemClaim);
   const canManage=currentLevel!==null;
@@ -247,7 +269,7 @@ function App() {
   const pageViews:Record<Page,ReactNode>={
     'home': <Home key={aboutRevision} navigate={navigate} openNotice={openNotice} notices={notices}/>,
     'about': <About key={aboutRevision} navigate={navigate} canEdit={Boolean(user&&!authPending&&canManageDonations)}/>,
-    'about-manage': (authPending?<section className="container section-block"><EmptyState title="권한 확인 중" description="로그인 상태를 확인하고 있습니다."/></section>:user&&canManageDonations?<AboutManagement onBack={()=>navigate('about')} registerLeaveGuard={registerEditorLeaveGuard} onSaved={message=>{navigate('about');setAboutSaveNotice(message??'변경 사항을 저장했습니다. 새 사진은 Cloudflare 이미지 배포 후 공개 화면에 표시됩니다.');}}/>:<section className="container section-block"><EmptyState icon={<LockKeyhole size={26}/>} title="접근 권한이 없습니다" description="동아리 소개 수정은 실무단 이상만 가능합니다."/></section>),
+    'about-manage': (authPending?<section className="container section-block"><EmptyState title="권한 확인 중" description="로그인 상태를 확인하고 있습니다."/></section>:user&&canManageDonations?<AboutManagement onBack={()=>navigate('about')} registerLeaveGuard={registerEditorLeaveGuard} onSaved={message=>{navigate('about');setAboutSaveNotice(message??'변경 사항을 저장했습니다. 이미지 업로드까지 시간이 걸릴 수 있습니다.');}}/>:<section className="container section-block"><EmptyState icon={<LockKeyhole size={26}/>} title="접근 권한이 없습니다" description="동아리 소개 수정은 실무단 이상만 가능합니다."/></section>),
     'news': <News canWrite={Boolean(user && !authPending && currentLevel)} onWrite={() => navigate('notice-compose')} openNotice={openNotice} notices={notices} loading={noticeLoading} error={noticeError} hasMore={Boolean(noticeCursor)} moreLoading={noticeMoreLoading} onLoadMore={()=>void loadMoreNotices()}/>,
     'notice-compose': (authPending ? <section className="container section-block"><EmptyState title="권한 확인 중" description="로그인 상태를 확인하고 있습니다." /></section> : user && currentLevel ? <NoticeComposer onBack={() => navigate('news')} onSaved={savedNotice} registerLeaveGuard={registerEditorLeaveGuard}/> : <section className="container section-block"><EmptyState icon={<LockKeyhole size={26}/>} title="접근 권한이 없습니다" description="공지사항 글쓰기는 파트장 이상 운영진만 사용할 수 있습니다." /></section>),
     'notice-edit': (authPending||noticeDetailLoading||(!noticeDetailError&&!activeFullNotice)?<section className="container section-block"><EmptyState title="공지사항 확인 중" description="공지사항과 로그인 상태를 확인하고 있습니다."/></section>:user&&currentLevel&&activeFullNotice?<NoticeComposer key={activeNoticeId} initial={activeFullNotice} onBack={()=>activeNoticeId?openNotice(activeNoticeId):navigate('news')} onSaved={savedNotice} registerLeaveGuard={registerEditorLeaveGuard}/>:<section className="container section-block"><EmptyState title="접근 권한이 없습니다" description="공지사항 수정은 파트장 이상만 가능합니다."/></section>),
@@ -259,7 +281,7 @@ function App() {
         onOpen={openSchedule}
       />,
     'schedule-detail': <ScheduleDetail schedule={findSchedule(activeScheduleId ?? '')} onBack={() => navigate('schedule')}/>,
-    'gallery': <Gallery canRegister={Boolean(user && !authPending && currentLevel)}/>,
+    'gallery': <Gallery key={galleryRevision} canRegister={Boolean(user && !authPending && currentLevel)}/>,
     'equipment': <Equipment notify={notify}/>,
     'finance': <FinanceLanding onDonations={() => navigate('donations')} onExpenses={() => navigate('expenses')} canEditAccount={Boolean(user&&!authPending&&currentLevel==='president')}/>,
     'donations': <DonationHistory key={financeRevision} onBack={() => navigate('finance')} loggedIn={Boolean(user)} authPending={authPending} onLogin={showLogin} canManageDonations={Boolean(!authPending&&user&&canManageDonations)} onManage={()=>navigate('donation-manage')}/>,
@@ -270,7 +292,7 @@ function App() {
     'handover': (authPending?<section className="container section-block"><EmptyState title="권한 확인 중" description="로그인 상태를 확인하고 있습니다." /></section>:page==='members'&&canManage&&user?<><PageHeading tag="MEMBER MANAGEMENT" title="부원 관리" description="부원 명단 조회와 운영 권한에 따른 부원 정보 수정"/><MemberManager key={rosterRevision} currentUid={user.uid} level={currentLevel!}/></>:page==='handover'&&canHandover?<Handover openLogin={showLogin} notify={notify}/>:<section className="container section-block"><EmptyState icon={<LockKeyhole size={26}/>} title="접근 권한이 없습니다" description="해당 메뉴에 접근할 수 있는 운영진 권한이 필요합니다." /></section>),
     'members': (authPending?<section className="container section-block"><EmptyState title="권한 확인 중" description="로그인 상태를 확인하고 있습니다." /></section>:page==='members'&&canManage&&user?<><PageHeading tag="MEMBER MANAGEMENT" title="부원 관리" description="부원 명단 조회와 운영 권한에 따른 부원 정보 수정"/><MemberManager key={rosterRevision} currentUid={user.uid} level={currentLevel!}/></>:page==='handover'&&canHandover?<Handover openLogin={showLogin} notify={notify}/>:<section className="container section-block"><EmptyState icon={<LockKeyhole size={26}/>} title="접근 권한이 없습니다" description="해당 메뉴에 접근할 수 있는 운영진 권한이 필요합니다." /></section>),
   };
-  return <div className="site-root" data-async-busy={rosterResetting||financeResetting||noticeResetting||aboutResetting||assetResetting ? "true" : undefined}>
+  return <div className="site-root" data-async-busy={rosterResetting||financeResetting||noticeResetting||aboutResetting||assetResetting||galleryResetting ? "true" : undefined}>
     <header className="site-header"><div className="container header-inner">
       <button type="button" className="brand" onClick={()=>navigate('home')} aria-label="모여락 홈으로 이동"><img src={logo} alt="모여락 로고"/><span><strong>모여락</strong><small>MYROCK</small></span></button>
       <nav className="desktop-nav" aria-label="주 메뉴">{navGroups.map(group=><div className="more-wrapper nav-group" key={group.label} onMouseEnter={()=>setOpenGroup(group.label)} onMouseLeave={()=>setOpenGroup(null)}><button type="button" aria-expanded={openGroup===group.label} className={group.items.some(i=>i.id===page)?'active':''} onClick={()=>setOpenGroup(openGroup===group.label?null:group.label)}>{group.label} <ChevronDown size={13}/></button>{openGroup===group.label&&<div className="more-menu">{group.items.map(item=><button type="button" key={item.id} onClick={()=>navigate(item.id)}>{item.label}</button>)}</div>}</div>)}</nav>
@@ -282,10 +304,10 @@ function App() {
           onBlur={event => { if (!event.relatedTarget || !event.currentTarget.contains(event.relatedTarget as Node)) setAccountOpen(false); }}
         ><button className="login-button account-toggle" type="button"
           onClick={() => { if (!window.matchMedia('(hover: hover)').matches) setAccountOpen(previous => !previous); }}
-          aria-haspopup="menu" aria-expanded={accountOpen}><UserRound size={15}/>{profile?.name??'내 계정'}<ChevronDown size={13}/></button>{accountOpen&&<div className="more-menu account-menu"><button type="button" onClick={()=>navigate('profile')}>내 정보</button>{canManage&&<button type="button" onClick={()=>navigate('members')}>부원 관리</button>}{canHandover&&<button type="button" onClick={()=>navigate('handover')}>인수인계</button>}<button type="button" onClick={logout} disabled={rosterResetting}>로그아웃</button>{isDeveloperSuperadmin && <><button type="button" className="developer-reset-action" disabled={rosterResetting||financeResetting||noticeResetting||aboutResetting||assetResetting} onClick={() => void resetRosterExceptMyself()}>명단 초기화</button><button type="button" className="developer-reset-action" disabled={rosterResetting||financeResetting||noticeResetting||aboutResetting||assetResetting} onClick={() => void resetDonationFinance()}>후원 · 회계 초기화</button><button type="button" className="developer-reset-action" disabled={rosterResetting||financeResetting||noticeResetting||aboutResetting||assetResetting} onClick={() => void resetAllNotices()}>공지사항 초기화</button><button type="button" className="developer-reset-action" disabled={rosterResetting||financeResetting||noticeResetting||aboutResetting||assetResetting} onClick={() => void resetIntroduction()}>모여락 소개 초기화</button><button type="button" className="developer-reset-action" disabled={rosterResetting||financeResetting||noticeResetting||aboutResetting||assetResetting} onClick={() => void resetAssets()}>에셋 초기화</button></>}</div>}</div>}
+          aria-haspopup="menu" aria-expanded={accountOpen}><UserRound size={15}/>{profile?.name??'내 계정'}<ChevronDown size={13}/></button>{accountOpen&&<div className="more-menu account-menu"><button type="button" onClick={()=>navigate('profile')}>내 정보</button>{canManage&&<button type="button" onClick={()=>navigate('members')}>부원 관리</button>}{canHandover&&<button type="button" onClick={()=>navigate('handover')}>인수인계</button>}<button type="button" onClick={logout} disabled={rosterResetting}>로그아웃</button>{isDeveloperSuperadmin && <><button type="button" className="developer-reset-action" disabled={rosterResetting||financeResetting||noticeResetting||aboutResetting||assetResetting||galleryResetting} onClick={() => void resetRosterExceptMyself()}>명단 초기화</button><button type="button" className="developer-reset-action" disabled={rosterResetting||financeResetting||noticeResetting||aboutResetting||assetResetting||galleryResetting} onClick={() => void resetDonationFinance()}>후원 · 회계 초기화</button><button type="button" className="developer-reset-action" disabled={rosterResetting||financeResetting||noticeResetting||aboutResetting||assetResetting||galleryResetting} onClick={() => void resetAllNotices()}>공지사항 초기화</button><button type="button" className="developer-reset-action" disabled={rosterResetting||financeResetting||noticeResetting||aboutResetting||assetResetting||galleryResetting} onClick={() => void resetIntroduction()}>모여락 소개 초기화</button><button type="button" className="developer-reset-action" disabled={rosterResetting||financeResetting||noticeResetting||aboutResetting||assetResetting||galleryResetting} onClick={() => void resetAssets()}>에셋 초기화</button><button type="button" className="developer-reset-action" disabled={rosterResetting||financeResetting||noticeResetting||aboutResetting||assetResetting||galleryResetting} onClick={() => void resetGallery()}>갤러리 초기화</button></>}</div>}</div>}
         <button type="button" className="mobile-menu-button" onClick={()=>setMenuOpen(!menuOpen)} aria-label={menuOpen?'메뉴 닫기':'메뉴 열기'} aria-expanded={menuOpen}>{menuOpen?<X size={22}/>:<Menu size={22}/>}</button>
       </div>
-    </div>{menuOpen&&<nav className="mobile-nav" aria-label="모바일 메뉴"><div className="container">{navGroups.map(group=><div className="mobile-group" key={group.label}><button type="button" aria-expanded={openGroup===group.label} onClick={()=>setOpenGroup(openGroup===group.label?null:group.label)}><strong>{group.label}</strong><ChevronDown size={16}/></button>{openGroup===group.label&&<div className="mobile-submenu">{group.items.map(item=><button type="button" key={item.id} onClick={()=>navigate(item.id)}>{item.label}</button>)}</div>}</div>)}{user&&<><button type="button" onClick={()=>navigate('profile')}>내 정보<ArrowRight size={16}/></button>{canManage&&<button type="button" onClick={()=>navigate('members')}>부원 관리<ArrowRight size={16}/></button>}{canHandover&&<button type="button" onClick={()=>navigate('handover')}>인수인계<ArrowRight size={16}/></button>}<button type="button" onClick={logout} disabled={rosterResetting}>로그아웃<LogOut size={16}/></button>{isDeveloperSuperadmin && <><button type="button" className="developer-reset-action" disabled={rosterResetting||financeResetting||noticeResetting||aboutResetting||assetResetting} onClick={() => void resetRosterExceptMyself()}>명단 초기화<Trash2 size={15}/></button><button type="button" className="developer-reset-action" disabled={rosterResetting||financeResetting||noticeResetting||aboutResetting||assetResetting} onClick={() => void resetDonationFinance()}>후원 · 회계 초기화<Trash2 size={15}/></button><button type="button" className="developer-reset-action" disabled={rosterResetting||financeResetting||noticeResetting||aboutResetting||assetResetting} onClick={() => void resetAllNotices()}>공지사항 초기화<Trash2 size={15}/></button><button type="button" className="developer-reset-action" disabled={rosterResetting||financeResetting||noticeResetting||aboutResetting||assetResetting} onClick={() => void resetIntroduction()}>모여락 소개 초기화<Trash2 size={15}/></button><button type="button" className="developer-reset-action" disabled={rosterResetting||financeResetting||noticeResetting||aboutResetting||assetResetting} onClick={() => void resetAssets()}>에셋 초기화<Trash2 size={15}/></button></>}</>}</div></nav>}
+    </div>{menuOpen&&<nav className="mobile-nav" aria-label="모바일 메뉴"><div className="container">{navGroups.map(group=><div className="mobile-group" key={group.label}><button type="button" aria-expanded={openGroup===group.label} onClick={()=>setOpenGroup(openGroup===group.label?null:group.label)}><strong>{group.label}</strong><ChevronDown size={16}/></button>{openGroup===group.label&&<div className="mobile-submenu">{group.items.map(item=><button type="button" key={item.id} onClick={()=>navigate(item.id)}>{item.label}</button>)}</div>}</div>)}{user&&<><button type="button" onClick={()=>navigate('profile')}>내 정보<ArrowRight size={16}/></button>{canManage&&<button type="button" onClick={()=>navigate('members')}>부원 관리<ArrowRight size={16}/></button>}{canHandover&&<button type="button" onClick={()=>navigate('handover')}>인수인계<ArrowRight size={16}/></button>}<button type="button" onClick={logout} disabled={rosterResetting}>로그아웃<LogOut size={16}/></button>{isDeveloperSuperadmin && <><button type="button" className="developer-reset-action" disabled={rosterResetting||financeResetting||noticeResetting||aboutResetting||assetResetting||galleryResetting} onClick={() => void resetRosterExceptMyself()}>명단 초기화<Trash2 size={15}/></button><button type="button" className="developer-reset-action" disabled={rosterResetting||financeResetting||noticeResetting||aboutResetting||assetResetting||galleryResetting} onClick={() => void resetDonationFinance()}>후원 · 회계 초기화<Trash2 size={15}/></button><button type="button" className="developer-reset-action" disabled={rosterResetting||financeResetting||noticeResetting||aboutResetting||assetResetting||galleryResetting} onClick={() => void resetAllNotices()}>공지사항 초기화<Trash2 size={15}/></button><button type="button" className="developer-reset-action" disabled={rosterResetting||financeResetting||noticeResetting||aboutResetting||assetResetting||galleryResetting} onClick={() => void resetIntroduction()}>모여락 소개 초기화<Trash2 size={15}/></button><button type="button" className="developer-reset-action" disabled={rosterResetting||financeResetting||noticeResetting||aboutResetting||assetResetting||galleryResetting} onClick={() => void resetAssets()}>에셋 초기화<Trash2 size={15}/></button><button type="button" className="developer-reset-action" disabled={rosterResetting||financeResetting||noticeResetting||aboutResetting||assetResetting||galleryResetting} onClick={() => void resetGallery()}>갤러리 초기화<Trash2 size={15}/></button></>}</>}</div></nav>}
     </header>
     <main key={page}>
       <Routes>

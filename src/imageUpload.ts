@@ -1,6 +1,6 @@
 import {auth} from './firebase';
 import {prepareImageForUpload,MAX_UPLOAD_IMAGE_BYTES} from './imageCompression';
-export async function uploadImagesBatch(files:File[],folder:'site'|'notices'='site'):Promise<string[]>{
+export async function uploadImagesBatch(files:File[],folder:'site'|'notices'|'gallery'='site'):Promise<string[]>{
   if(!files.length)return [];
   const token=await auth.currentUser?.getIdToken();
   if(!token)throw Error('로그인이 필요합니다.');

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { KeyboardEvent as ReactKeyboardEvent, MouseEvent as ReactMouseEvent, TouchEvent as ReactTouchEvent } from 'react';
 import { ArrowLeft, ArrowRight, ArrowUpRight, Image as ImageIcon, Plus, X } from 'lucide-react';
-import { photoAlbums } from './galleryData';
+import {listGalleryAlbums} from './galleryApi';
 import GalleryUploadDialog from './GalleryUploadDialog';
 import type { PhotoAlbum, PhotoCategory } from './galleryData';
 
@@ -21,6 +21,10 @@ function PhotoSlot({ src, label, kind }: { src: string | null; label: string; ki
 
 export default function PhotoGallery({ canRegister }: { canRegister: boolean }) {
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [albums,setAlbums]=useState<PhotoAlbum[]>([]);
+  const [loading,setLoading]=useState(true);
+  const [loadError,setLoadError]=useState('');
+  const [message,setMessage]=useState('');
   const [filter, setFilter] = useState<Filter>('전체');
   const [activeAlbum, setActiveAlbum] = useState<PhotoAlbum | null>(null);
   const [photoIndex, setPhotoIndex] = useState(0);
@@ -29,7 +33,20 @@ export default function PhotoGallery({ canRegister }: { canRegister: boolean }) 
   const openerRef = useRef<HTMLButtonElement | null>(null);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
 
-  const filtered = filter === '전체' ? photoAlbums : photoAlbums.filter(album => album.category === filter);
+  async function reload(){
+    setLoading(true);setLoadError('');
+    try{setAlbums(await listGalleryAlbums());}
+    catch(error){setLoadError(error instanceof Error?error.message:'갤러리를 불러오지 못했습니다.');}
+    finally{setLoading(false);}
+  }
+  useEffect(()=>{
+    let alive=true;
+    void listGalleryAlbums().then(items=>{if(alive)setAlbums(items);})
+      .catch(error=>{if(alive)setLoadError(error instanceof Error?error.message:'갤러리 조회 실패');})
+      .finally(()=>{if(alive)setLoading(false);});
+    return ()=>{alive=false;};
+  },[]);
+  const filtered = filter === '전체' ? albums : albums.filter(album => album.category === filter);
   const count = activeAlbum?.photos.length ?? 0;
 
   function openAlbum(album: PhotoAlbum, event: ReactMouseEvent<HTMLButtonElement>) {
@@ -128,6 +145,9 @@ export default function PhotoGallery({ canRegister }: { canRegister: boolean }) 
       </button>}
     </div>
 
+    {loadError && <p className="gallery-load-error" role="alert">{loadError} <button type="button" onClick={()=>void reload()}>다시 시도</button></p>}
+    {loading && <p className="gallery-empty-state" role="status">갤러리를 불러오는 중입니다.</p>}
+    {!loading&&!loadError&&filtered.length===0&&<p className="gallery-empty-state">{albums.length===0?'아직 등록된 갤러리 앨범이 없습니다.':'이 분류에 등록된 앨범이 없습니다.'}</p>}
     <div className="gallery-album-grid">
       {filtered.map(album => <button type="button" key={album.id}
         className="gallery-album-card"
@@ -144,8 +164,13 @@ export default function PhotoGallery({ canRegister }: { canRegister: boolean }) 
       </button>)}
     </div>
 
-    {canRegister && uploadOpen && <GalleryUploadDialog onClose={() => setUploadOpen(false)} />}
+    {canRegister && uploadOpen && <GalleryUploadDialog onClose={() => setUploadOpen(false)} onCreated={album=>{
+      setAlbums(previous=>[album,...previous]);
+      setUploadOpen(false);
+      setMessage('갤러리 앨범을 등록했습니다. 이미지 업로드까지 시간이 걸릴 수 있습니다.');
+    }} />}
 
+    {message&&<div className="site-bottom-toast is-success" role="status" aria-live="polite"><span>{message}</span><button type="button" aria-label="알림 닫기" onClick={()=>setMessage('')}>닫기</button></div>}
     {activeAlbum && <div className="gallery-lightbox-backdrop" onMouseDown={event => {
       if (event.target === event.currentTarget) closeAlbum();
     }}>

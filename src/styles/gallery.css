@@ -401,3 +401,8 @@
 .gallery-upload-dropzone.is-compact strong{margin-top:2px;font-size:11px;line-height:1.6}
 .gallery-upload-dropzone.is-compact .gallery-upload-dropzone-detail{font-size:10px;line-height:1.5;text-align:center}
 @media(max-width:680px){.gallery-upload-photo-grid>.gallery-upload-dropzone.is-compact{min-height:155px}}
+
+.gallery-empty-state{min-height:150px;padding:52px 15px;text-align:center;color:#82938a;font-size:13px}
+.gallery-load-error{padding:15px;border:1px solid #e4bdbc;background:#fff7f6;color:#994b43;font-size:12px}
+.gallery-load-error button{margin-left:10px;border:0;text-decoration:underline;background:transparent;color:inherit}
+.gallery-upload-dialog .gallery-upload-error{position:relative}
