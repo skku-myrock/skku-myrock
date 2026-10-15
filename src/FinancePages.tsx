@@ -159,15 +159,24 @@ export function DonationHistory({
   const [allError,setAllError]=useState('');
   const [mineError,setMineError]=useState('');
   const [loadingAll,setLoadingAll]=useState(true);
+  const [allCursor,setAllCursor]=useState<string|null>(null);
+  const [loadingMoreAll,setLoadingMoreAll]=useState(false);
   const [loadingMine,setLoadingMine]=useState(false);
   const [mineLoaded,setMineLoaded]=useState(false);
   useEffect(()=>{
     let active=true;
-    void getPublicDonations().then(data=>{if(active)setAll(data.records);})
+    void getPublicDonations().then(data=>{if(active){setAll(data.records);setAllCursor(data.nextPageToken);}})
       .catch(reason=>{if(active)setAllError(reason instanceof Error?reason.message:'후원 기록 조회 오류');})
       .finally(()=>{if(active)setLoadingAll(false);});
     return()=>{active=false;};
   },[]);
+  async function loadMoreDonations(){
+    if(!allCursor||loadingMoreAll)return;
+    setLoadingMoreAll(true);
+    try{const result=await getPublicDonations(allCursor);setAll(prev=>[...prev,...result.records.filter(record=>!prev.some(item=>item.id===record.id))]);setAllCursor(result.nextPageToken);setAllError('');}
+    catch(e){setAllError(e instanceof Error?e.message:'후원 기록 추가 조회 실패');}
+    finally{setLoadingMoreAll(false);}
+  }
   useEffect(()=>{
     let active=true;
     if(authPending||!loggedIn){setMine([]);setMineLoaded(false);return()=>{active=false;};}
@@ -199,6 +208,7 @@ export function DonationHistory({
               <span>{displayDate(row.date)}</span><span>{row.donorName}</span><span>{displayAmount(row.amount)}</span>
             </div>)}
         </div>
+        {allCursor&&<div className="list-bottom"><button type="button" className="outline-action" disabled={loadingMoreAll} onClick={()=>void loadMoreDonations()}>{loadingMoreAll?'더 불러오는 중...':'후원 내역 더 보기'}</button></div>}
       </section>
       <section className="finance-record-section" aria-labelledby="my-donations-heading">
         <FinanceSectionTitle title="내 후원 내역" description="로그인한 부원의 학번에 연결된 기록만 표시합니다." />
@@ -230,15 +240,24 @@ export function ExpenseHistory({ onBack, canManageExpenses, onManage }: {
   onBack:Nav;canManageExpenses:boolean;onManage:Nav;
 }) {
   const [rows,setRows]=useState<Array<FinanceTransactionInput & {id:string}>>([]);
+  const [expenseCursor,setExpenseCursor]=useState<string|null>(null);
+  const [loadingMore,setLoadingMore]=useState(false);
   const [loading,setLoading]=useState(true);
   const [error,setError]=useState('');
   useEffect(()=>{
     let active=true;
-    void readExpenses().then(data=>{if(active)setRows(data.records);})
+    void readExpenses().then(data=>{if(active){setRows(data.records);setExpenseCursor(data.nextPageToken);}})
       .catch(reason=>{if(active)setError(reason instanceof Error?reason.message:'거래 내역 조회 실패');})
       .finally(()=>{if(active)setLoading(false);});
     return()=>{active=false;};
   },[]);
+  async function loadMoreExpenses(){
+    if(!expenseCursor||loadingMore)return;
+    setLoadingMore(true);
+    try{const result=await readExpenses(expenseCursor);setRows(prev=>[...prev,...result.records.filter(record=>!prev.some(item=>item.id===record.id))]);setExpenseCursor(result.nextPageToken);setError('');}
+    catch(e){setError(e instanceof Error?e.message:'거래 내역 추가 조회 실패');}
+    finally{setLoadingMore(false);}
+  }
   return <>
     <FinanceHeading eyebrow="CLUB EXPENSES" title="회비 집행 내역"
       description="동아리 계좌의 입금·출금 거래 내역을 투명하게 공개합니다." />
@@ -259,6 +278,7 @@ export function ExpenseHistory({ onBack, canManageExpenses, onManage }: {
               <span>{formatWon(row.amount)}</span><span>{formatWon(row.balance)}</span><span>{row.description}</span>
             </div>)}
         </div>
+        {expenseCursor&&<div className="list-bottom"><button type="button" className="outline-action" disabled={loadingMore} onClick={()=>void loadMoreExpenses()}>{loadingMore?'더 불러오는 중...':'회비 내역 더 보기'}</button></div>}
       </section>
       <div className="finance-detail-footer"><BackToFinance onBack={onBack}/></div>
     </div>
