@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {clearImageFolder} from '../functions/_lib/githubImages.js';
-import {withoutAboutPhotoUrls,DEFAULT_ABOUT} from '../functions/_lib/aboutContent.js';
+import {withoutAboutPhotoUrls,resetAboutTextKeepingImages,DEFAULT_ABOUT} from '../functions/_lib/aboutContent.js';
 const source=path=>readFile(new URL('../'+path,import.meta.url),'utf8');
 
 test('notice management action stays aligned with author and date',async()=>{
@@ -22,7 +22,7 @@ test('desktop and mobile menus expose exactly three independently scoped reset a
    assert.equal(app.split('>'+name).length-1,2,name);
  for(const method of ['purgeNotices()','resetClubIntroduction()','resetSiteAssets()'])
    assert.ok(app.includes(method),method);
- assert.match(app,/GitHub 이미지 파일은 그대로 유지됩니다/);
+ assert.match(app,/사진 URL과 GitHub 파일은 그대로 유지됩니다/);
 });
 
 test('all reset APIs enforce signed and stored superadmin flags',async()=>{
@@ -102,4 +102,60 @@ test('asset reset checks legacy notice references before GitHub reset, then clea
  const notices=await source('functions/api/notices/purge.js');
  assert.doesNotMatch(notices,/getAbout|saveAbout|withoutAboutPhotoUrls/);
  assert.match(notices,/clearImageFolder\(env,'notices'\)/);
+});
+
+test('introduction reset preserves homepage, about and all eight officer photos',()=>{
+ const source={
+   ...DEFAULT_ABOUT,
+   cohortLabel:'임시 운영진 소개',
+   homeImage:'https://myrock-images.pages.dev/site/home.webp',
+   heroImage:'https://myrock-images.pages.dev/site/intro.webp',
+   officers:DEFAULT_ABOUT.officers.map((person,index)=>({...person,id:'custom-'+index,position:'임시 직책',photoUrl:'https://myrock-images.pages.dev/site/'+index+'.jpg'})),
+   history:[{id:'recent',year:'2026년',description:'임시 연혁'}]
+ };
+ const reset=resetAboutTextKeepingImages(source);
+ assert.equal(reset.homeImage,source.homeImage);
+ assert.equal(reset.heroImage,source.heroImage);
+ assert.deepEqual(reset.officers.map(person=>person.photoUrl),source.officers.map(person=>person.photoUrl));
+ assert.deepEqual(reset.officers.map(({photoUrl,...person})=>person),DEFAULT_ABOUT.officers.map(({photoUrl,...person})=>person));
+ assert.deepEqual(reset.history,DEFAULT_ABOUT.history);
+ assert.equal(reset.cohortLabel,DEFAULT_ABOUT.cohortLabel);
+ assert.deepEqual(resetAboutTextKeepingImages(reset),reset);
+ assert.equal(source.officers[0].position,'임시 직책');
+});
+
+test('introduction reset preserves officer photo ownership if member order changed',()=>{
+ const original={
+   ...DEFAULT_ABOUT,
+   officers:[...DEFAULT_ABOUT.officers].reverse().map((person,index)=>({...person,photoUrl:'https://photos.example/'+person.name+'.webp'}))
+ };
+ const result=resetAboutTextKeepingImages(original);
+ for(const person of result.officers)
+   assert.equal(person.photoUrl,'https://photos.example/'+person.name+'.webp');
+});
+
+test('introduction reset API reuses stored image links instead of blank image defaults',async()=>{
+ const handler=await source('functions/api/about/reset.js');
+ assert.match(handler,/resetAboutTextKeepingImages\(original\.ok\?docFields\(original\.data\):DEFAULT_ABOUT\)/);
+ assert.match(handler,/toFields\(next\)/);
+ assert.doesNotMatch(handler,/toFields\(DEFAULT_ABOUT\)/);
+ assert.doesNotMatch(handler,/clearImageFolder/);
+ const asset=await source('functions/api/images/reset.js');
+ assert.match(asset,/withoutAboutPhotoUrls\(content\)/);
+});
+
+test('every destructive reset uses a single warning confirmation without typed prompts',async()=>{
+ const app=await source('src/App.tsx');
+ assert.doesNotMatch(app,/window\.prompt\(/);
+ for(const name of ['resetRosterExceptMyself','resetDonationFinance','resetAllNotices','resetIntroduction','resetAssets']){
+   const start=app.indexOf('function '+name+'(');
+   assert.ok(start>=0,name);
+   const next=app.indexOf('\n  async function ',start+12);
+   const segment=app.slice(start,next<0?app.length:next);
+   assert.match(segment,/window\.confirm\(/,name);
+   assert.equal((segment.match(/window\.confirm\(/g)||[]).length,1,name);
+ }
+ const client=await source('src/adminResets.ts');
+ // Server confirmation values continue to be supplied automatically by the API client.
+ assert.match(client,/confirmation/);
 });
