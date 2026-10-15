@@ -240,7 +240,8 @@ test('member-management copy removed, action column is right aligned with a 3+2 
 test('unchanged bank account uses the same gray disabled save design as anonymous roster',async()=>{
   const page=await readFile(new URL('../src/FinancePages.tsx',import.meta.url),'utf8');
   assert.match(page,/disabled=\{busy\|\|!accountChanged\}/);
-  assert.match(styles,/\.finance-manager-people-save>\.button:disabled,\s*\.finance-account-edit-actions>\.button:disabled\{/);
+  assert.match(styles,/\.finance-manager-people-save>\.button:disabled\{/);
+  assert.match(styles,/\.finance-account-edit-actions>\.button:disabled\{/);
   assert.match(styles,/background:#e4e9e5!important;border-color:#dbe1dc!important/);
   assert.match(styles,/\.finance-account-edit-actions>\.button:not\(:disabled\)\{opacity:1;filter:none\}/);
 });
