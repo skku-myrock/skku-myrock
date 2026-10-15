@@ -7,24 +7,26 @@ import {validateNotice} from '../functions/_lib/notices.js';
 
 const source=async path=>path==='src/styles.css'?readStyles():readFile(new URL('../'+path,import.meta.url),'utf8');
 const [app,composer,model,backend,index,detail,batch,style]=await Promise.all(['src/App.tsx','src/NoticeComposer.tsx','src/noticesData.ts','functions/_lib/notices.js','functions/api/notices/index.js','functions/api/notices/[id].js','functions/api/images/batch.js','src/styles.css'].map(source));
+const pages=await source('src/pages/SitePages.tsx');
+const routes=await source('src/app/siteNavigation.ts');
 const base={title:'새 공지',category:'공지',blocks:[{kind:'text',text:'본문'}]};
 
 test('demo notices are removed and public page loads persisted notices',()=>{
   assert.doesNotMatch(model,/recruit-29-5|summer-concert-2026|homecoming-2026/);
   assert.match(model,/listNotices/);
   assert.match(app,/void listNotices\(\)/);
-  assert.match(app,/notices\.slice\(0, 3\)/);
-  assert.match(app,/notices\.filter/);
+  assert.match(pages,/notices\.slice\(0, 3\)/);
+  assert.match(pages,/notices\.filter/);
 });
 
 test('public sees notice author and only part leaders or above see management menu',()=>{
-  assert.match(app,/<span className="notice-author-cell">작성자<\/span>/);
-  assert.match(app,/<span className="notice-author-cell">\{post.author\}<\/span>/);
-  assert.match(app,/<span>작성자 \{notice.author\}<\/span>/);
-  assert.match(app,/canManage&&<div className="notice-manage-actions">/);
-  assert.match(app,/수정하기/);
-  assert.match(app,/삭제하기/);
-  assert.match(app,/page==='notice-edit'/);
+  assert.match(pages,/<span className="notice-author-cell">작성자<\/span>/);
+  assert.match(pages,/<span className="notice-author-cell">\{post.author\}<\/span>/);
+  assert.match(pages,/<span>작성자 \{notice.author\}<\/span>/);
+  assert.match(pages,/canManage&&<div className="notice-manage-actions">/);
+  assert.match(pages,/수정하기/);
+  assert.match(pages,/삭제하기/);
+  assert.match(routes,/page:'notice-edit',path:'\/news\/:id\/edit'/);
   assert.match(index,/assertAccess\(request,env,'part_leader'\)/);
   assert.match(detail,/assertAccess\(request,env,'part_leader'\)/);
   assert.match(detail,/onRequestDelete/);
