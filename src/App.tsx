@@ -24,6 +24,7 @@ import AboutManagement from './AboutManagement';
 import { DEFAULT_ABOUT,getAbout } from './aboutContent';
 import type { AboutContent } from './aboutContent';
 import { purgeDonations } from './donationApi';
+import {purgeNotices,resetClubIntroduction} from './adminResets';
 import {listNotices,deleteNotice} from './noticesData';
 import type { NoticePost } from './noticesData';
 import NoticeImageCarousel from './NoticeImageCarousel';
@@ -240,11 +241,13 @@ function NoticeDetail({ notice, canManage, backToList, onEdit, onDelete }: { not
       <header className="notice-detail-header">
         <span className="notice-detail-category">{notice.category}</span>
         <h2>{notice.title}</h2>
-        <div className="notice-detail-meta"><time dateTime={notice.publishedAt}>{notice.date}</time>
-          <span>작성자 {notice.author}</span>
+        <div className="notice-detail-meta">
+          <div className="notice-detail-byline"><time dateTime={notice.publishedAt}>{notice.date}</time>
+            <span>작성자 {notice.author}</span>
+          </div>
+          {canManage&&<div className="notice-manage-actions"><button type="button" className="outline-action" aria-expanded={manageOpen} onClick={()=>setManageOpen(x=>!x)}>관리 <ChevronDown size={15}/></button>{manageOpen&&<div className="notice-manage-menu"><button type="button" onClick={onEdit}>수정하기</button><button type="button" onClick={onDelete}>삭제하기</button></div>}</div>}
         </div>
       </header>
-      {canManage&&<div className="notice-manage-actions"><button type="button" className="outline-action" aria-expanded={manageOpen} onClick={()=>setManageOpen(x=>!x)}>관리 <ChevronDown size={15}/></button>{manageOpen&&<div className="notice-manage-menu"><button type="button" onClick={onEdit}>수정하기</button><button type="button" onClick={onDelete}>삭제하기</button></div>}</div>}
       <div className="notice-detail-content">
         {notice.blocks.map((block,index)=>block.kind==='text'?<div className="notice-detail-body" key={index}><p>{block.text}</p></div>:block.kind==='gallery'?
           <div key={index} className="notice-detail-images"><NoticeImageCarousel label={notice.title+' 이미지 슬라이드'} slides={block.images.map((image,i)=>({id:i,src:image.url,alt:image.name,width:Number(image.width)||320,height:Number(image.height)||240}))}/></div>:
@@ -378,6 +381,8 @@ function App() {
   const [rosterResetting,setRosterResetting] = useState(false);
   const [rosterResetDeleted,setRosterResetDeleted] = useState(0);
   const [financeResetting,setFinanceResetting] = useState(false);
+  const [noticeResetting,setNoticeResetting]=useState(false);
+  const [aboutResetting,setAboutResetting]=useState(false);
   const [financeRevision,setFinanceRevision] = useState(0);
   const [rosterRevision,setRosterRevision] = useState(0);
   useEffect(()=>{
@@ -444,7 +449,7 @@ function App() {
   const showLogin=()=>{setLoginOpen(true);setMenuOpen(false);setAccountOpen(false);};
   const logout=async()=>{try{await signOut(auth);navigate('home');notify('로그아웃되었습니다.');}catch{notify('로그아웃하지 못했습니다. 잠시 후 다시 시도해 주세요.');}};
   async function resetRosterExceptMyself() {
-    if (rosterResetting || !user || !profile?.superadmin || !hasSystemClaim) return;
+    if (rosterResetting || financeResetting || noticeResetting || aboutResetting || !user || !profile?.superadmin || !hasSystemClaim) return;
     const confirmed = window.confirm(
       '개발용 명단 초기화입니다. 본인 계정을 제외한 모든 부원의 Firestore 프로필과 Firebase 로그인 계정이 삭제됩니다.\n\n삭제된 계정은 자동 복구할 수 없습니다. 실행할까요?'
     );
@@ -467,7 +472,7 @@ function App() {
     }
   }
   async function resetDonationFinance() {
-    if(financeResetting||!user||!profile?.superadmin||!hasSystemClaim)return;
+    if(financeResetting||rosterResetting||noticeResetting||aboutResetting||!user||!profile?.superadmin||!hasSystemClaim)return;
     const typed=window.prompt('모든 후원 기록과 익명자 명단, 회비 집행 내역이 영구 삭제됩니다. 계속하려면 후원 · 회계 초기화를 입력하세요.');
     if(typed!=='후원 · 회계 초기화')return;
     if(!window.confirm('후원과 회비 집행 내역 전체를 영구 삭제합니다. 복구할 수 없습니다. 실행할까요?'))return;
@@ -488,12 +493,47 @@ function App() {
       setFinanceRevision(prev=>prev+1);
     }finally{setFinanceResetting(false);}
   }
+  async function resetAllNotices(){
+    if(rosterResetting||financeResetting||noticeResetting||aboutResetting||!user||!profile?.superadmin||!hasSystemClaim)return;
+    const typed=window.prompt('모든 공지사항 문서를 영구 삭제합니다. 계속하려면 공지사항 초기화를 입력하세요.');
+    if(typed!=='공지사항 초기화')return;
+    if(!window.confirm('모든 공지사항 내용을 삭제합니다. 삭제한 글은 복구할 수 없습니다. 실행할까요?'))return;
+    setNoticeResetting(true);setAccountOpen(false);setMenuOpen(false);
+    let removed=0;
+    try{
+      let done=false;
+      for(let i=0;i<500&&!done;i++){
+        const result=await purgeNotices();
+        removed+=result.deleted;done=result.done;
+      }
+      if(!done)throw Error('초기화 요청 횟수를 초과했습니다.');
+      setNotices([]);setNoticeError('');navigate('news');
+      window.alert('공지사항 초기화가 완료되었습니다. 삭제된 공지사항: '+removed+'건');
+    }catch(error){
+      window.alert('공지사항 초기화가 중단되었습니다. 지금까지 삭제한 공지사항: '+removed+'건. '+(error instanceof Error?error.message:'서버 오류'));
+      void listNotices().then(setNotices).catch(()=>{});
+    }finally{setNoticeResetting(false);}
+  }
+  async function resetIntroduction(){
+    if(rosterResetting||financeResetting||noticeResetting||aboutResetting||!user||!profile?.superadmin||!hasSystemClaim)return;
+    const typed=window.prompt('모여락 소개 정보를 기본값으로 되돌리고 GitHub myrock-images/site/ 안의 모든 사진을 삭제합니다. 공지사항에 사용된 사진도 사라져 링크가 깨질 수 있습니다. 계속하려면 모여락 소개 초기화를 입력하세요.');
+    if(typed!=='모여락 소개 초기화')return;
+    if(!window.confirm('소개 정보와 메인·운영진 사진을 초기화하고 site/ 전체 사진을 삭제합니다. gallery/는 유지됩니다. 실행할까요?'))return;
+    setAboutResetting(true);setAccountOpen(false);setMenuOpen(false);
+    try{
+      await resetClubIntroduction();
+      navigate('about');
+      window.alert('모여락 소개가 28기 운영진과 1998년·2023년 연혁으로 초기화되었습니다. GitHub site/도 비웠습니다. Cloudflare 배포 반영까지 시간이 걸릴 수 있습니다.');
+    }catch(error){
+      window.alert('모여락 소개 초기화가 완료되지 않았습니다. GitHub 파일과 Firestore 상태를 각각 확인해 주세요. '+(error instanceof Error?error.message:'서버 오류'));
+    }finally{setAboutResetting(false);}
+  }
   const isDeveloperSuperadmin=Boolean(user && profile?.superadmin && hasSystemClaim);
   const currentLevel=managementLevel(profile,hasSystemClaim);
   const canManage=currentLevel!==null;
   const canManageDonations=currentLevel==='staff'||currentLevel==='president';
   const canHandover=canViewHandover(profile,hasSystemClaim);
-  return <div className="site-root" data-async-busy={rosterResetting||financeResetting ? "true" : undefined}>
+  return <div className="site-root" data-async-busy={rosterResetting||financeResetting||noticeResetting||aboutResetting ? "true" : undefined}>
     <header className="site-header"><div className="container header-inner">
       <button type="button" className="brand" onClick={()=>navigate('home')} aria-label="모여락 홈으로 이동"><img src={logo} alt="모여락 로고"/><span><strong>모여락</strong><small>MYROCK</small></span></button>
       <nav className="desktop-nav" aria-label="주 메뉴">{navGroups.map(group=><div className="more-wrapper nav-group" key={group.label} onMouseEnter={()=>setOpenGroup(group.label)} onMouseLeave={()=>setOpenGroup(null)}><button type="button" aria-expanded={openGroup===group.label} className={group.items.some(i=>i.id===page)?'active':''} onClick={()=>setOpenGroup(openGroup===group.label?null:group.label)}>{group.label} <ChevronDown size={13}/></button>{openGroup===group.label&&<div className="more-menu">{group.items.map(item=><button type="button" key={item.id} onClick={()=>navigate(item.id)}>{item.label}</button>)}</div>}</div>)}</nav>
@@ -505,10 +545,10 @@ function App() {
           onBlur={event => { if (!event.relatedTarget || !event.currentTarget.contains(event.relatedTarget as Node)) setAccountOpen(false); }}
         ><button className="login-button account-toggle" type="button"
           onClick={() => { if (!window.matchMedia('(hover: hover)').matches) setAccountOpen(previous => !previous); }}
-          aria-haspopup="menu" aria-expanded={accountOpen}><UserRound size={15}/>{profile?.name??'내 계정'}<ChevronDown size={13}/></button>{accountOpen&&<div className="more-menu account-menu"><button type="button" onClick={()=>navigate('profile')}>내 정보</button>{canManage&&<button type="button" onClick={()=>navigate('members')}>부원 관리</button>}{canHandover&&<button type="button" onClick={()=>navigate('handover')}>인수인계</button>}<button type="button" onClick={logout} disabled={rosterResetting}>로그아웃</button>{isDeveloperSuperadmin && <><button type="button" className="developer-reset-action" disabled={rosterResetting||financeResetting} onClick={() => void resetRosterExceptMyself()}>명단 초기화</button><button type="button" className="developer-reset-action" disabled={rosterResetting||financeResetting} onClick={() => void resetDonationFinance()}>후원 · 회계 초기화</button></>}</div>}</div>}
+          aria-haspopup="menu" aria-expanded={accountOpen}><UserRound size={15}/>{profile?.name??'내 계정'}<ChevronDown size={13}/></button>{accountOpen&&<div className="more-menu account-menu"><button type="button" onClick={()=>navigate('profile')}>내 정보</button>{canManage&&<button type="button" onClick={()=>navigate('members')}>부원 관리</button>}{canHandover&&<button type="button" onClick={()=>navigate('handover')}>인수인계</button>}<button type="button" onClick={logout} disabled={rosterResetting}>로그아웃</button>{isDeveloperSuperadmin && <><button type="button" className="developer-reset-action" disabled={rosterResetting||financeResetting||noticeResetting||aboutResetting} onClick={() => void resetRosterExceptMyself()}>명단 초기화</button><button type="button" className="developer-reset-action" disabled={rosterResetting||financeResetting||noticeResetting||aboutResetting} onClick={() => void resetDonationFinance()}>후원 · 회계 초기화</button><button type="button" className="developer-reset-action" disabled={rosterResetting||financeResetting||noticeResetting||aboutResetting} onClick={() => void resetAllNotices()}>공지사항 초기화</button><button type="button" className="developer-reset-action" disabled={rosterResetting||financeResetting||noticeResetting||aboutResetting} onClick={() => void resetIntroduction()}>모여락 소개 초기화</button></>}</div>}</div>}
         <button type="button" className="mobile-menu-button" onClick={()=>setMenuOpen(!menuOpen)} aria-label={menuOpen?'메뉴 닫기':'메뉴 열기'} aria-expanded={menuOpen}>{menuOpen?<X size={22}/>:<Menu size={22}/>}</button>
       </div>
-    </div>{menuOpen&&<nav className="mobile-nav" aria-label="모바일 메뉴"><div className="container">{navGroups.map(group=><div className="mobile-group" key={group.label}><button type="button" aria-expanded={openGroup===group.label} onClick={()=>setOpenGroup(openGroup===group.label?null:group.label)}><strong>{group.label}</strong><ChevronDown size={16}/></button>{openGroup===group.label&&<div className="mobile-submenu">{group.items.map(item=><button type="button" key={item.id} onClick={()=>navigate(item.id)}>{item.label}</button>)}</div>}</div>)}{user&&<><button type="button" onClick={()=>navigate('profile')}>내 정보<ArrowRight size={16}/></button>{canManage&&<button type="button" onClick={()=>navigate('members')}>부원 관리<ArrowRight size={16}/></button>}{canHandover&&<button type="button" onClick={()=>navigate('handover')}>인수인계<ArrowRight size={16}/></button>}<button type="button" onClick={logout} disabled={rosterResetting}>로그아웃<LogOut size={16}/></button>{isDeveloperSuperadmin && <><button type="button" className="developer-reset-action" disabled={rosterResetting||financeResetting} onClick={() => void resetRosterExceptMyself()}>명단 초기화<Trash2 size={15}/></button><button type="button" className="developer-reset-action" disabled={rosterResetting||financeResetting} onClick={() => void resetDonationFinance()}>후원 · 회계 초기화<Trash2 size={15}/></button></>}</>}</div></nav>}
+    </div>{menuOpen&&<nav className="mobile-nav" aria-label="모바일 메뉴"><div className="container">{navGroups.map(group=><div className="mobile-group" key={group.label}><button type="button" aria-expanded={openGroup===group.label} onClick={()=>setOpenGroup(openGroup===group.label?null:group.label)}><strong>{group.label}</strong><ChevronDown size={16}/></button>{openGroup===group.label&&<div className="mobile-submenu">{group.items.map(item=><button type="button" key={item.id} onClick={()=>navigate(item.id)}>{item.label}</button>)}</div>}</div>)}{user&&<><button type="button" onClick={()=>navigate('profile')}>내 정보<ArrowRight size={16}/></button>{canManage&&<button type="button" onClick={()=>navigate('members')}>부원 관리<ArrowRight size={16}/></button>}{canHandover&&<button type="button" onClick={()=>navigate('handover')}>인수인계<ArrowRight size={16}/></button>}<button type="button" onClick={logout} disabled={rosterResetting}>로그아웃<LogOut size={16}/></button>{isDeveloperSuperadmin && <><button type="button" className="developer-reset-action" disabled={rosterResetting||financeResetting||noticeResetting||aboutResetting} onClick={() => void resetRosterExceptMyself()}>명단 초기화<Trash2 size={15}/></button><button type="button" className="developer-reset-action" disabled={rosterResetting||financeResetting||noticeResetting||aboutResetting} onClick={() => void resetDonationFinance()}>후원 · 회계 초기화<Trash2 size={15}/></button><button type="button" className="developer-reset-action" disabled={rosterResetting||financeResetting||noticeResetting||aboutResetting} onClick={() => void resetAllNotices()}>공지사항 초기화<Trash2 size={15}/></button><button type="button" className="developer-reset-action" disabled={rosterResetting||financeResetting||noticeResetting||aboutResetting} onClick={() => void resetIntroduction()}>모여락 소개 초기화<Trash2 size={15}/></button></>}</>}</div></nav>}
     </header>
     <main key={page}>
       {page==='home'&&<Home navigate={navigate} openNotice={openNotice} notices={notices}/>}

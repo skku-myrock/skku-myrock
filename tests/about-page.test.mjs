@@ -11,7 +11,7 @@ test('default introduction retains eight leaders and original two milestones',()
   for(const name of ['김서연','신희수','배은성','허지원','정해준','김하은','추서현','김민현'])
     assert.ok(defaults.includes("name:'"+name+"'"),name);
   assert.match(defaults,/cohortLabel:'28기 운영진 소개'/);
-  assert.match(defaults,/199x년/);
+  assert.match(defaults,/1998년/);
   assert.match(defaults,/모여락 창단/);
   assert.match(defaults,/2023년/);
   assert.match(defaults,/중앙동아리 승격/);
@@ -57,4 +57,13 @@ test('homepage and introduction images have distinct labels and fields',()=>{
   assert.match(app,/alt="동아리 소개 사진"/);
   assert.match(editor,/type:'home'/);
   assert.match(editor,/메인 페이지 사진/);
+});
+
+
+test('legacy R2 object reads are not part of the new image path',async()=>{
+  const legacy=await readFile(new URL('../functions/api/about/image.js',import.meta.url),'utf8');
+  const server=await readFile(new URL('../functions/_lib/aboutContent.js',import.meta.url),'utf8');
+  assert.doesNotMatch(legacy,/MYROCK_IMAGES|\.get\(key\)|onRequestGet/);
+  assert.match(legacy,/onRequestPost/);
+  assert.doesNotMatch(server,/key=about\\\//);
 });

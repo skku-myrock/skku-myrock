@@ -9,7 +9,7 @@
 
 ## 1. Cloudflare Pages 최초 연결
 
-Cloudflare Dashboard → **Workers & Pages → Pages → Connect to Git**에서 GitHub `skwodnjs/skku-myrock` 저장소를 연결합니다.
+Cloudflare Dashboard → **Workers & Pages → Pages → Connect to Git**에서 GitHub `skku-myrock/skku-myrock` 저장소를 연결합니다.
 
 | 항목 | 설정 |
 |---|---|
@@ -212,16 +212,16 @@ npm run check:pages
 
 ## 동아리 소개 관리
 
-- `/about`은 기본 운영진 8명과 연혁 2건을 유지하면서, Firestore `siteContent/clubIntroduction`에 저장된 최신 대표 사진·운영진 명단·연혁을 공개 API로 조회합니다.
+- `/about`은 기본 운영진 8명과 연혁 2건을 유지하면서, Firestore `siteContent/clubIntroduction`에 저장된 최신 메인 페이지 사진·동아리 소개 사진·운영진 명단·연혁을 공개 API로 조회합니다.
 - 실무단(`staff`)·회장단(`president`) 및 검증된 최고관리자만 공개 `/about` 페이지에서 **정보 수정** 관리자 버튼을 보고 `/about/manage`에 진입할 수 있습니다. 서버의 `GET /api/about/manage`, `POST /api/about/content`, `POST /api/about/image`는 매번 Firebase ID 토큰과 Firestore 역할을 확인합니다.
 - 수정 페이지는 운영진 이름·직위·사진 URL·파일 업로드, 인원 추가/삭제/순서 조정, 연혁 연도·내용 추가/수정/삭제/순서 조정, 대표 사진 URL·업로드/제거 및 저장을 지원합니다. 저장 시 문서 updateTime으로 충돌을 감지합니다.
-- 새 동아리 소개·메인 페이지·운영진 사진은 파일 선택 직후 로컬에서 미리보고 **변경 사항 저장**을 누를 때 `myrock-images/site/`에 저장합니다. 기존 R2 사진 URL은 읽기 호환성을 유지하므로 이전·검증이 끝나기 전에는 R2 파일을 삭제하지 마세요.
+- 새 동아리 소개·메인 페이지·운영진 사진은 파일 선택 직후 로컬에서 미리보고 **변경 사항 저장**을 누를 때 `myrock-images/site/`에 저장합니다. 이전 상대경로 방식의 사진은 더 이상 표시하지 않습니다. 운영 중인 과거 사진이 필요하다면 원본을 확보하여 GitHub에 다시 올려야 합니다.
 - 동아리 소개·후원 계좌·후원 기록·회비 집행 내역처럼 **공개 페이지에 노출되는 관리자 전용 작업 버튼**에만 `.admin-only-action` 색상을 적용합니다. 공지사항 글쓰기처럼 덜 민감한 버튼과 애초에 관리 전용인 페이지의 버튼은 그대로 유지합니다.
 
 ## 공지사항 이미지 입력 및 하단 알림
 
 - 공지사항 작성 화면의 **이미지 추가**, **슬라이드에 사진 추가**, **슬라이드로 사진 추가** 버튼은 URL 입력과 다중 파일 선택 박스를 펼칩니다. URL을 추가하면 이미지 하나가 삽입되고, 이미 존재하는 슬라이드에 추가하면 같은 슬라이드에 포함됩니다. 파일을 여러 장 선택하면 기존과 동일하게 슬라이드로 묶습니다. URL은 HTTPS만 지원하며 이미지는 로컬에서 미리봅니다. 실제 발행·저장 시에만 이미지와 공지사항 내용을 저장합니다.
-- 동아리 소개 수정과 후원 내역 관리의 익명자 명단 저장 결과 및 오류 메시지는 화면 하단에 고정되는 **닫기 가능한 팝업**으로 표시합니다. 기존 R2 바인딩은 이전 사진 호환성 용도로만 유지합니다.
+- 동아리 소개 수정과 후원 내역 관리의 익명자 명단 저장 결과 및 오류 메시지는 화면 하단에 고정되는 **닫기 가능한 팝업**으로 표시합니다. 이전 외부 버킷 연결은 더 이상 사용하지 않습니다.
 
 ## 이미지 저장소 (Organization)
 
@@ -229,4 +229,19 @@ npm run check:pages
 
 홈페이지 Pages Functions의 서버 전용 Secret `GITHUB_IMAGES_TOKEN`에는 이미지 저장소에만 `Contents: Read and write` 권한이 있는 GitHub App 설치 토큰 또는 fine-grained 토큰을 설정합니다. `MYROCK_IMAGES_PUBLIC_BASE_URL`에는 이미지 Pages의 HTTPS 공개 기본 주소(예: `https://images-example.pages.dev/`)를 설정합니다. 브라우저에 GitHub 자격 증명을 제공하지 마세요. GitHub에 커밋한 후 Pages 배포가 완료되기 전에는 사진 URL이 즉시 표시되지 않을 수 있습니다.
 
-`/api/about/image`의 GET은 기존 R2 이미지 링크 호환을 위해 유지합니다. 기존 이미지 데이터를 이전·검증하기 전까지 `MYROCK_IMAGES` 바인딩이나 R2 버킷을 삭제하지 마세요. 새로운 사진 업로드는 `/api/images/upload` 또는 호환 경로 `/api/about/image`를 통해 GitHub에 저장합니다.
+`/api/about/image`는 기존 화면에서 POST할 경우 새 GitHub 업로드 API로 전달하는 호환 경로입니다. GET 버킷 조회 기능은 제거했습니다. 권장 업로드 API는 `/api/images/batch`이며 기존 단일 이미지 API `/api/images/upload`도 GitHub만 사용합니다.
+
+## 최고관리자 초기화 및 이미지 정리
+
+- 로그인 계정의 **서명된 Firebase 최고관리자 클레임** 및 **Firestore 최고관리자 플래그**가 모두 유효할 때만 명단·회계·공지·소개 초기화를 표시하고 API에서도 검증합니다.
+- **공지사항 초기화**: `/api/notices/purge`가 Firestore `notices` 컬렉션을 요청당 최대 20개씩 삭제합니다. 사용자는 확인 문구 및 두 번째 확인창을 통과해야 합니다. GitHub 이미지 파일은 이 작업에서 제거하지 않습니다.
+- **모여락 소개 초기화**: `/api/about/reset`이 현재 `myrock-images/site/`의 파일을 `.gitkeep` 하나만 남기는 단일 커밋으로 정리한 다음, Firestore 소개 문서를 28기 운영진 8명과 **1998년 모여락 창단, 2023년 중앙동아리 승격**, 이미지 URL 없음 상태로 재설정합니다. `gallery/` 및 홈페이지 저장소는 건드리지 않습니다.
+- **주의**: 공지사항 이미지도 `site/`에 저장하므로 **소개 초기화를 실행하면 공지사항은 남아 있어도 사진 링크가 깨질 수 있습니다**. 실행 전 공지사항 이미지 사용 여부와 백업을 확인하세요. GitHub 트리 정리와 Firestore 수정은 서로 다른 시스템이므로 원자적 트랜잭션이 아닙니다. 중간 실패 시 두 시스템을 확인한 뒤 다시 초기화해야 합니다.
+- Git 이력에 남은 과거 파일이 영구 제거되는 것은 아닙니다. 위 작업은 최신 `main`에서만 이미지 파일을 제거합니다. 이미지 전용 Pages 배포의 전파는 비동기입니다.
+
+## 저장·배포 역할
+
+- **GitHub**: 공개 홈페이지 소스코드 `skku-myrock/skku-myrock`, 비공개 사진 원본 `skku-myrock/myrock-images`.
+- **Cloudflare Pages 및 Pages Functions**: React 정적 홈페이지, 이미지 정적 배포, 서버 API, CSV 업로드 요청의 유효성 검사와 처리.
+- **Firebase Authentication / Firestore**: 로그인, 권한, 공지사항/소개/후원·회계/부원 명단의 영속 저장. **CSV 파일의 행 데이터는 Cloudflare에 장기 저장되는 것이 아니라 Firestore에 저장됩니다.**
+- 예전 이미지 버킷 연결은 앱 코드에서 참조하지 않습니다. Cloudflare 대시보드의 구버전 배포, 버킷 자체, 구형 변수/바인딩은 **운영 데이터 백업 후 별도로 해제**해야 합니다.
