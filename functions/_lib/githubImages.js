@@ -1,4 +1,5 @@
 import {reject} from './shared.js';
+import {siteManifestEntry} from './siteManifest.js';
 const REPO='https://api.github.com/repos/skku-myrock/myrock-images/';
 const FOLDERS=new Set(['site','notices']);
 async function github(env,path,method='GET',body){
@@ -20,7 +21,10 @@ export async function clearImageFolder(env,folder){
   const head=await github(env,'git/ref/heads/main');
   const commit=await github(env,'git/commits/'+head.object.sha);
   const empty=await github(env,'git/trees','POST',{tree:[{path:'.gitkeep',mode:'100644',type:'blob',content:''}]});
-  const tree=await github(env,'git/trees','POST',{base_tree:commit.tree.sha,tree:[{path:folder,mode:'040000',type:'tree',sha:empty.sha}]});
+  const entries=[{path:folder,mode:'040000',type:'tree',sha:empty.sha}];
+  if(folder==='site')entries.push(siteManifestEntry([]));
+  // Update the live folder and its deployed allowlist in the same Git commit.
+  const tree=await github(env,'git/trees','POST',{base_tree:commit.tree.sha,tree:entries});
   if(tree.sha===commit.tree.sha)return {changed:false,commit:null};
   const next=await github(env,'git/commits','POST',{message:'maintenance: clear '+folder+' image assets',tree:tree.sha,parents:[head.object.sha]});
   await github(env,'git/refs/heads/main','PATCH',{sha:next.sha,force:false});
