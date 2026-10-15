@@ -1,6 +1,7 @@
 import { FIRESTORE_ROOT, docFields, reject, toFields } from './shared.js';
 import { googleRequest } from './google.js';
 import { donationFields, normalizeDonation } from './donations.js';
+import {firestorePage} from './firestorePages.js';
 
 export const LEDGER = FIRESTORE_ROOT + '/donations';
 export const ANONYMOUS_DOC = FIRESTORE_ROOT + '/financeSettings/anonymousDonors';
@@ -26,6 +27,35 @@ export async function loadLedger(env) {
   }
   reject('후원 기록이 너무 많아 조회하지 못했습니다. 관리자에게 문의해 주세요.',503);
 }
+/** Member view: Firestore's studentId index filters before documents are read. */
+export async function loadDonationsByStudentId(env,studentId){
+  if(!/^\\d{10}$/.test(studentId))reject('본인 학번을 확인할 수 없습니다.',403);
+  const result=await googleRequest(env,FIRESTORE_ROOT+':runQuery',{
+    method:'POST',
+    body:{structuredQuery:{
+      from:[{collectionId:'donations'}],
+      where:{fieldFilter:{field:{fieldPath:'studentId'},op:'EQUAL',value:{stringValue:studentId}}},
+      select:{fields:[{fieldPath:'date'},{fieldPath:'amount'}]}
+    }}
+  });
+  if(!result.ok)throw Error('본인 후원 기록 조회 실패: '+result.status);
+  if(!Array.isArray(result.data))throw Error('후원 쿼리 응답 형식 오류');
+  return result.data.filter(item=>item.document).map(item=>{
+    const doc=item.document,d=docFields(doc);
+    return {id:doc.name.split('/').pop(),date:String(d.date??''),amount:String(d.amount??'0')};
+  }).sort((a,b)=>b.date.localeCompare(a.date)||a.id.localeCompare(b.id));
+}
+
+/** Public list: only limited visible rows, never expose private studentId fields. */
+export async function loadPublicDonationPage(env,request){
+  const {documents,nextPageToken}=await firestorePage(env,LEDGER,{
+    request,orderBy:'date desc',fields:['date','donorName','studentId','amount','anonymous']
+  });
+  return {records:documents.map(doc=>({
+    id:doc.name.split('/').pop(),...normalizeDonation(docFields(doc))
+  })),nextPageToken};
+}
+
 export async function loadAnonymous(env) {
   const response = await googleRequest(env, ANONYMOUS_DOC);
   if (response.status === 404) return { people:[], updateTime:null };
