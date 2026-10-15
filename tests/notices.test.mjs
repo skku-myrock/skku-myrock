@@ -14,7 +14,7 @@ const base={title:'새 공지',category:'공지',blocks:[{kind:'text',text:'본�
 test('demo notices are removed and public page loads persisted notices',()=>{
   assert.doesNotMatch(model,/recruit-29-5|summer-concert-2026|homecoming-2026/);
   assert.match(model,/listNotices/);
-  assert.match(app,/void listNotices\(\)/);
+  assert.match(app,/void listNoticesPage\(\)/);
   assert.match(pages,/notices\.slice\(0, 3\)/);
   assert.match(pages,/notices\.filter/);
 });
@@ -61,7 +61,7 @@ test('composer previews files locally, batches uploads only on publish and suppo
 });
 
 test('batch images use only GitHub private repository and one commit',()=>{
-  assert.match(batch,/assertAccess\(request,env,'part_leader'\)/);
+  assert.match(batch,/assertAccess\(request,env,folder==='site'\?'staff':'part_leader'\)/);
   assert.match(batch,/GITHUB_IMAGES_TOKEN/);
   assert.match(batch,/myrock-images/);
   assert.match(batch,/git\/blobs/);
