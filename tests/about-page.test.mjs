@@ -1,9 +1,10 @@
+import {readStyles} from './readStyles.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const app=await readFile(new URL('../src/App.tsx',import.meta.url),'utf8');
-const styles=await readFile(new URL('../src/styles.css',import.meta.url),'utf8');
+const styles=await readStyles();
 const defaults=await readFile(new URL('../src/aboutContent.ts',import.meta.url),'utf8');
 const editor=await readFile(new URL('../src/AboutManagement.tsx',import.meta.url),'utf8');
 
