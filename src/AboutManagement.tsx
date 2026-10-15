@@ -3,6 +3,7 @@ import type {ChangeEvent} from 'react';
 import {ArrowLeft,ArrowDown,ArrowUp,ImagePlus,Plus,Save,Trash2} from 'lucide-react';
 import {DEFAULT_ABOUT,getAboutManagement,saveAbout} from './aboutContent';
 import {uploadImagesBatch} from './imageUpload';
+import {validateSourceImage} from './imageCompression';
 import type {AboutContent,Officer,HistoryEntry} from './aboutContent';
 
 type PhotoTarget={type:'home'}|{type:'hero'}|{type:'officer';id:string};
@@ -42,7 +43,7 @@ export default function AboutManagement({onBack}:{onBack:()=>void}){
   function chooseImage(event:ChangeEvent<HTMLInputElement>,target:PhotoTarget){
     const file=event.target.files?.[0];event.target.value='';
     if(!file||busy)return;
-    if(file.size===0||file.size>5000000||!['image/jpeg','image/png','image/webp','image/gif'].includes(file.type)){setError('5MB 이하의 JPG, PNG, WebP, GIF 이미지를 선택해 주세요.');return;}
+    try{validateSourceImage(file);}catch(reason){setError(reason instanceof Error?reason.message:'이미지 형식이나 크기를 확인해 주세요.');return;}
     const url=URL.createObjectURL(file);staged.current.set(url,file);
     if(target.type==='home')setContent(prev=>({...prev,homeImage:url}));
     else if(target.type==='hero')setContent(prev=>({...prev,heroImage:url}));
@@ -74,6 +75,7 @@ export default function AboutManagement({onBack}:{onBack:()=>void}){
       <button className="finance-return-link" type="button" onClick={onBack}><ArrowLeft size={16}/> 소개 페이지로 돌아가기</button>
 
       {loading?<p>소개 정보를 불러오는 중입니다.</p>:<>
+        <p className="image-compression-notice" role="note">이미지를 저장할 때 자동으로 압축·크기 조정할 수 있습니다. <strong>업로드된 이미지는 원본을 대체하지 못하므로 원본 사진을 별도로 보관해 주세요.</strong> GIF 애니메이션은 압축하지 않습니다.</p>
         <section className="about-manage-section">
           <h2>메인 페이지 사진</h2>
           <div className="about-manage-photo">
@@ -86,7 +88,7 @@ export default function AboutManagement({onBack}:{onBack:()=>void}){
               <button type="button" className="outline-action" disabled={busy||!content.homeImage} onClick={()=>setContent(p=>({...p,homeImage:''}))}>사진 제거</button>
             </div>
           </div>
-          <p className="about-manage-hint">메인 페이지의 첫 화면에 표시되는 사진입니다. 업로드 후 변경 사항을 저장해야 적용됩니다.</p>
+          <p className="about-manage-hint">메인 페이지의 첫 화면에 표시되는 사진입니다. 변경 사항을 저장하면 사진을 자동 압축해 업로드합니다.</p>
         </section>
         <section className="about-manage-section">
           <h2>동아리 소개 사진</h2>
@@ -100,7 +102,7 @@ export default function AboutManagement({onBack}:{onBack:()=>void}){
               <button type="button" className="outline-action" disabled={busy||!content.heroImage} onClick={()=>setContent(p=>({...p,heroImage:''}))}>사진 제거</button>
             </div>
           </div>
-          <p className="about-manage-hint">외부 HTTPS 이미지 URL을 입력하거나 JPG/PNG/WebP/GIF(5MB 이하) 파일을 업로드할 수 있습니다. 선택한 파일은 업로드 후 변경 사항을 저장해야 공개 페이지에 반영됩니다.</p>
+          <p className="about-manage-hint">외부 HTTPS 이미지 URL 또는 JPG/PNG/WebP 사진(원본 30MB 이하)을 사용할 수 있습니다. 움직이는 GIF는 원본 그대로 업로드하므로 5MB 이하여야 합니다.</p>
         </section>
         <section className="about-manage-section">
           <div className="about-manage-section-heading"><h2>운영진 명단</h2><button type="button" className="outline-action" disabled={busy||content.officers.length>=40} onClick={()=>{
