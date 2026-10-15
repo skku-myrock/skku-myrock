@@ -229,7 +229,7 @@ npm run check:pages
 
 홈페이지 Pages Functions의 서버 전용 Secret `GITHUB_IMAGES_TOKEN`에는 이미지 저장소에만 `Contents: Read and write` 권한이 있는 GitHub App 설치 토큰 또는 fine-grained 토큰을 설정합니다. `MYROCK_IMAGES_PUBLIC_BASE_URL`에는 이미지 Pages의 HTTPS 공개 기본 주소(예: `https://images-example.pages.dev/`)를 설정합니다. 브라우저에 GitHub 자격 증명을 제공하지 마세요. GitHub에 커밋한 후 Pages 배포가 완료되기 전에는 사진 URL이 즉시 표시되지 않을 수 있습니다.
 
-`/api/about/image`는 기존 화면에서 POST할 경우 새 GitHub 업로드 API로 전달하는 호환 경로입니다. GET 버킷 조회 기능은 제거했습니다. 권장 업로드 API는 `/api/images/batch`이며 기존 단일 이미지 API `/api/images/upload`도 GitHub만 사용합니다.
+`/api/about/image`와 `/api/images/upload`는 구형 단일 파일 POST 호환 경로이며, **두 경로 모두 `/api/images/batch`와 같은 파일 형식·크기·서명 검사 및 GitHub 트리 커밋 로직을 재사용합니다.** 새 업로드 API는 `/api/images/batch`입니다. 서버에서 `site/` 업로드는 실무단 이상, `notices/` 업로드는 파트장 이상만 허용합니다. 단일 파일 호환 경로는 `site/`만 등록할 수 있습니다. GIF 업로드는 모든 경로에서 차단합니다. GET 버킷 조회 기능은 제거했습니다.
 
 ## 최고관리자 초기화 및 이미지 정리
 
@@ -259,3 +259,10 @@ npm run check:pages
 - `src/useEditorLeaveGuard.ts`는 기존 미저장 변경 판단/문구를 유지하고, 내부 페이지 이동은 라우터의 `useBlocker`가 제어합니다. 외부 이동·새로고침·탭 닫기는 브라우저 `beforeunload`를 계속 사용합니다.
 - 기존 `src/styles.css`는 스타일 임포트 진입점입니다. `src/styles/`의 공통·갤러리·공지·회계·일정·편집·관리 영역별 파일은 원래 CSS 선언 순서를 유지하도록 나누었습니다.
 - Firebase Authentication/Firestore, Cloudflare Functions, GitHub 이미지 저장/배포 코드는 이 프런트엔드 리팩토링에서 변경하지 않았습니다. 기존 Node 테스트는 이동한 소스 및 스타일 경로만 갱신했으며, 신규 UI 자동화 테스트는 후속 단계로 남겼습니다.
+
+## 공개 데이터 조회 최적화
+
+- 공지사항 목록(`GET /api/notices`)은 최신순으로 **30건씩** Firestore 문서 필드 마스크를 적용하여 제목·작성자·날짜·요약만 조회합니다. 이미지 블록과 전체 본문은 목록에서 전송하지 않으며, 상세/수정 URL(`GET /api/notices/:id`)에서 해당 문서만 읽습니다. 목록의 검색은 **불러온 항목의 제목·요약**을 기준으로 하고 `공지사항 더 보기`로 다음 페이지를 불러옵니다. **서버 전체 본문 검색은 제공하지 않습니다.**
+- 공개 후원 기록(`GET /api/donations/public`)과 공개 회계 거래(`GET /api/finance/expenses`)도 최신순 30건 단위 `pageToken` 커서를 제공하며, 개인정보 및 관리자 버전 필드가 응답에 포함되지 않도록 별도 매핑합니다. 공개 후원 목록은 기존 익명 처리 규칙을 유지합니다. 새 페이지는 화면의 `더 보기` 버튼으로 가져옵니다.
+- 본인 후원 조회(`GET /api/donations/mine`)는 검증된 Firebase 사용자의 Firestore 학번으로 직접 쿼리하고, 타인 후원 기록을 일괄 읽어 서버에서 필터링하지 않습니다. 본인 누적액 계산을 위해 매칭되는 모든 본인 기록은 조회합니다.
+- 운영진 CSV 전체 다운로드, 기존 후원·회계 관리 목록, 에셋 초기화 시 공지 이미지 참조 검사에는 전체 조회가 계속 필요하므로 변경하지 않습니다. Firestore 문서 읽기 수는 결과 데이터와 인덱스 동작에 따라 결정되며, 페이지네이션은 **초기 응답 규모와 불필요한 전체 조회를 줄이는 목적**입니다.
