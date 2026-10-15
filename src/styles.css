@@ -1728,6 +1728,11 @@
   color:#929d95!important;opacity:.65;box-shadow:none;filter:saturate(.25)
 }
 .finance-manager-people-save>.button:not(:disabled){opacity:1;filter:none}
+.finance-account-edit-actions>.button:disabled{
+  background:#e4e9e5!important;border-color:#dbe1dc!important;
+  color:#929d95!important;opacity:.65;box-shadow:none;filter:saturate(.25)
+}
+.finance-account-edit-actions>.button:not(:disabled){opacity:1;filter:none}
 /* The forbidden cursor is misleading for buttons disabled while an async task runs.
    Keep disabled functionality intact; show an OS busy spinner everywhere during requests. */
 button:disabled{cursor:default!important}

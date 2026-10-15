@@ -36,7 +36,7 @@ type Notify = (message?: string) => void;
 type NavItem = { id: Page; label: string };
 
 const navGroups: { label: string; items: NavItem[] }[] = [
-  { label: '소개', items: [{id:'about',label:'동아리 소개'},{id:'gallery',label:'포토존'}] },
+  { label: '소개', items: [{id:'about',label:'동아리 소개'},{id:'gallery',label:'갤러리'}] },
   { label: '소식', items: [{id:'news',label:'공지사항'},{id:'finance',label:'후원 · 회계'}] },
   { label: '활동', items: [{id:'schedule',label:'합주 시간 조율'},{id:'equipment',label:'장비 대여'}] },
 ];
@@ -265,7 +265,7 @@ function NoticeDetail({ notice, canManage, backToList, onEdit, onDelete }: { not
 
 function Gallery({ notify }: { notify: Notify }) {
   return <>
-    <PageHeading tag="PHOTO ARCHIVE" title="포토존" description="공연부터 일상까지, 모여락의 순간들을 모아두는 공간입니다." />
+    <PageHeading tag="PHOTO ARCHIVE" title="갤러리" description="공연부터 일상까지, 모여락의 순간들을 모아두는 공간입니다." />
     <PhotoGallery onRegister={() => notify('사진 등록 기능은 추후 연결될 예정입니다. 현재는 앨범별 사진 뷰어를 이용할 수 있습니다.')} />
   </>;
 }
