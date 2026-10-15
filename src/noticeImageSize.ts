@@ -8,11 +8,14 @@ export function initialImageDimensions(naturalWidth: number, naturalHeight: numb
   return { width: Math.max(1, Math.round(naturalWidth * scale)), height: Math.max(1, Math.round(naturalHeight * scale)) };
 }
 
-export function resizeImageDimensions(size: ImageDimensions, axis: DimensionAxis, input: number, locked: boolean): ImageDimensions {
+export function resizeImageDimensions(size: ImageDimensions & { naturalWidth?:number; naturalHeight?:number }, axis: DimensionAxis, input: number, locked: boolean): ImageDimensions {
   if (!Number.isFinite(input) || input < 1) return size;
   const value = Math.min(MAX_IMAGE_DIMENSION, Math.round(input));
   if (!locked || size.width < 1 || size.height < 1) return { ...size, [axis]: value };
-  const ratio = size.width / size.height;
+  // Always derive the ratio from the original pixels. The displayed W/H may
+  // already be rounded, and using it compounds the rounding error on each edit.
+  const ratio = size.naturalWidth && size.naturalHeight
+    ? size.naturalWidth / size.naturalHeight : size.width / size.height;
   const companion = Math.max(1, Math.round(axis === 'width' ? value / ratio : value * ratio));
   if (companion <= MAX_IMAGE_DIMENSION) return axis === 'width' ? { width: value, height: companion } : { width: companion, height: value };
   return axis === 'width'
