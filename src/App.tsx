@@ -533,15 +533,16 @@ function App() {
   }
   async function resetAssets(){
     if(rosterResetting||financeResetting||noticeResetting||aboutResetting||assetResetting||!user||!profile?.superadmin||!hasSystemClaim)return;
-    const typed=window.prompt('GitHub myrock-images/site/ 파일을 모두 정리합니다. 소개 사진은 보이지 않게 되며, site/ 이미지를 사용하는 옛 공지사항이 있다면 작업이 차단됩니다. 계속하려면 에셋 초기화를 입력하세요.');
+    const typed=window.prompt('GitHub myrock-images/site/ 파일과 Firestore의 메인·동아리 소개·운영진 사진 URL을 함께 초기화합니다. site/ 이미지를 사용하는 옛 공지사항이 있다면 작업이 차단됩니다. 계속하려면 에셋 초기화를 입력하세요.');
     if(typed!=='에셋 초기화')return;
-    if(!window.confirm('site/ 폴더만 초기화합니다. gallery/와 notices/는 유지되며 Git 이력은 삭제하지 않습니다. 실행할까요?'))return;
+    if(!window.confirm('site/ 사진과 Firebase 소개 사진 URL을 초기화합니다. gallery/, notices/, 운영진 이름과 연혁은 유지됩니다. 실행할까요?'))return;
     setAssetResetting(true);setAccountOpen(false);setMenuOpen(false);
     try{
       await resetSiteAssets();
-      window.alert('site/ 에셋 초기화가 완료되었습니다. 이미지 Pages의 배포 반영까지 시간이 걸릴 수 있습니다.');
+      setAboutRevision(v=>v+1);
+      window.alert('site/ 에셋과 Firebase의 메인·동아리 소개·운영진 사진 URL이 초기화되었습니다. 기존 직접 이미지 URL은 Cloudflare 캐시에 잠시 남을 수 있습니다.');
     }catch(error){
-      window.alert('에셋 초기화가 완료되지 않았습니다. '+(error instanceof Error?error.message:'서버 오류'));
+      window.alert('에셋 초기화가 완료되지 않았습니다. GitHub 파일 정리가 먼저 완료되었을 수도 있으니 저장소를 확인하고 다시 시도해 주세요. '+(error instanceof Error?error.message:'서버 오류'));
     }finally{setAssetResetting(false);}
   }
   const isDeveloperSuperadmin=Boolean(user && profile?.superadmin && hasSystemClaim);
@@ -567,7 +568,7 @@ function App() {
     </div>{menuOpen&&<nav className="mobile-nav" aria-label="모바일 메뉴"><div className="container">{navGroups.map(group=><div className="mobile-group" key={group.label}><button type="button" aria-expanded={openGroup===group.label} onClick={()=>setOpenGroup(openGroup===group.label?null:group.label)}><strong>{group.label}</strong><ChevronDown size={16}/></button>{openGroup===group.label&&<div className="mobile-submenu">{group.items.map(item=><button type="button" key={item.id} onClick={()=>navigate(item.id)}>{item.label}</button>)}</div>}</div>)}{user&&<><button type="button" onClick={()=>navigate('profile')}>내 정보<ArrowRight size={16}/></button>{canManage&&<button type="button" onClick={()=>navigate('members')}>부원 관리<ArrowRight size={16}/></button>}{canHandover&&<button type="button" onClick={()=>navigate('handover')}>인수인계<ArrowRight size={16}/></button>}<button type="button" onClick={logout} disabled={rosterResetting}>로그아웃<LogOut size={16}/></button>{isDeveloperSuperadmin && <><button type="button" className="developer-reset-action" disabled={rosterResetting||financeResetting||noticeResetting||aboutResetting||assetResetting} onClick={() => void resetRosterExceptMyself()}>명단 초기화<Trash2 size={15}/></button><button type="button" className="developer-reset-action" disabled={rosterResetting||financeResetting||noticeResetting||aboutResetting||assetResetting} onClick={() => void resetDonationFinance()}>후원 · 회계 초기화<Trash2 size={15}/></button><button type="button" className="developer-reset-action" disabled={rosterResetting||financeResetting||noticeResetting||aboutResetting||assetResetting} onClick={() => void resetAllNotices()}>공지사항 초기화<Trash2 size={15}/></button><button type="button" className="developer-reset-action" disabled={rosterResetting||financeResetting||noticeResetting||aboutResetting||assetResetting} onClick={() => void resetIntroduction()}>모여락 소개 초기화<Trash2 size={15}/></button><button type="button" className="developer-reset-action" disabled={rosterResetting||financeResetting||noticeResetting||aboutResetting||assetResetting} onClick={() => void resetAssets()}>에셋 초기화<Trash2 size={15}/></button></>}</>}</div></nav>}
     </header>
     <main key={page}>
-      {page==='home'&&<Home navigate={navigate} openNotice={openNotice} notices={notices}/>}
+      {page==='home'&&<Home key={aboutRevision} navigate={navigate} openNotice={openNotice} notices={notices}/>}
       {page==='about'&&<About key={aboutRevision} navigate={navigate} canEdit={Boolean(user&&!authPending&&canManageDonations)}/>}
        {page==='about-manage'&&(authPending?<section className="container section-block"><EmptyState title="권한 확인 중" description="로그인 상태를 확인하고 있습니다."/></section>:user&&canManageDonations?<AboutManagement onBack={()=>navigate('about')}/>:<section className="container section-block"><EmptyState icon={<LockKeyhole size={26}/>} title="접근 권한이 없습니다" description="동아리 소개 수정은 실무단 이상만 가능합니다."/></section>)}
       {page==='news'&&<News canWrite={Boolean(user && !authPending && currentLevel)} onWrite={() => navigate('notice-compose')} openNotice={openNotice} notices={notices} loading={noticeLoading} error={noticeError}/>}
