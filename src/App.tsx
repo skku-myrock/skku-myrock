@@ -24,12 +24,12 @@ import AboutManagement from './AboutManagement';
 import { DEFAULT_ABOUT,getAbout } from './aboutContent';
 import type { AboutContent } from './aboutContent';
 import { purgeDonations } from './donationApi';
-import { findNotice, notices } from './noticesData';
+import {listNotices,deleteNotice} from './noticesData';
 import type { NoticePost } from './noticesData';
 import NoticeImageCarousel from './NoticeImageCarousel';
 import NoticeComposer from './NoticeComposer';
 
-type Page = 'home' | 'about' | 'about-manage' | 'news' | 'notice-detail' | 'notice-compose' | 'schedule' | 'schedule-detail' | 'gallery' | 'equipment' | 'finance' | 'donations' | 'donation-manage' | 'expenses' | 'expense-manage' | 'handover' | 'members' | 'profile';
+type Page = 'home' | 'about' | 'about-manage' | 'news' | 'notice-detail' | 'notice-compose' | 'notice-edit' | 'schedule' | 'schedule-detail' | 'gallery' | 'equipment' | 'finance' | 'donations' | 'donation-manage' | 'expenses' | 'expense-manage' | 'handover' | 'members' | 'profile';
 type Navigate = (page: Page) => void;
 type Notify = (message?: string) => void;
 type NavItem = { id: Page; label: string };
@@ -54,6 +54,7 @@ const profileRoleLabel = (profile: MemberProfile): string =>
   : profile.handoverAccess ? 'OB 운영진' : '일반부원';
 const canViewHandover = (profile: MemberProfile | null, hasSystemClaim: boolean) => Boolean(profile && (profile.role !== 'member' || profile.handoverAccess || (profile.superadmin && hasSystemClaim)));
 const pathFor = (page: Page) => page === 'home' ? '/' : page === 'notice-detail' ? '/news' : page === 'notice-compose' ? '/news/write' : page === 'schedule-detail' ? '/schedule' : page === 'donation-manage' ? '/finance/donations/manage' : page === 'about-manage' ? '/about/manage' : page === 'expense-manage' ? '/finance/expenses/manage' : page === 'donations' || page === 'expenses' ? `/finance/${page}` : `/${page}`;
+const noticeEditIdFromPath=():string|null=>window.location.pathname.match(/^\/news\/([a-f0-9-]{36})\/edit\/?$/)?.[1]??null;
 const noticeIdFromPath = (): string | null => {
   const match = window.location.pathname.match(/^\/news\/([a-z0-9-]+)\/?$/);
   return match && match[1] !== 'write' ? match[1] : null;
@@ -65,6 +66,7 @@ const scheduleIdFromPath = (): string | null => {
 const pathToPage = (): Page => {
   if (/^\/about\/manage\/?$/.test(window.location.pathname)) return 'about-manage';
   if (/^\/news\/write\/?$/.test(window.location.pathname)) return 'notice-compose';
+  if(noticeEditIdFromPath())return 'notice-edit';
   if (noticeIdFromPath()) return 'notice-detail';
   if (scheduleIdFromPath()) return 'schedule-detail';
   if (/^\/finance\/donations\/manage\/?$/.test(window.location.pathname)) return 'donation-manage';
@@ -96,7 +98,7 @@ function EmptyState({ icon, title, description }: { icon?: ReactNode; title: str
   return <div className="empty-state">{icon && <span className="empty-icon">{icon}</span>}<strong>{title}</strong><p>{description}</p></div>;
 }
 
-function Home({ navigate, openNotice }: { navigate: Navigate; openNotice: (id: string) => void }) {
+function Home({ navigate, openNotice, notices }: { navigate: Navigate; openNotice: (id: string) => void; notices: NoticePost[] }) {
   const [homeImage,setHomeImage]=useState('');
   useEffect(()=>{let active=true;void getAbout().then(({content})=>{if(active)setHomeImage(content.homeImage??'');}).catch(()=>{});return()=>{active=false;};},[]);
   return <>
@@ -178,7 +180,7 @@ function About({ navigate, canEdit }: { navigate: Navigate;canEdit:boolean }) {
 }
 
 
-function News({ canWrite, onWrite, openNotice }: { canWrite: boolean; onWrite: () => void; openNotice: (id: string) => void }) {
+function News({ canWrite, onWrite, openNotice, notices, loading, error }: { canWrite: boolean; onWrite: () => void; openNotice: (id: string) => void; notices: NoticePost[]; loading:boolean; error:string }) {
   const [category, setCategory] = useState('전체');
   const [query, setQuery] = useState('');
   const search = query.trim().toLocaleLowerCase('ko');
@@ -204,22 +206,25 @@ function News({ canWrite, onWrite, openNotice }: { canWrite: boolean; onWrite: (
         </div>
       </div>
       <div className="table-shell">
-        <div className={`notice-table-head${canWrite ? ' has-author' : ''}`}><span>분류</span><span>제목</span><span className="notice-date-cell">등록일</span>{canWrite && <span className="notice-author-cell">작성자</span>}</div>
-        {filtered.map(post => <button type="button" key={post.id} className={`notice-table-row${canWrite ? ' has-author' : ''}`}
+        <div className={'notice-table-head has-author'}><span>분류</span><span>제목</span><span className="notice-date-cell">등록일</span><span className="notice-author-cell">작성자</span></div>
+        {filtered.map(post => <button type="button" key={post.id} className={'notice-table-row has-author'}
           onClick={() => openNotice(post.id)} aria-label={post.title + ' 상세보기'}>
           <span className="notice-category">{post.category}</span>
           <span><strong>{post.title}</strong><small>{post.description}</small></span>
           <span className="notice-date-cell">{post.date}</span>
-          {canWrite && <span className="notice-author-cell">{post.author}</span>}
+          <span className="notice-author-cell">{post.author}</span>
         </button>)}
-        {filtered.length === 0 && <EmptyState title="검색 결과가 없습니다" description="검색어 또는 분류를 변경해 보세요." />}
+        {error&&<p role="alert" className="form-error">{error}</p>}
+        {loading&&<p role="status">공지사항을 불러오는 중입니다.</p>}
+        {!loading&&filtered.length===0&&<EmptyState title="공지사항이 없습니다" description="등록된 공지사항이 없습니다." />}
       </div>
       <div className="list-bottom"><span>총 {filtered.length}건</span></div>
     </section>
   </>;
 }
 
-function NoticeDetail({ notice, canViewAuthor, backToList }: { notice: NoticePost | undefined; canViewAuthor: boolean; backToList: () => void }) {
+function NoticeDetail({ notice, canManage, backToList, onEdit, onDelete }: { notice: NoticePost | undefined; canManage: boolean; backToList: () => void; onEdit: () => void; onDelete: () => void }) {
+  const [manageOpen,setManageOpen]=useState(false);
   if (!notice) {
     return <section className="container section-block notice-detail-missing">
       <EmptyState title="공지사항을 찾을 수 없습니다" description="존재하지 않거나 이동된 공지사항입니다." />
@@ -236,19 +241,14 @@ function NoticeDetail({ notice, canViewAuthor, backToList }: { notice: NoticePos
         <span className="notice-detail-category">{notice.category}</span>
         <h2>{notice.title}</h2>
         <div className="notice-detail-meta"><time dateTime={notice.publishedAt}>{notice.date}</time>
-          {canViewAuthor && <span>작성자 {notice.author}</span>}
+          <span>작성자 {notice.author}</span>
         </div>
       </header>
+      {canManage&&<div className="notice-manage-actions"><button type="button" className="outline-action" aria-expanded={manageOpen} onClick={()=>setManageOpen(x=>!x)}>관리 <ChevronDown size={15}/></button>{manageOpen&&<div className="notice-manage-menu"><button type="button" onClick={onEdit}>수정하기</button><button type="button" onClick={onDelete}>삭제하기</button></div>}</div>}
       <div className="notice-detail-content">
-        <div className="notice-detail-images" aria-label="공지사항 이미지">
-          <NoticeImageCarousel key={notice.id} label={notice.title + ' 첨부 이미지'} slides={notice.images.map((src, index) => ({
-            id: index, src, alt: '공지 이미지 ' + (index + 1), width: 800, height: 450,
-          }))}/>
-        </div>
-        <div className="notice-detail-body">
-          {notice.body.split(/\n\s*\n/).map((paragraph, index) =>
-            <p key={index}>{paragraph}</p>)}
-        </div>
+        {notice.blocks.map((block,index)=>block.kind==='text'?<div className="notice-detail-body" key={index}><p>{block.text}</p></div>:block.kind==='gallery'?
+          <div key={index} className="notice-detail-images"><NoticeImageCarousel label={notice.title+' 이미지 슬라이드'} slides={block.images.map((image,i)=>({id:i,src:image.url,alt:image.name,width:Number(image.width)||320,height:Number(image.height)||240}))}/></div>:
+          <div key={index} className="notice-detail-image-single" style={{maxWidth:Number(block.width)||800}}><img src={block.url} alt={block.name} style={{width:'100%',aspectRatio:Number(block.width)&&Number(block.height)?Number(block.width)+' / '+Number(block.height):'auto'}}/></div>)}
       </div>
       <div className="notice-detail-footer">
         <button type="button" className="outline-action" onClick={backToList}>
