@@ -1,6 +1,6 @@
 import { failure, secureOrigin, success, docFields, reject } from '../../_lib/shared.js';
 import { verifyFirebaseToken, getFirestoreDocument } from '../../_lib/google.js';
-import { loadLedger } from '../../_lib/donationStore.js';
+import { loadDonationsByStudentId } from '../../_lib/donationStore.js';
 
 export async function onRequestGet({request,env}) {
   try {
@@ -10,8 +10,7 @@ export async function onRequestGet({request,env}) {
     if (!profile) reject('등록된 부원 계정이 없습니다.',403);
     const studentId = String(docFields(profile).studentId ?? '');
     if (!/^\d{10}$/.test(studentId)) reject('본인 학번을 확인할 수 없습니다.',403);
-    const records = await loadLedger(env);
-    return success({ records:records.filter(record => record.studentId === studentId)
-      .map(({id,date,amount}) => ({id,date,amount})) });
+    const records = await loadDonationsByStudentId(env,studentId);
+    return success({ records });
   } catch(error) { return failure(error); }
 }
