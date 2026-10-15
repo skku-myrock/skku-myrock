@@ -2,6 +2,7 @@ import {failure,parseBody,reject,secureOrigin,success} from '../../_lib/shared.j
 import {assertAccess} from '../../_lib/google.js';
 import {listNotices} from '../../_lib/notices.js';
 import {clearImageFolder} from '../../_lib/githubImages.js';
+import {getAbout,saveAbout} from '../../_lib/aboutContent.js';
 
 export const RESET_SITE_CONFIRMATION='에셋 초기화';
 export async function onRequestPost({request,env}){
@@ -24,7 +25,19 @@ export async function onRequestPost({request,env}){
       return urls.some(url=>typeof url==='string'&&url.startsWith(legacyPrefix));
     });
     if(referenced)reject('공지사항에 아직 site/ 사진을 참조하는 글이 있습니다. 해당 사진을 notices/로 이전한 후 에셋을 초기화해 주세요.',409);
+
+    // Read before mutating GitHub. This preserves the current club description,
+    // officer names/roles and history while clearing only their image references.
+    const {content,updateTime}=await getAbout(env);
+    const photosPresent=Boolean(content.homeImage||content.heroImage||content.officers.some(person=>person.photoUrl));
+    const withoutPhotos={
+      ...content,homeImage:'',heroImage:'',
+      officers:content.officers.map(person=>({...person,photoUrl:''}))
+    };
     const cleaned=await clearImageFolder(env,'site');
-    return success({reset:true,...cleaned});
+    // GitHub and Firestore are independent systems. If the Firestore write fails,
+    // return an error so a superadmin can retry this idempotent reset.
+    if(photosPresent)await saveAbout(env,withoutPhotos,updateTime);
+    return success({reset:true,...cleaned,photoUrlsCleared:photosPresent});
   }catch(error){return failure(error);}
 }
