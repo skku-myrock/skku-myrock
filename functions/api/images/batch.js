@@ -9,9 +9,9 @@ async function github(path,token,method='GET',body){
   if(!response.ok){console.error('GitHub images request failed',path,method,response.status);reject('GitHub 이미지 저장 요청에 실패했습니다. 잠시 후 다시 시도해 주세요.',response.status===409||response.status===422?409:502);}
   return response.json();
 }
-export async function onRequestPost({request,env}){
+export async function uploadImages({request,env},{legacySingle=false}={}){
   try{
-    secureOrigin(request);await assertAccess(request,env,'part_leader');
+    secureOrigin(request);
     if(!env.GITHUB_IMAGES_TOKEN||!env.MYROCK_IMAGES_PUBLIC_BASE_URL)reject('GitHub 이미지 저장소 서버 설정이 필요합니다.',503);
     let publicBase;
     try{publicBase=new URL(env.MYROCK_IMAGES_PUBLIC_BASE_URL);if(publicBase.protocol!=='https:'||publicBase.username||publicBase.password||publicBase.search||publicBase.hash||publicBase.pathname!=='/')throw Error('invalid');}
@@ -19,9 +19,12 @@ export async function onRequestPost({request,env}){
     if(Number(request.headers.get('content-length')??0)>17000000)reject('한 번에 업로드할 수 있는 총 용량은 16MB입니다.',413);
     if(!request.headers.get('content-type')?.includes('multipart/form-data'))reject('이미지 파일만 업로드할 수 있습니다.',415);
     const form=await request.formData();
-    const folder=form.get('folder')??'site';
+    const folder=legacySingle?'site':(form.get('folder')??'site');
+    if(legacySingle&&form.has('folder')&&form.get('folder')!=='site')reject('단일 이미지 API는 site 폴더에만 저장할 수 있습니다.',400);
     if(folder!=='site'&&folder!=='notices')reject('지원하지 않는 이미지 폴더입니다.',400);
-    const files=form.getAll('images');
+    // The two URLs share all type/size/signature checks and the same atomic Git commit.
+    const files=legacySingle?[form.get('image')]:form.getAll('images');
+    await assertAccess(request,env,folder==='site'?'staff':'part_leader');
     if(!files.length||files.length>12)reject('한 번에 1~12장의 이미지를 업로드할 수 있습니다.');
     let total=0;
     const checked=[];
@@ -37,15 +40,19 @@ export async function onRequestPost({request,env}){
     const commit=await github('git/commits/'+head.object.sha,token);
     const entries=[];
     const urls=[];
+    const paths=[];
     for(const image of checked){
       const blob=await github('git/blobs',token,'POST',{content:base64(image.bytes),encoding:'base64'});
       const path=folder+'/'+crypto.randomUUID()+'.'+extensions[image.type];
       entries.push({path,mode:'100644',type:'blob',sha:blob.sha});
       urls.push(new URL(path,publicBase).href);
+      paths.push(path);
     }
     const tree=await github('git/trees',token,'POST',{base_tree:commit.tree.sha,tree:entries});
     const next=await github('git/commits',token,'POST',{message:'assets('+folder+'): upload '+files.length+' images',tree:tree.sha,parents:[head.object.sha]});
     await github('git/refs/heads/main',token,'PATCH',{sha:next.sha,force:false});
-    return success({urls,deployPending:true,commit:next.sha},201);
+    return success({urls,url:urls[0],path:paths[0],deployPending:true,commit:next.sha},201);
   }catch(error){return failure(error);}
 }
+
+export const onRequestPost=context=>uploadImages(context);
