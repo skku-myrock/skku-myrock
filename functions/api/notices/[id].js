@@ -6,10 +6,10 @@ export async function onRequestGet({request,env,params}){
   catch(error){return failure(error);}
 }
 export async function onRequestPut({request,env,params}){
-  try{secureOrigin(request);await assertAccess(request,env,'part_leader');const input=await parseBody(request);return success({notice:await updateNotice(env,String(params.id),input)});}
+  try{secureOrigin(request);await assertAccess(request,env,'part_leader');const input=await parseBody(request,450000);return success({notice:await updateNotice(env,String(params.id),input)});}
   catch(error){return failure(error);}
 }
 export async function onRequestDelete({request,env,params}){
-  try{secureOrigin(request);await assertAccess(request,env,'part_leader');const input=await parseBody(request);return success(await deleteNotice(env,String(params.id),input?.expectedUpdateTime));}
+  try{secureOrigin(request);await assertAccess(request,env,'part_leader');const input=await parseBody(request,450000);return success(await deleteNotice(env,String(params.id),input?.expectedUpdateTime));}
   catch(error){return failure(error);}
 }
