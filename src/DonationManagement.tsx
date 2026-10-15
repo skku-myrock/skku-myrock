@@ -133,7 +133,7 @@ export default function DonationManagement({onBack}:{onBack:()=>void}) {
               <input type="file" accept=".csv,text/csv" onChange={event=>void chooseCsv(event)} aria-label="후원 내역 CSV 파일 선택"/>
             </label>
             <button type="button" className="outline-action finance-manager-template" onClick={downloadTemplate}><Download size={15}/> 양식 내려받기</button>
-            <div className="finance-manager-csv-guidance"><span>날짜는 반드시 다음 예시와 같은 값을 사용해야 합니다. 예시) 2026-10-14</span><span>익명 여부는 소문자 'o'일 때만 익명이며, 빈칸이면 공개됩니다.</span></div>
+            <div className="finance-manager-csv-guidance"><span>날짜는 반드시 다음 예시와 같은 형식을 사용해야 합니다. 예시) 2026-10-14</span><span>익명으로 표시하려면 '익명 여부' 칸에 소문자 'o'를 입력해 주세요. 다른 값이나 빈칸은 익명으로 처리되지 않습니다.</span></div>
             {csvRows.length>0&&<div className="finance-manager-import-confirm">
               <strong>추가 준비: {csvRows.length}건{csvRange&&` (${csvRange.start} ~ ${csvRange.end})`}</strong><button type="button" className="button button-primary" disabled={busy} onClick={()=>void commitCsv()}>CSV {csvRows.length}건 추가</button>
               <button type="button" className="outline-action" disabled={busy} onClick={()=>setCsvRows([])}>취소</button>
