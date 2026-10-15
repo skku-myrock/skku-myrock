@@ -1,0 +1,130 @@
+/* Notice compose preview: plain text blocks and locally selected images. */
+.notice-composer-page { max-width: 900px; }
+.notice-composer-info { border: 1px solid #dce8e1; background: #f5f9f6; color: #668071; padding: 15px 18px; font-size: 12px; line-height: 1.85; margin-bottom: 26px; }
+.notice-composer-fields { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 14px; margin-bottom: 36px; }
+.notice-composer-fields label { display: flex; flex-direction: column; gap: 9px; font-size: 12px; font-weight: 600; }
+.notice-composer-fields input,.notice-composer-fields select { width: 100%; box-sizing: border-box; height: 44px; padding: 0 12px; border: 1px solid #dce4e1; background: #fff; color: var(--ink); font-size: 13px; }
+.notice-composer-top { margin-bottom: 15px; }
+.notice-composer-top h2 { font-size: 18px; margin: 0 0 8px; letter-spacing: -.04em; }
+.notice-composer-top p { margin: 0; font-size: 12px; color: var(--muted); line-height: 1.8; }
+.notice-composer-blocks { display: flex; flex-direction: column; gap: 15px; }
+.notice-composer-block { border: 1px solid var(--border); background: #fff; padding: 16px; }
+.notice-composer-block-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 10px; }
+.notice-composer-block-top strong { color: #667f70; font-size: 11px; }
+.notice-composer-block-actions { display: flex; gap: 5px; }
+.notice-composer-block-actions button { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border: 1px solid var(--border); background: #fff; color: #6a8275; cursor: pointer; }
+.notice-composer-block-actions button:disabled { cursor: default; opacity: .35; }
+.notice-composer-block textarea { display: block; width: 100%; min-height: 115px; resize: vertical; box-sizing: border-box; padding: 13px; border: 1px solid #dce4e1; color: var(--ink); font: 13px/1.85 'Noto Sans KR', sans-serif; }
+.notice-composer-block textarea:focus,.notice-composer-fields input:focus,.notice-composer-fields select:focus { outline: 2px solid #a8d2bd; outline-offset: 1px; }
+.notice-composer-image { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.notice-composer-image img { display: block; max-width: 100%; max-height: 440px; object-fit: contain; }
+.notice-composer-image small { color: #7e9286; font-size: 11px; overflow-wrap: anywhere; }
+.notice-composer-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+.notice-composer-actions>.button:last-child { margin-left: auto; }
+.notice-composer-file { position: relative; cursor: pointer; }
+.notice-composer-file input { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
+.notice-composer-file:focus-within { outline: 2px solid var(--accent-dark); outline-offset: 2px; }
+.notice-composer-footnote { color: #8b9a90; font-size: 11px; line-height: 1.8; margin: 18px 0 0; }
+.notice-composer-preview { padding: 28px 25px; border: 1px solid var(--border); background: #fff; min-height: 180px; overflow-wrap: anywhere; }
+.notice-composer-preview h3 { font-size: 24px; line-height: 1.5; letter-spacing: -.04em; margin: 14px 0 30px; }
+.notice-composer-preview p { white-space: pre-wrap; font-size: 14px; line-height: 1.9; margin: 0 0 23px; }
+.notice-composer-preview img { display: block; max-width: 100%; max-height: 70dvh; object-fit: contain; margin: 0 auto 25px; }
+@media (max-width: 620px) {
+  .notice-composer-fields { grid-template-columns: 1fr; gap: 15px; }
+  .notice-composer-block { padding: 12px; }
+  .notice-composer-preview { padding: 20px 14px; }
+  .notice-composer-actions>.button:last-child { margin-left: 0; }
+}
+
+/* Notice authors are displayed only in the management-only view. */
+.notice-table-head.has-author,.notice-table-row.has-author{grid-template-columns:90px minmax(0,1fr) 100px 90px}
+.notice-table-head .notice-author-cell,.notice-table-row>.notice-author-cell{color:#768b7f;font-size:12px;text-align:right}
+.notice-detail-meta{display:flex;align-items:center;gap:12px 22px;flex-wrap:wrap;font-size:12px;color:#87958f}
+.notice-detail-meta>span{color:#667e70}
+@media(max-width:620px){.notice-table-head.has-author,.notice-table-row.has-author{grid-template-columns:49px minmax(0,1fr) 64px}.notice-table-head.has-author>.notice-author-cell,.notice-table-row.has-author>.notice-author-cell{display:block}}
+
+/* Image dimensions: aspect-locked or freely adjustable px sizes, preview-only. */
+.notice-composer-image-stage,.notice-composer-preview-image{position:relative;max-width:100%;min-width:0;overflow:hidden}
+.notice-composer-image-stage>.notice-composer-resized-image,.notice-composer-preview-image>.notice-composer-resized-image{position:absolute;inset:0;display:block;width:100%;height:100%;max-width:none;max-height:none;margin:0;object-fit:fill}
+.notice-composer-preview-image{margin:0 auto 25px}
+.notice-composer-dimensions{display:flex;align-items:end;gap:10px;flex-wrap:wrap;margin:5px 0 4px}
+.notice-composer-dimensions label{display:flex;align-items:center;gap:7px;color:#627b6d;font-size:12px;font-weight:700}
+/* Compact W/H controls shared by single images and grouped slides. */
+.notice-composer-dimensions input{width:69px;min-width:0;height:32px;box-sizing:border-box;border:1px solid #dce4e1;border-radius:2px;padding:0 9px;color:var(--ink);background:#fff;text-align:right;font-size:12px;font-variant-numeric:tabular-nums}
+.notice-composer-dimensions label span{font-size:11px;color:#91a095;font-weight:400}
+.notice-composer-dimensions input:focus-visible,.notice-composer-ratio-toggle:focus-visible{outline:2px solid #a8d2bd;outline-offset:2px}
+.notice-composer-ratio-toggle{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border:1px solid #cbded3;background:#f4f9f5;color:#43765a;cursor:pointer}
+.notice-composer-ratio-toggle[aria-pressed=false]{background:#fff;color:#92a49b}
+@media(max-width:520px){.notice-composer-dimensions{gap:7px}.notice-composer-dimensions input{width:57px;padding-inline:5px}}
+
+
+/* Image carousels shared by static notices and the non-persistent composer. */
+.notice-carousel{display:flex;flex-direction:column;align-items:center;gap:12px;width:100%;min-width:0;outline-offset:4px}
+.notice-carousel:focus-visible{outline:2px solid var(--accent-dark)}
+.notice-slide-viewport{position:relative;max-width:100%;overflow:hidden;background:#edf1ef;touch-action:pan-y}
+.notice-slide-media{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);overflow:hidden}
+.notice-slide-media>img{display:block;width:100%;height:100%;max-width:none;max-height:none;object-fit:fill;margin:0}
+.notice-slide-media>.notice-detail-photo-placeholder{width:100%;height:100%;min-height:0;aspect-ratio:auto;border:0}
+.notice-slide-arrow{position:absolute;top:50%;transform:translateY(-50%);width:36px;height:42px;display:flex;align-items:center;justify-content:center;border:0;border-radius:2px;background:rgba(23,44,32,.68);color:#fff;cursor:pointer;z-index:1}
+.notice-slide-arrow.previous{left:10px}
+.notice-slide-arrow.next{right:10px}
+.notice-slide-arrow:hover,.notice-slide-arrow:focus-visible{background:rgba(23,44,32,.88);outline-offset:2px}
+.notice-slide-pagination{display:flex;align-items:center;justify-content:center;gap:13px;color:#73897c;font:600 12px 'DM Sans',sans-serif;min-height:24px}
+.notice-slide-dots{display:flex;gap:7px;align-items:center}
+.notice-slide-dots button{width:8px;height:8px;padding:0;border-radius:50%;border:0;background:#cfdbd3;cursor:pointer}
+.notice-slide-dots button.active{background:#23865a}
+.notice-slide-dots button:focus-visible{outline:2px solid #248056;outline-offset:3px}
+.notice-composer-gallery{display:flex;flex-direction:column;gap:15px;min-width:0}
+.notice-composer-gallery-note{margin:0;color:#738679;font-size:11px;line-height:1.75}
+.notice-composer-gallery-sizes{display:flex;flex-direction:column;gap:9px}
+.notice-composer-gallery-size-row{border-top:1px solid #e3ebe5;padding:12px 0 3px}
+.notice-composer-gallery-size-heading{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.notice-composer-gallery-size-heading strong{font-size:11px;color:#516f5e;overflow-wrap:anywhere}
+.notice-composer-gallery-remove{display:inline-flex;justify-content:center;align-items:center;width:27px;height:27px;flex:0 0 auto;border:1px solid #d6e0d8;background:#fff;color:#698476;cursor:pointer}
+.notice-composer-publish{display:flex;align-items:center;gap:15px;flex-wrap:wrap;margin-top:28px;padding-top:22px;border-top:1px solid #dce7df}
+.notice-composer-publish .button:disabled{opacity:.5;cursor:not-allowed;background:var(--accent-dark)}
+.notice-composer-publish span{color:#86988b;font-size:11px;line-height:1.7}
+@media(max-width:520px){.notice-slide-arrow{width:29px;height:37px}.notice-slide-arrow.previous{left:4px}.notice-slide-arrow.next{right:4px}}
+
+
+/* Inline gallery editing, drag handles and original pixel size restoration. */
+.notice-composer-gallery-add{align-self:flex-start}
+.notice-composer-gallery-size-row{transition:background-color .12s,border-color .12s}
+.notice-composer-gallery-size-row.is-drop-target{background:#f1f8f2;border-top-color:#438c62}
+.notice-composer-gallery-size-heading{justify-content:flex-start}
+.notice-composer-gallery-size-heading>strong{flex:1;min-width:0}
+.notice-composer-gallery-drag-handle,.notice-composer-gallery-order-actions button{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;flex:0 0 auto;padding:0;border:1px solid #d6e0d8;background:#fff;color:#668173;cursor:pointer}
+.notice-composer-gallery-drag-handle{cursor:grab;touch-action:none}
+.notice-composer-gallery-drag-handle:active{cursor:grabbing}
+.notice-composer-gallery-drag-handle:focus-visible,.notice-composer-gallery-order-actions button:focus-visible,.notice-composer-original-size:focus-visible{outline:2px solid #6a9c7d;outline-offset:2px}
+.notice-composer-gallery-order-actions{display:flex;gap:4px;align-items:center;margin-left:auto}
+.notice-composer-gallery-order-actions button:disabled{opacity:.35;cursor:default}
+.notice-composer-gallery-thumb{width:42px;height:42px;max-height:none;object-fit:cover;flex:0 0 auto;border:1px solid #dae7dd}
+.notice-composer-original-size{display:inline-flex;gap:6px;align-items:center;justify-content:center;height:32px;padding:0 10px;border:1px solid #cbded3;background:#fff;color:#4a7760;font-size:11px;cursor:pointer}
+.notice-composer-original-size:disabled{opacity:.4;cursor:default}
+@media(max-width:520px){.notice-composer-gallery-size-heading{flex-wrap:wrap}.notice-composer-gallery-order-actions{margin-left:0}.notice-composer-gallery-thumb{width:35px;height:35px}}
+
+/* On mobile, slide ordering uses the right-side arrow buttons, not drag handles. */
+@media(max-width:700px){.notice-composer-gallery-drag-handle{display:none}}
+/* Keep the narrower numeric inputs readable without browser spinner chrome. */
+.notice-composer-dimensions input[type=number]{appearance:textfield;-moz-appearance:textfield}
+.notice-composer-dimensions input[type=number]::-webkit-inner-spin-button,.notice-composer-dimensions input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+
+
+/* Image filenames: keep ordinal and filename separate; ellipsize long filenames on all screens. */
+.notice-composer-gallery-file-label{display:flex;align-items:center;gap:5px;flex:1;min-width:0;overflow:hidden}
+.notice-composer-gallery-image-number{flex:0 0 auto;white-space:nowrap}
+.notice-composer-gallery-filename{display:block;flex:1;min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Notice list date must retain its typography when the manager-only author column is added. */
+.notice-table-row>.notice-date-cell{font-family:'Noto Sans KR',sans-serif;font-size:12px;font-weight:400;line-height:1.6;font-variant-numeric:tabular-nums;letter-spacing:0;color:#a4afab;white-space:nowrap;text-align:right}
+
+@media(max-width:700px){
+  .notice-composer-dimensions input{height:28px;min-height:28px;padding-block:0}
+  .notice-composer-ratio-toggle{width:28px;height:28px;min-height:28px}
+  .notice-composer-original-size{height:28px;min-height:28px;padding-inline:8px}
+  .notice-composer-gallery-file-label{flex-direction:column;align-items:flex-start;gap:1px}
+  .notice-composer-gallery-filename{flex:none;width:100%}
+}
+
+

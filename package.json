@@ -11,10 +11,11 @@
     "check:pages": "wrangler pages functions build functions --outfile .tmp-pages-functions/worker.js"
   },
   "dependencies": {
+    "firebase": "^11.10.0",
     "lucide-react": "^0.468.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "firebase": "^11.10.0"
+    "react-router-dom": "^6.30.1"
   },
   "devDependencies": {
     "@types/react": "^18.3.18",

@@ -1,3 +1,4 @@
+import {readStyles} from './readStyles.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
@@ -13,7 +14,7 @@ const transpiled = typescript.transpileModule(source, {
 const { photoAlbums } = await import('data:text/javascript;base64,' + Buffer.from(transpiled).toString('base64'));
 const component = await readFile(new URL('../src/PhotoGallery.tsx', import.meta.url), 'utf8');
 const app = await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8');
-const styles = await readFile(new URL('../src/styles.css', import.meta.url), 'utf8');
+const styles = await readStyles();
 
 test('all requested concerts, events and daily activity albums appear in order', () => {
   assert.deepEqual(photoAlbums.map(album => [album.category, album.title]), [

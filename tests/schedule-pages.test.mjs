@@ -1,11 +1,13 @@
+import {readStyles} from './readStyles.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import ts from 'typescript';
 
 const app = await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8');
+const routes = await readFile(new URL('../src/app/siteNavigation.ts', import.meta.url), 'utf8');
 const source = await readFile(new URL('../src/SchedulePages.tsx', import.meta.url), 'utf8');
-const styles = await readFile(new URL('../src/styles.css', import.meta.url), 'utf8');
+const styles = await readStyles();
 
 const ast = ts.createSourceFile('SchedulePages.tsx', source, ts.ScriptTarget.ES2022, true, ts.ScriptKind.TSX);
 const declarations = ast.statements.filter(ts.isVariableStatement)
@@ -174,13 +176,14 @@ test('long date ranges scroll horizontally and full-day hours flow vertically', 
 });
 
 test('schedule routing, titles, browser history and back button remain intact', () => {
-  assert.match(app, /page === 'schedule-detail' \? '\/schedule'/);
-  assert.match(app, /const scheduleIdFromPath =/);
-  assert.match(app, /if \(scheduleIdFromPath\(\)\) return 'schedule-detail';/);
-  assert.match(app, /setActiveScheduleId\(scheduleIdFromPath\(\)\)/);
-  assert.match(app, /window\.history\.pushState\(null, '', path\)/);
-  assert.match(app, /window\.addEventListener\('popstate',onPop\)/);
-  assert.match(app, /page==='schedule-detail'&&<ScheduleDetail/);
+  assert.match(routes,/page:'schedule-detail',path:'\/schedule\/:id'/);
+  assert.match(routes,/export const schedulePath=\(id:string\)=>'\/schedule\/'/);
+  assert.match(routes,/routeFromPath\(pathname:string\)/);
+  assert.match(app,/const activeScheduleId=page==='schedule-detail'\?/);
+  assert.match(app,/routerNavigate\(schedulePath\(id\)\)/);
+  assert.match(app,/useBlocker\(/);
+  assert.match(app,/'schedule-detail': <ScheduleDetail/);
+  assert.doesNotMatch(app,/window\.history\.pushState/);
   assert.match(source, /if \(!schedule\)/);
   assert.match(source, /onClick=\{onBack\}/);
   assert.match(source, /30분이며, 시간은 1시간 간격/);

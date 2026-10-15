@@ -1,10 +1,12 @@
+import {readStyles} from './readStyles.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const finance = await readFile(new URL('../src/FinancePages.tsx', import.meta.url), 'utf8');
 const app = await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8');
-const styles = await readFile(new URL('../src/styles.css', import.meta.url), 'utf8');
+const routes = await readFile(new URL('../src/app/siteNavigation.ts', import.meta.url), 'utf8');
+const styles = await readStyles();
 
 test('finance landing introduces donations before account instructions and transaction links', () => {
   const start = finance.indexOf('export function FinanceLanding');
@@ -53,12 +55,13 @@ test('donations load sanitized public and student-specific histories and restric
   assert.match(finance, /onClick=\{onLogin\}/);
 });
 test('finance management uses separate protected route, not the public list', () => {
-  assert.match(app, /\| 'finance' \| 'donations' \| 'donation-manage' \| 'expenses' \| 'expense-manage'/);
-  assert.match(app, /page === 'donation-manage' \? '\/finance\/donations\/manage'/);
-  assert.match(app, /return 'donation-manage'/);
+  for(const page of ['finance','donations','donation-manage','expenses','expense-manage'])assert.match(routes,new RegExp("page:'"+page+"'"));
+  assert.match(routes,/page:'donation-manage',path:'\/finance\/donations\/manage'/);
+  assert.match(app,/'donation-manage':\s*\(authPending/);
   assert.match(app, /canManageDonations=currentLevel==='staff'\|\|currentLevel==='president'/);
   assert.match(app, /<DonationManagement onBack=\{\(\)=>navigate\('donations'\)\}/);
-  assert.match(app, /window\.addEventListener\('popstate',onPop\)/);
+  assert.match(app,/useBlocker\(/);
+  assert.doesNotMatch(app,/window\.addEventListener\('popstate'/);
   assert.match(app, /<FinanceLanding onDonations=\{\(\) => navigate\('donations'\)\} onExpenses=\{\(\) => navigate\('expenses'\)\} canEditAccount=/);
   assert.match(app, /<ExpenseHistory onBack=\{\(\) => navigate\('finance'\)\} canManageExpenses=/);
   assert.match(app, /후원 · 회계 초기화/);
@@ -158,8 +161,8 @@ test('donation edits use only inline row fields and remove the private disclosur
 test('transaction manager supports CSV upload, individual edits, templates and export',async()=>{
   const manager=await readFile(new URL('../src/ExpenseManagement.tsx',import.meta.url),'utf8');
   const client=await readFile(new URL('../src/financeTransactions.ts',import.meta.url),'utf8');
-  assert.match(app,/return 'expense-manage'/);
-  assert.match(app,/page==='expense-manage'/);
+  assert.match(routes,/page:'expense-manage',path:'\/finance\/expenses\/manage'/);
+  assert.match(app,/'expense-manage':\s*\(authPending/);
   assert.match(app,/user&&canManageDonations\?<ExpenseManagement/);
   for(const label of ['거래일시','거래구분','거래금액','거래 후 잔액','거래내용','CSV 다운로드','수정','취소']){
     assert.ok(manager.includes(label),label);

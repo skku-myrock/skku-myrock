@@ -1,3 +1,4 @@
+import {readStyles} from './readStyles.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
@@ -6,7 +7,7 @@ import {withoutAboutPhotoUrls,resetAboutTextKeepingImages,DEFAULT_ABOUT} from '.
 const source=path=>readFile(new URL('../'+path,import.meta.url),'utf8');
 
 test('notice management action stays aligned with author and date',async()=>{
- const app=await source('src/App.tsx'),style=await source('src/styles.css');
+ const app=await source('src/pages/SitePages.tsx'),style=await readStyles();
  const h=app.indexOf('<header className="notice-detail-header">'),e=app.indexOf('</header>',h);
  const section=app.slice(h,e);
  assert.match(section,/notice-detail-meta/);
@@ -98,7 +99,7 @@ test('asset reset checks legacy notice references before GitHub reset, then clea
  assert.ok(handler.indexOf('clearImageFolder(env,\'site\')')<handler.indexOf('saveAbout(env,withoutPhotos,updateTime)'));
  const app=await source('src/App.tsx');
  assert.match(app,/await resetSiteAssets\(\);\s*setAboutRevision\(v=>v\+1\)/);
- assert.match(app,/page==='home'&&<Home key=\{aboutRevision\}/);
+ assert.match(app,/'home': <Home key=\{aboutRevision\}/);
  const notices=await source('functions/api/notices/purge.js');
  assert.doesNotMatch(notices,/getAbout|saveAbout|withoutAboutPhotoUrls/);
  assert.match(notices,/clearImageFolder\(env,'notices'\)/);
