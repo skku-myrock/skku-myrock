@@ -22,7 +22,7 @@ import type {NoticePost} from './noticesData';
 import NoticeComposer from './NoticeComposer';
 import {Home,About,News,NoticeDetail,Gallery,Equipment,Handover,LoginDialog,Profile,PageHeading,EmptyState} from './pages/SitePages';
 import {navGroups,allNav,routeDefinitions,routeFromPath,pathFor,noticePath,editNoticePath,schedulePath} from './app/siteNavigation';
-import type {Page,Navigate} from './app/siteNavigation';
+import type {Page,Navigate,Notify} from './app/siteNavigation';
 
 const managementLevel = (profile: MemberProfile | null, hasSystemClaim: boolean): 'part_leader' | 'staff' | 'president' | null => {
   if (!profile) return null;
