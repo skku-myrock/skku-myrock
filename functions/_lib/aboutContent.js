@@ -15,7 +15,7 @@ export const DEFAULT_ABOUT={
     {id:'default-7',name:'추서현',position:'드럼파트장',photoUrl:''},
     {id:'default-8',name:'김민현',position:'키보드파트장',photoUrl:''},
   ],
-  history:[{id:'history-1',year:'199x년',description:'모여락 창단'},
+  history:[{id:'history-1',year:'1998년',description:'모여락 창단'},
     {id:'history-2',year:'2023년',description:'중앙동아리 승격'}],
 };
 const text=(value,max,label)=>{if(typeof value!=='string'||!value.trim()||value.trim().length>max)reject(label+'을(를) 확인해 주세요.');return value.trim();};
@@ -23,7 +23,6 @@ export function normalizeImage(value){
   if(typeof value!=='string'||value.length>1000)reject('이미지 주소를 확인해 주세요.');
   const url=value.trim();
   if(!url)return '';
-  if(/^\/api\/about\/image\?key=about\/[a-f0-9-]{36}$/.test(url))return url;
   if(!/^https:\/\//.test(url))reject('이미지는 HTTPS 주소 또는 업로드한 이미지만 사용할 수 있습니다.');
   try {const parsed=new URL(url);if(parsed.username||parsed.password)reject('이미지 주소를 확인해 주세요.');}
   catch {reject('이미지 주소가 올바르지 않습니다.');}
@@ -54,7 +53,13 @@ export async function getAbout(env){
   const res=await googleRequest(env,ABOUT_DOC);
   if(res.status===404)return {content:DEFAULT_ABOUT,updateTime:null};
   if(!res.ok)throw Error('동아리 소개 조회 실패: '+res.status);
-  return {content:normalizeAbout(docFields(res.data)),updateTime:res.data.updateTime??null};
+  const existing=docFields(res.data);
+  // Legacy relative image paths are no longer hosted. Hide them instead of failing
+  // the entire introduction page while the old Firestore record still exists.
+  const image=value=>typeof value==='string'&&value.startsWith('/')?'':value;
+  const safe={...existing,homeImage:image(existing.homeImage),heroImage:image(existing.heroImage),
+    officers:Array.isArray(existing.officers)?existing.officers.map(o=>({...o,photoUrl:image(o.photoUrl)})):existing.officers};
+  return {content:normalizeAbout(safe),updateTime:res.data.updateTime??null};
 }
 export async function saveAbout(env,content,expectedUpdateTime){
   const valid=normalizeAbout(content);
