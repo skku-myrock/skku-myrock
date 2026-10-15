@@ -34,7 +34,7 @@ test('protected editor supports leader management, photo upload, history and sav
   assert.match(app,/canEdit=\{Boolean\(user&&!authPending&&canManageDonations\)\}/);
   assert.match(app,/navigate\('about-manage'\)/);
   assert.match(editor,/getAboutManagement\(\)/);
-  assert.match(editor,/saveAbout\(content,version\)/);
+  assert.match(editor,/saveAbout\(next,version\)/);
   assert.match(editor,/uploadImagesBatch\(/);
   for(const label of ['동아리 소개 사진','메인 페이지 사진','운영진 명단','운영진 추가','연혁 추가','사진 URL','이미지 URL','변경 사항 저장'])
     assert.ok(editor.includes(label),label);
