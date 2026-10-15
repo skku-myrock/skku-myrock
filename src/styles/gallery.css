@@ -409,4 +409,10 @@
 .gallery-load-error button{margin-left:10px;border:0;text-decoration:underline;background:transparent;color:inherit}
 .gallery-upload-dialog .gallery-upload-error{position:relative}
 
-@media(max-width:620px){.gallery-section.section-block{margin-top:18px}}
+@media(max-width:620px){
+  .gallery-section.section-block{margin-top:18px}
+  /* Keep the tabs and management action on one compact row on phones, too. */
+  .gallery-toolbar.toolbar{flex-direction:row;align-items:flex-start;gap:10px}
+  .gallery-toolbar .gallery-tabs{flex:1 1 auto;min-width:0;gap:clamp(9px,2.8vw,16px)}
+  .gallery-toolbar .admin-only-action{align-self:flex-start;flex:0 0 auto;padding:10px 11px;font-size:11px}
+}

@@ -9,7 +9,9 @@ test('page action bars share 22px offset from the page heading divider',async()=
   assert.match(gallery,/\.gallery-section\.section-block\s*\{\s*margin-top:\s*22px;\s*\}/);
   assert.match(about,/\.about-admin-tools \+ \.about-intro\.section-block\{margin-top:20px\}/);
   assert.match(about,/\.about-admin-tools\{margin-top:18px\}/);
-  assert.match(gallery,/@media\(max-width:620px\)\{\.gallery-section\.section-block\{margin-top:18px\}\}/);
+  assert.match(gallery,/@media\(max-width:620px\)\{\s*\.gallery-section\.section-block\{margin-top:18px\}/);
+  assert.match(gallery,/\.gallery-toolbar\.toolbar\{flex-direction:row;align-items:flex-start;gap:10px\}/);
+  assert.match(gallery,/\.gallery-toolbar \.gallery-tabs\{flex:1 1 auto;min-width:0;/);
 });
 
 test('portraits center photo placeholder label and preserve frame sizes',async()=>{
