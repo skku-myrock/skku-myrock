@@ -12,7 +12,8 @@ async function cleanupModule(){
   let code=await source('functions/_lib/githubImages.js');
   code=code.replace("import {reject} from './shared.js';","const reject=(message,status=400)=>{throw Object.assign(new Error(message),{status})};")
     .replace("import {getAbout} from './aboutContent.js';","const getAbout=async()=>globalThis.__cleanupState.about;")
-    .replace("import {listNotices} from './notices.js';","const listNotices=async()=>globalThis.__cleanupState.notices;");
+    .replace("import {listNotices} from './notices.js';","const listNotices=async()=>globalThis.__cleanupState.notices;")
+    .replace("import {listGalleryAlbums} from './gallery.js';","const listGalleryAlbums=async()=>globalThis.__cleanupState.albums??[];");
   return import('data:text/javascript;base64,'+Buffer.from(code).toString('base64'));
 }
 

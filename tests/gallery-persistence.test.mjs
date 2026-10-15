@@ -57,7 +57,7 @@ test('gallery upload and display use actual data rather than fixtures',async()=>
     read('src/galleryData.ts'),read('src/styles/management.css'),read('src/App.tsx')]);
   assert.doesNotMatch(model,/fiveEmptyPhotos|2026-01-15-white-noise|photoAlbums/);
   assert.match(gallery,/listGalleryAlbums\(\)/);
-  assert.match(dialog,/uploadImagesBatch\(photos\.map\(photo=>photo\.file\),'gallery'\)/);
+  assert.match(dialog,/uploadImagesBatch\(newPhotos\.map\(photo=>photo\.file!\),'gallery'\)/);
   assert.match(dialog,/publishGalleryAlbum\(category,title\.trim\(\),urls\)/);
   assert.match(css,/\.home-hero-image,\.about-intro>\.about-hero-image\{object-fit:cover\}/);
   assert.match(app,/변경 사항을 저장했습니다\. 이미지 업로드까지 시간이 걸릴 수 있습니다\./);

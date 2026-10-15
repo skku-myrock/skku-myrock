@@ -1,4 +1,4 @@
-import {FIRESTORE_ROOT,docFields,toFields,reject} from './shared.js';
+import {FIRESTORE_ROOT,docFields,toFields,reject,validateUpdateTime} from './shared.js';
 import {googleRequest} from './google.js';
 
 export const GALLERY_ROOT=FIRESTORE_ROOT+'/galleryAlbums';
@@ -31,7 +31,7 @@ export function validateGalleryAlbum(input,publicBase){
 
 export function galleryFromDoc(doc){
   const fields=docFields(doc);
-  return {id:doc.name.split('/').at(-1),category:fields.category,title:fields.title,photos:fields.photos,createdAt:fields.createdAt};
+  return {id:doc.name.split('/').at(-1),category:fields.category,title:fields.title,photos:fields.photos,createdAt:fields.createdAt,...(doc.updateTime?{updateTime:doc.updateTime}:{})};
 }
 
 export async function listGalleryAlbums(env){
@@ -78,4 +78,41 @@ export async function deleteGalleryPage(env,count=20){
     deleted++;
   }
   return {deleted,remaining:docs.length>count};
+}
+
+export function validateAlbumId(id){
+  if(typeof id!=='string'||!idPattern.test(id))reject('갤러리 앨범 식별자가 올바르지 않습니다.',400);
+  return id;
+}
+export async function getGalleryAlbumDocument(env,id){
+  const endpoint=GALLERY_ROOT+'/'+validateAlbumId(id);
+  const result=await googleRequest(env,endpoint);
+  if(result.status===404)reject('앨범을 찾을 수 없습니다.',404);
+  if(!result.ok)reject('갤러리 앨범 조회에 실패했습니다.',503);
+  return result.data;
+}
+export async function updateGalleryAlbum(env,id,input){
+  validateAlbumId(id);
+  const expectedUpdateTime=validateUpdateTime(input?.expectedUpdateTime);
+  const data=validateGalleryAlbum(input,env.MYROCK_IMAGES_PUBLIC_BASE_URL);
+  // Firestore enforces optimistic locking atomically; never overwrite someone else's update.
+  const endpoint=new URL(GALLERY_ROOT+'/'+id);
+  endpoint.searchParams.set('currentDocument.updateTime',expectedUpdateTime);
+  for(const field of ['category','title','photos'])endpoint.searchParams.append('updateMask.fieldPaths',field);
+  const response=await googleRequest(env,endpoint.href,{method:'PATCH',body:{fields:toFields(data)}});
+  if(response.status===404)reject('앨범을 찾을 수 없습니다.',404);
+  if(response.status===409||response.status===412)reject('다른 운영진이 앨범을 변경했습니다. 새로고침한 뒤 다시 시도해 주세요.',409);
+  if(!response.ok)reject('갤러리 앨범 수정에 실패했습니다.',503);
+  return galleryFromDoc(response.data);
+}
+export async function deleteGalleryAlbum(env,id,expectedTime){
+  validateAlbumId(id);
+  const expectedUpdateTime=validateUpdateTime(expectedTime);
+  const endpoint=new URL(GALLERY_ROOT+'/'+id);
+  endpoint.searchParams.set('currentDocument.updateTime',expectedUpdateTime);
+  const result=await googleRequest(env,endpoint.href,{method:'DELETE'});
+  if(result.status===404)reject('앨범을 찾을 수 없습니다.',404);
+  if(result.status===409||result.status===412)reject('다른 운영진이 앨범을 변경했습니다. 새로고침한 뒤 다시 시도해 주세요.',409);
+  if(!result.ok)reject('갤러리 앨범 삭제에 실패했습니다.',503);
+  return {deleted:true};
 }

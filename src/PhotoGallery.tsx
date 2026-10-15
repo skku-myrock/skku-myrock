@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { KeyboardEvent as ReactKeyboardEvent, MouseEvent as ReactMouseEvent, TouchEvent as ReactTouchEvent } from 'react';
-import { ArrowLeft, ArrowRight, ArrowUpRight, Image as ImageIcon, Plus, X } from 'lucide-react';
-import {listGalleryAlbums} from './galleryApi';
+import { ArrowLeft, ArrowRight, ArrowUpRight, Image as ImageIcon, MoreHorizontal, Plus, Trash2, Pencil, X } from 'lucide-react';
+import {listGalleryAlbums,deleteGalleryAlbum} from './galleryApi';
 import GalleryUploadDialog from './GalleryUploadDialog';
 import type { PhotoAlbum, PhotoCategory } from './galleryData';
 
@@ -21,6 +21,12 @@ function PhotoSlot({ src, label, kind }: { src: string | null; label: string; ki
 
 export default function PhotoGallery({ canRegister }: { canRegister: boolean }) {
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [editingAlbum,setEditingAlbum]=useState<PhotoAlbum|null>(null);
+  const [manageOpen,setManageOpen]=useState(false);
+  const [deleting,setDeleting]=useState(false);
+  const [manageError,setManageError]=useState('');
+  const editingRef=useRef(false);
+  const manageOpenRef=useRef(false);
   const [albums,setAlbums]=useState<PhotoAlbum[]>([]);
   const [loading,setLoading]=useState(true);
   const [loadError,setLoadError]=useState('');
@@ -50,12 +56,55 @@ export default function PhotoGallery({ canRegister }: { canRegister: boolean }) 
   const count = activeAlbum?.photos.length ?? 0;
 
   function openAlbum(album: PhotoAlbum, event: ReactMouseEvent<HTMLButtonElement>) {
+    setManageError('');manageOpenRef.current=false;setManageOpen(false);
     openerRef.current = event.currentTarget;
     setPhotoIndex(0);
     setActiveAlbum(album);
   }
 
-  function closeAlbum() { setActiveAlbum(null); }
+  function closeAlbum() {
+    if(editingRef.current||deleting)return;
+    setManageOpen(false);manageOpenRef.current=false;
+    setActiveAlbum(null);
+  }
+  function openManagement(){
+    const next=!manageOpenRef.current;
+    manageOpenRef.current=next;
+    setManageOpen(next);
+  }
+  function startEditing(){
+    if(!activeAlbum)return;
+    editingRef.current=true;manageOpenRef.current=false;
+    setManageOpen(false);setManageError('');
+    setEditingAlbum(activeAlbum);
+  }
+  function closeEditor(){
+    if(!editingRef.current)return;
+    editingRef.current=false;
+    setEditingAlbum(null);
+  }
+  function onAlbumUpdated(updated:PhotoAlbum,cleanupPending:boolean){
+    setAlbums(previous=>previous.map(album=>album.id===updated.id?updated:album));
+    setActiveAlbum(updated);
+    setPhotoIndex(index=>Math.min(index,updated.photos.length-1));
+    setMessage(cleanupPending?'변경 사항을 저장했지만 이전 이미지 정리가 지연되었습니다.':'앨범 변경 사항을 저장했습니다. 이미지 업로드까지 시간이 걸릴 수 있습니다.');
+    closeEditor();
+  }
+  async function removeAlbum(){
+    if(!activeAlbum||deleting)return;
+    const target=activeAlbum;
+    if(!window.confirm('「'+target.title+'」 앨범과 등록된 사진을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.'))return;
+    setDeleting(true);setManageError('');
+    manageOpenRef.current=false;setManageOpen(false);
+    try{
+      const result=await deleteGalleryAlbum(target);
+      setAlbums(previous=>previous.filter(album=>album.id!==target.id));
+      setActiveAlbum(null);
+      setMessage(result.cleanupPending?'앨범은 삭제했지만 이미지 저장소 정리가 지연되었습니다.':'앨범과 사용하지 않는 갤러리 사진을 삭제했습니다.');
+    }catch(error){
+      setManageError(error instanceof Error?error.message:'앨범 삭제에 실패했습니다.');
+    }finally{setDeleting(false);}
+  }
 
   function goTo(delta: number) {
     if (count === 0) return;
@@ -69,9 +118,11 @@ export default function PhotoGallery({ canRegister }: { canRegister: boolean }) 
     closeButtonRef.current?.focus();
 
     const handleKeyDown = (event: KeyboardEvent) => {
+      if(editingRef.current||deleting)return;
       if (event.key === 'Escape') {
         event.preventDefault();
-        setActiveAlbum(null);
+        if(manageOpenRef.current){manageOpenRef.current=false;setManageOpen(false);}
+        else setActiveAlbum(null);
       } else if (event.key === 'ArrowRight') {
         event.preventDefault();
         setPhotoIndex(index => (index + 1) % activeAlbum.photos.length);
@@ -98,7 +149,7 @@ export default function PhotoGallery({ canRegister }: { canRegister: boolean }) 
       document.removeEventListener('keydown', handleKeyDown);
       openerRef.current?.focus();
     };
-  }, [activeAlbum]);
+  }, [activeAlbum,deleting]);
 
   useEffect(() => {
     if(!activeAlbum||!activeAlbum.photos.length)return;
@@ -170,6 +221,8 @@ export default function PhotoGallery({ canRegister }: { canRegister: boolean }) 
       setMessage('갤러리 앨범을 등록했습니다. 이미지 업로드까지 시간이 걸릴 수 있습니다.');
     }} />}
 
+    {canRegister&&editingAlbum&&<GalleryUploadDialog initialAlbum={editingAlbum}
+      onClose={closeEditor} onUpdated={onAlbumUpdated}/>}
     {message&&<div className="site-bottom-toast is-success" role="status" aria-live="polite"><span>{message}</span><button type="button" aria-label="알림 닫기" onClick={()=>setMessage('')}>닫기</button></div>}
     {activeAlbum && <div className="gallery-lightbox-backdrop" onMouseDown={event => {
       if (event.target === event.currentTarget) closeAlbum();
@@ -182,10 +235,23 @@ export default function PhotoGallery({ canRegister }: { canRegister: boolean }) 
             <span className="gallery-lightbox-category">{activeAlbum.category} · PHOTO ARCHIVE</span>
             <h2 id="gallery-viewer-title">{activeAlbum.title}</h2>
           </div>
-          <button type="button" ref={closeButtonRef} className="gallery-close-button"
-            onClick={closeAlbum} aria-label="사진 전체보기 닫기"><X size={23} /></button>
+          <div className="gallery-lightbox-header-actions">
+            {canRegister&&<div className="gallery-manage-wrapper">
+              <button type="button" className="gallery-manage-trigger" disabled={deleting}
+                onClick={openManagement} aria-expanded={manageOpen} aria-haspopup="true">
+                <MoreHorizontal size={18} aria-hidden="true"/> 관리
+              </button>
+              {manageOpen&&<div className="gallery-manage-menu" role="group" aria-label="앨범 관리">
+                <button type="button" onClick={startEditing}><Pencil size={15} aria-hidden="true"/> 수정하기</button>
+                <button type="button" className="gallery-manage-delete" onClick={()=>void removeAlbum()}><Trash2 size={15} aria-hidden="true"/> 삭제하기</button>
+              </div>}
+            </div>}
+            <button type="button" ref={closeButtonRef} className="gallery-close-button" disabled={deleting}
+              onClick={closeAlbum} aria-label="사진 전체보기 닫기"><X size={23} /></button>
+          </div>
         </header>
 
+        {manageError&&<p className="gallery-manage-error" role="alert">{manageError}</p>}
         <div className="gallery-lightbox-layout">
           <div className="gallery-lightbox-left">
             <div className="gallery-photo-stage"

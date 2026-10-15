@@ -32,7 +32,9 @@ test('reuses introduction image warning and JPG PNG WebP source validation, then
   assert.match(styles,/\.image-compression-notice\{/);
   assert.match(compress,/MAX_SOURCE_IMAGE_BYTES = 30_000_000/);
   assert.doesNotMatch(dialog,/image\/gif/);
-  assert.match(dialog,/await uploadImagesBatch\(photos\.map\(photo=>photo\.file\),'gallery'\)/);
+  assert.match(dialog,/await uploadImagesBatch\(newPhotos\.map\(photo=>photo\.file!\),'gallery'\)/);
+  assert.match(dialog,/await updateGalleryAlbum\(initialAlbum,category,title\.trim\(\),urls\)/);
+  assert.match(dialog,/initialAlbum\?\.photos\.map/);
   assert.match(dialog,/await publishGalleryAlbum\(category,title\.trim\(\),urls\)/);
   assert.match(dialog,/disabled=\{busy\|\|!title\.trim\(\)\|\|photos\.length===0\}/);
   assert.match(dialog,/busyRef\.current/);

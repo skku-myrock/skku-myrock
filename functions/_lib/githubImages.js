@@ -1,6 +1,7 @@
 import {reject} from './shared.js';
 import {getAbout} from './aboutContent.js';
 import {listNotices} from './notices.js';
+import {listGalleryAlbums} from './gallery.js';
 const REPO='https://api.github.com/repos/skku-myrock/myrock-images/';
 const FOLDERS=new Set(['site','notices','gallery']);
 async function github(env,path,method='GET',body){
@@ -66,6 +67,55 @@ export async function deleteUnusedSiteImages(env,obsoleteUrls){
     const tree=await github(env,'git/trees','POST',{base_tree:previous.tree.sha,tree:entries});
     if(tree.sha===previous.tree.sha)return {deleted:0};
     const next=await github(env,'git/commits','POST',{message:'assets(site): remove '+entries.length+' replaced photos',tree:tree.sha,parents:[head.object.sha]});
+    try{
+      await github(env,'git/refs/heads/main','PATCH',{sha:next.sha,force:false});
+      return {deleted:entries.length,commit:next.sha};
+    }catch(error){
+      if(error?.status!==409||attempt===2)throw error;
+    }
+  }
+  return {deleted:0};
+}
+
+/** Clean generated gallery WebP assets only after the associated Firestore mutation succeeds.
+ * Protect files referenced by other albums, introduction content, or notices.
+ */
+export async function deleteUnusedGalleryImages(env,obsoleteUrls){
+  if(!Array.isArray(obsoleteUrls)||obsoleteUrls.length===0)return {deleted:0};
+  const base=new URL(env.MYROCK_IMAGES_PUBLIC_BASE_URL);
+  if(base.protocol!=='https:'||base.pathname!=='/'||base.search||base.hash)throw Error('이미지 공개 주소 설정이 올바르지 않습니다.');
+  const candidates=new Map();
+  for(const value of obsoleteUrls){
+    if(typeof value!=='string')continue;
+    let url;try{url=new URL(value);}catch{continue;}
+    const path=url.pathname.slice(1);
+    if(url.origin===base.origin&&!url.search&&!url.hash&&
+      /^gallery\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.webp$/i.test(path))
+      candidates.set(path,url.href);
+  }
+  if(!candidates.size)return {deleted:0};
+  const albums=await listGalleryAlbums(env);
+  const about=await getAbout(env);
+  const notices=await listNotices(env);
+  if(notices.length>=1000)throw Error('공지사항 참조 검사가 제한에 도달해 사진 정리를 건너뜁니다.');
+  const refs=new Set([
+    ...albums.flatMap(album=>album.photos),
+    about.content.homeImage,about.content.heroImage,...about.content.officers.map(person=>person.photoUrl),
+    ...notices.flatMap(notice=>(notice.blocks??[]).flatMap(block=>
+      block.kind==='image'?[block.url]:block.kind==='gallery'?(block.images??[]).map(photo=>photo.url):[])),
+  ]);
+  for(const [path,url] of candidates)if(refs.has(url))candidates.delete(path);
+  if(!candidates.size)return {deleted:0};
+  for(let attempt=0;attempt<3;attempt++){
+    const head=await github(env,'git/ref/heads/main');
+    const previous=await github(env,'git/commits/'+head.object.sha);
+    const existing=await github(env,'git/trees/'+previous.tree.sha+'?recursive=1');
+    if(existing.truncated)throw Error('GitHub 트리 목록이 불완전하여 이미지 삭제를 건너뜁니다.');
+    const names=new Set((existing.tree??[]).filter(entry=>entry.type==='blob').map(entry=>entry.path));
+    const entries=[...candidates.keys()].filter(path=>names.has(path)).map(path=>({path,mode:'100644',type:'blob',sha:null}));
+    if(!entries.length)return {deleted:0};
+    const tree=await github(env,'git/trees','POST',{base_tree:previous.tree.sha,tree:entries});
+    const next=await github(env,'git/commits','POST',{message:'assets(gallery): remove '+entries.length+' unreferenced photos',tree:tree.sha,parents:[head.object.sha]});
     try{
       await github(env,'git/refs/heads/main','PATCH',{sha:next.sha,force:false});
       return {deleted:entries.length,commit:next.sha};
