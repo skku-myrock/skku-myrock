@@ -1,5 +1,6 @@
 import {failure,reject,secureOrigin,success} from '../../_lib/shared.js';
 import {assertAccess} from '../../_lib/google.js';
+import {currentSiteImagePaths,siteManifestEntry} from '../../_lib/siteManifest.js';
 
 const extensions={'image/jpeg':'jpg','image/png':'png','image/webp':'webp','image/gif':'gif'};
 function validSignature(type,b){return type==='image/jpeg'?b[0]===255&&b[1]===216&&b[2]===255:type==='image/png'?b[0]===137&&b[1]===80&&b[2]===78&&b[3]===71:type==='image/webp'?b[0]===82&&b[1]===73&&b[2]===70&&b[3]===70&&b[8]===87&&b[9]===69&&b[10]===66&&b[11]===80:b[0]===71&&b[1]===73&&b[2]===70;}
@@ -11,7 +12,7 @@ async function github(path,token,method='GET',body){
 }
 export async function onRequestPost({request,env}){
   try{
-    secureOrigin(request);await assertAccess(request,env,'part_leader');
+    secureOrigin(request);
     if(!env.GITHUB_IMAGES_TOKEN||!env.MYROCK_IMAGES_PUBLIC_BASE_URL)reject('GitHub 이미지 저장소 서버 설정이 필요합니다.',503);
     let publicBase;
     try{publicBase=new URL(env.MYROCK_IMAGES_PUBLIC_BASE_URL);if(publicBase.protocol!=='https:'||publicBase.username||publicBase.password||publicBase.search||publicBase.hash||publicBase.pathname!=='/')throw Error('invalid');}
@@ -21,7 +22,10 @@ export async function onRequestPost({request,env}){
     const form=await request.formData();
     const folder=form.get('folder')??'site';
     if(folder!=='site'&&folder!=='notices')reject('지원하지 않는 이미지 폴더입니다.',400);
+    // The legacy single-image endpoint supplies 'image', while the batch UI sends 'images'.
     const files=form.getAll('images');
+    if(!files.length&&form.has('image'))files.push(form.get('image'));
+    await assertAccess(request,env,folder==='site'?'staff':'part_leader');
     if(!files.length||files.length>12)reject('한 번에 1~12장의 이미지를 업로드할 수 있습니다.');
     let total=0;
     const checked=[];
@@ -37,15 +41,19 @@ export async function onRequestPost({request,env}){
     const commit=await github('git/commits/'+head.object.sha,token);
     const entries=[];
     const urls=[];
+    const paths=[];
+    const existingSitePaths=folder==='site'?await currentSiteImagePaths(path=>github(path,token),commit.tree.sha):null;
     for(const image of checked){
       const blob=await github('git/blobs',token,'POST',{content:base64(image.bytes),encoding:'base64'});
       const path=folder+'/'+crypto.randomUUID()+'.'+extensions[image.type];
       entries.push({path,mode:'100644',type:'blob',sha:blob.sha});
+      paths.push(path);
       urls.push(new URL(path,publicBase).href);
     }
+    if(existingSitePaths)entries.push(siteManifestEntry([...existingSitePaths,...paths]));
     const tree=await github('git/trees',token,'POST',{base_tree:commit.tree.sha,tree:entries});
     const next=await github('git/commits',token,'POST',{message:'assets('+folder+'): upload '+files.length+' images',tree:tree.sha,parents:[head.object.sha]});
     await github('git/refs/heads/main',token,'PATCH',{sha:next.sha,force:false});
-    return success({urls,deployPending:true,commit:next.sha},201);
+    return success({urls,url:urls[0],paths,path:paths[0],deployPending:true,commit:next.sha},201);
   }catch(error){return failure(error);}
 }
