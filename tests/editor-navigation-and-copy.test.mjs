@@ -48,5 +48,5 @@ test('file uploads reject GIF on client and server, while public GIF URL compati
   const [compress,server]=await Promise.all([src('src/imageCompression.ts'),src('functions/api/images/batch.js')]);
   assert.match(compress,/const types = new Set\(\['image\/jpeg','image\/png','image\/webp'\]\)/);
   assert.doesNotMatch(server,/image\/gif/);
-  assert.match(server,/const extensions=\{'image\/jpeg':'jpg','image\/png':'png','image\/webp':'webp'\}/);
+  assert.match(server,/const extensions=\{'image\/webp':'webp'\}/);
 });
