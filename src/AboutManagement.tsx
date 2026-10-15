@@ -4,7 +4,7 @@ import {ArrowLeft,ArrowDown,ArrowUp,ImagePlus,Plus,Save,Trash2} from 'lucide-rea
 import {DEFAULT_ABOUT,getAboutManagement,saveAbout,uploadAboutImage} from './aboutContent';
 import type {AboutContent,Officer,HistoryEntry} from './aboutContent';
 
-type PhotoTarget={type:'hero'}|{type:'officer';id:string};
+type PhotoTarget={type:'home'}|{type:'hero'}|{type:'officer';id:string};
 
 export default function AboutManagement({onBack}:{onBack:()=>void}){
   const [content,setContent]=useState<AboutContent>(structuredClone(DEFAULT_ABOUT));
@@ -41,7 +41,8 @@ export default function AboutManagement({onBack}:{onBack:()=>void}){
     setError('');setMessage('');setBusy(true);
     try{
       const url=await uploadAboutImage(file);
-      if(target.type==='hero')setContent(prev=>({...prev,heroImage:url}));
+      if(target.type==='home')setContent(prev=>({...prev,homeImage:url}));
+      else if(target.type==='hero')setContent(prev=>({...prev,heroImage:url}));
       else updateOfficer(target.id,'photoUrl',url);
       setMessage('사진 업로드가 완료되었습니다. 변경 내용을 저장해야 소개 페이지에 반영됩니다.');
     }catch(reason){setError(reason instanceof Error?reason.message:'사진 업로드 실패');}
@@ -59,15 +60,29 @@ export default function AboutManagement({onBack}:{onBack:()=>void}){
   }
   return <>
     <div className="page-heading container"><span className="eyebrow">CLUB INTRODUCTION MANAGEMENT</span><h1>동아리 소개 수정</h1>
-      <p>대표 사진, 운영진 명단, 연혁을 수정해 공개 소개 페이지에 반영합니다.</p></div>
+      <p>메인 페이지 사진, 동아리 소개 사진, 운영진 명단과 연혁을 수정합니다.</p></div>
     <div className="container about-manage" data-async-busy={busy?'true':undefined}>
       <button className="finance-return-link" type="button" onClick={onBack}><ArrowLeft size={16}/> 소개 페이지로 돌아가기</button>
 
       {loading?<p>소개 정보를 불러오는 중입니다.</p>:<>
         <section className="about-manage-section">
-          <h2>동아리 대표 사진</h2>
+          <h2>메인 페이지 사진</h2>
           <div className="about-manage-photo">
-            {content.heroImage?<img src={content.heroImage} alt="동아리 대표 사진 미리보기"/>:<div className="about-manage-photo-empty">등록된 대표 사진이 없습니다.</div>}
+            {content.homeImage?<img src={content.homeImage} alt="메인 페이지 사진 미리보기"/>:<div className="about-manage-photo-empty">등록된 메인 페이지 사진이 없습니다.</div>}
+            <div className="about-manage-photo-controls">
+              <label>이미지 URL<input type="url" placeholder="https://..." value={content.homeImage} onChange={e=>{setContent(p=>({...p,homeImage:e.target.value}));setMessage('');}}/></label>
+              <label className="outline-action about-image-upload"><ImagePlus size={14}/> 파일 업로드
+                <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" disabled={busy} onChange={e=>void chooseImage(e,{type:'home'})}/>
+              </label>
+              <button type="button" className="outline-action" disabled={busy||!content.homeImage} onClick={()=>setContent(p=>({...p,homeImage:''}))}>사진 제거</button>
+            </div>
+          </div>
+          <p className="about-manage-hint">메인 페이지의 첫 화면에 표시되는 사진입니다. 업로드 후 변경 사항을 저장해야 적용됩니다.</p>
+        </section>
+        <section className="about-manage-section">
+          <h2>동아리 소개 사진</h2>
+          <div className="about-manage-photo">
+            {content.heroImage?<img src={content.heroImage} alt="동아리 소개 사진 미리보기"/>:<div className="about-manage-photo-empty">등록된 동아리 소개 사진이 없습니다.</div>}
             <div className="about-manage-photo-controls">
               <label>이미지 URL<input type="url" placeholder="https://..." value={content.heroImage} onChange={e=>{setContent(p=>({...p,heroImage:e.target.value}));setMessage('');}}/></label>
               <label className="outline-action about-image-upload"><ImagePlus size={14}/> 파일 업로드

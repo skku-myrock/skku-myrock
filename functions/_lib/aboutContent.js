@@ -3,7 +3,7 @@ import { googleRequest } from './google.js';
 
 export const ABOUT_DOC=FIRESTORE_ROOT+'/siteContent/clubIntroduction';
 export const DEFAULT_ABOUT={
-  heroImage:'',
+  homeImage:'',heroImage:'',
   cohortLabel:'28기 운영진 소개',
   officers:[
     {id:'default-1',name:'김서연',position:'회장, 보컬파트장',photoUrl:''},
@@ -31,6 +31,7 @@ export function normalizeImage(value){
 }
 export function normalizeAbout(input){
   if(!input||typeof input!=='object'||Array.isArray(input))reject('동아리 소개 형식이 올바르지 않습니다.');
+  const homeImage=normalizeImage(input.homeImage??'');
   const heroImage=normalizeImage(input.heroImage??'');
   const cohortLabel=text(input.cohortLabel,80,'운영진 소개 문구');
   if(!Array.isArray(input.officers)||input.officers.length>40)reject('운영진은 최대 40명까지 등록할 수 있습니다.');
@@ -47,7 +48,7 @@ export function normalizeAbout(input){
   const history=input.history.map(row=>({
     id:validateId(row?.id),year:text(row?.year,40,'연혁 연도'),description:text(row?.description,250,'연혁 내용'),
   }));
-  return {heroImage,cohortLabel,officers,history};
+  return {homeImage,heroImage,cohortLabel,officers,history};
 }
 export async function getAbout(env){
   const res=await googleRequest(env,ABOUT_DOC);

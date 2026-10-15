@@ -1,10 +1,10 @@
 import { auth } from './firebase';
 export type Officer={id:string;name:string;position:string;photoUrl:string};
 export type HistoryEntry={id:string;year:string;description:string};
-export type AboutContent={heroImage:string;cohortLabel:string;officers:Officer[];history:HistoryEntry[]};
+export type AboutContent={homeImage:string;heroImage:string;cohortLabel:string;officers:Officer[];history:HistoryEntry[]};
 export type AboutManageResponse={content:AboutContent;updateTime:string|null};
 export const DEFAULT_ABOUT:AboutContent={
-  heroImage:'',
+  homeImage:'',heroImage:'',
   cohortLabel:'28기 운영진 소개',
   officers:[
     {id:'default-1',name:'김서연',position:'회장, 보컬파트장',photoUrl:''},

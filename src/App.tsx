@@ -97,6 +97,8 @@ function EmptyState({ icon, title, description }: { icon?: ReactNode; title: str
 }
 
 function Home({ navigate, openNotice }: { navigate: Navigate; openNotice: (id: string) => void }) {
+  const [homeImage,setHomeImage]=useState('');
+  useEffect(()=>{let active=true;void getAbout().then(({content})=>{if(active)setHomeImage(content.homeImage??'');}).catch(()=>{});return()=>{active=false;};},[]);
   return <>
     <section className="hero container">
       <div className="hero-copy">
@@ -105,7 +107,7 @@ function Home({ navigate, openNotice }: { navigate: Navigate; openNotice: (id: s
         <p>성균관대학교 중앙 밴드 동아리 모여락입니다.<br />우리의 음악과 이야기를 이곳에 담습니다.</p>
         <TextLink onClick={() => navigate('about')}>동아리 소개</TextLink>
       </div>
-      <div className="hero-media"><Placeholder label="대표 공연 사진" /></div>
+      <div className="hero-media">{homeImage?<img className="home-hero-image" src={homeImage} alt="메인 페이지 사진"/>:<Placeholder label="메인 페이지 사진" />}</div>
     </section>
     <section className="container home-updates">
       <SectionHeading title="공지사항" aside="모여락의 새로운 소식" action="전체 보기" onAction={() => navigate('news')} />
@@ -137,7 +139,7 @@ function About({ navigate, canEdit }: { navigate: Navigate;canEdit:boolean }) {
       {loadError&&<p role="status" className="about-load-error">{loadError}</p>}
     </section>
     <section className="container about-intro section-block"><div className="about-description"><h2>음악을 좋아하는 사람들이<br />함께하는 공간</h2><p>보컬, 기타, 베이스, 드럼, 키보드. 서로 다른 소리로 모여 한 곡을 완성합니다. 이곳에는 동아리 소개와 활동 이야기가 정리될 예정입니다.</p><TextLink onClick={() => navigate('gallery')}>활동 사진 보러 가기</TextLink></div>
-      {content.heroImage?<img className="about-hero-image" src={content.heroImage} alt="동아리 대표 사진"/>:<Placeholder label="동아리 대표 사진"/>}
+      {content.heroImage?<img className="about-hero-image" src={content.heroImage} alt="동아리 소개 사진"/>:<Placeholder label="동아리 대표 사진"/>}
     </section>
     <section className="container section-block" aria-label="28기 운영진 소개">
       <SectionHeading title="운영진" aside={content.cohortLabel} />
