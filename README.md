@@ -224,3 +224,11 @@ npm run check:pages
 
 - 공지사항 작성 화면의 **이미지 추가**, **슬라이드에 사진 추가**, **슬라이드로 사진 추가** 버튼은 URL 입력과 다중 파일 선택 박스를 펼칩니다. URL을 추가하면 이미지 하나가 삽입되고, 이미 존재하는 슬라이드에 추가하면 같은 슬라이드에 포함됩니다. 파일을 여러 장 선택하면 기존과 동일하게 슬라이드로 묶습니다. URL은 `http://` 또는 `https://`를 지원하며 이미지 크기는 브라우저 이미지 로드로 계산합니다. **공지사항 이미지를 서버에 업로드하거나 게시글을 저장하지 않습니다.** 파일은 브라우저 임시 URL이므로 페이지를 떠나면 사라집니다.
 - 동아리 소개 수정과 후원 내역 관리의 익명자 명단 저장 결과 및 오류 메시지는 화면 하단에 고정되는 **닫기 가능한 팝업**으로 표시합니다. 동아리 소개 이미지 업로드에 필요한 R2 바인딩 설정은 운영 문서에만 기술하고 공개 수정 화면의 개발용 안내에서 제외합니다.
+
+## 이미지 저장소 (Organization)
+
+사진 업로드는 `skku-myrock/myrock-images` 비공개 저장소의 `site/` 디렉터리에 GitHub Contents API로 저장합니다. `gallery/`는 포토존 사진의 장기 보관용입니다. Cloudflare Pages 이미지 전용 프로젝트는 해당 저장소의 루트 디렉터리를 정적 배포하도록 연결해야 합니다.
+
+홈페이지 Pages Functions의 서버 전용 Secret `GITHUB_IMAGES_TOKEN`에는 이미지 저장소에만 `Contents: Read and write` 권한이 있는 GitHub App 설치 토큰 또는 fine-grained 토큰을 설정합니다. `MYROCK_IMAGES_PUBLIC_BASE_URL`에는 이미지 Pages의 HTTPS 공개 기본 주소(예: `https://images-example.pages.dev/`)를 설정합니다. 브라우저에 GitHub 자격 증명을 제공하지 마세요. GitHub에 커밋한 후 Pages 배포가 완료되기 전에는 사진 URL이 즉시 표시되지 않을 수 있습니다.
+
+`/api/about/image`의 GET은 기존 R2 이미지 링크 호환을 위해 유지합니다. 기존 이미지 데이터를 이전·검증하기 전까지 `MYROCK_IMAGES` 바인딩이나 R2 버킷을 삭제하지 마세요. 새로운 사진 업로드는 `/api/images/upload` 또는 호환 경로 `/api/about/image`를 통해 GitHub에 저장합니다.

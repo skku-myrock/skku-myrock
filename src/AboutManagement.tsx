@@ -44,7 +44,7 @@ export default function AboutManagement({onBack}:{onBack:()=>void}){
       if(target.type==='home')setContent(prev=>({...prev,homeImage:url}));
       else if(target.type==='hero')setContent(prev=>({...prev,heroImage:url}));
       else updateOfficer(target.id,'photoUrl',url);
-      setMessage('사진 업로드가 완료되었습니다. 변경 내용을 저장해야 소개 페이지에 반영됩니다.');
+      setMessage('사진이 GitHub에 등록되었습니다. 이미지 배포 후 변경 내용을 저장해야 공개 페이지에 정상적으로 표시됩니다.');
     }catch(reason){setError(reason instanceof Error?reason.message:'사진 업로드 실패');}
     finally{setBusy(false);}
   }

@@ -36,7 +36,7 @@ test('protected editor supports leader management, photo upload, history and sav
   assert.match(editor,/getAboutManagement\(\)/);
   assert.match(editor,/saveAbout\(content,version\)/);
   assert.match(editor,/uploadAboutImage\(file\)/);
-  for(const label of ['동아리 대표 사진','운영진 명단','운영진 추가','연혁 추가','사진 URL','이미지 URL','변경 사항 저장'])
+  for(const label of ['동아리 소개 사진','메인 페이지 사진','운영진 명단','운영진 추가','연혁 추가','사진 URL','이미지 URL','변경 사항 저장'])
     assert.ok(editor.includes(label),label);
   assert.match(styles,/\.about-manage-fields\{/);
 });
@@ -49,4 +49,12 @@ test('about management save feedback is a bottom popup and the deploy-only R2 hi
   assert.match(editor,/onClick=\{\(\)=>\{setError\(''\);setMessage\(''\);\}\}/);
   assert.doesNotMatch(editor,/파일 업로드에는 Cloudflare R2 MYROCK_IMAGES 바인딩이 필요합니다/);
   assert.match(styles,/\.site-bottom-toast\{position:fixed/);
+});
+
+test('homepage and introduction images have distinct labels and fields',()=>{
+  assert.match(defaults,/homeImage:''/);
+  assert.match(app,/homeImage\?<img className="home-hero-image"/);
+  assert.match(app,/alt="동아리 소개 사진"/);
+  assert.match(editor,/type:'home'/);
+  assert.match(editor,/메인 페이지 사진/);
 });

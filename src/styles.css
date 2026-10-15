@@ -1823,3 +1823,5 @@ body:has([data-async-busy="true"]),body:has([data-async-busy="true"]) *{
 
 /* Separate the newly opened image input panel from the existing content above it. */
 .notice-composer-image-picker.is-new-image{margin-top:16px}
+
+.home-hero-image{display:block;width:100%;height:100%;object-fit:cover;background:#eff2f1}
