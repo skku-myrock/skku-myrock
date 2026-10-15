@@ -209,10 +209,10 @@ export function NoticeDetail({ notice, canManage, backToList, onEdit, onDelete }
 }
 
 
-export function Gallery({ notify }: { notify: Notify }) {
+export function Gallery({ canRegister }: { canRegister: boolean }) {
   return <>
     <PageHeading tag="PHOTO ARCHIVE" title="갤러리" description="공연부터 일상까지, 모여락의 순간들을 모아두는 공간입니다." />
-    <PhotoGallery onRegister={() => notify('사진 등록 기능은 추후 연결될 예정입니다. 현재는 앨범별 사진 뷰어를 이용할 수 있습니다.')} />
+    <PhotoGallery canRegister={canRegister} />
   </>;
 }
 

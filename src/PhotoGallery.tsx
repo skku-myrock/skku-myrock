@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { KeyboardEvent as ReactKeyboardEvent, MouseEvent as ReactMouseEvent, TouchEvent as ReactTouchEvent } from 'react';
 import { ArrowLeft, ArrowRight, ArrowUpRight, Image as ImageIcon, Plus, X } from 'lucide-react';
 import { photoAlbums } from './galleryData';
+import GalleryUploadDialog from './GalleryUploadDialog';
 import type { PhotoAlbum, PhotoCategory } from './galleryData';
 
 const categories = ['전체', '공연', '행사', '일상'] as const;
@@ -18,7 +19,8 @@ function PhotoSlot({ src, label, kind }: { src: string | null; label: string; ki
   </div>;
 }
 
-export default function PhotoGallery({ onRegister }: { onRegister: () => void }) {
+export default function PhotoGallery({ canRegister }: { canRegister: boolean }) {
+  const [uploadOpen, setUploadOpen] = useState(false);
   const [filter, setFilter] = useState<Filter>('전체');
   const [activeAlbum, setActiveAlbum] = useState<PhotoAlbum | null>(null);
   const [photoIndex, setPhotoIndex] = useState(0);
@@ -112,9 +114,9 @@ export default function PhotoGallery({ onRegister }: { onRegister: () => void })
           className={filter === category ? 'active' : ''}
           onClick={() => setFilter(category)}>{category}</button>)}
       </div>
-      <button type="button" className="button button-primary" onClick={onRegister}>
+      {canRegister && <button type="button" className="admin-only-action" onClick={() => setUploadOpen(true)}>
         <Plus size={16} aria-hidden="true" /> 사진 등록
-      </button>
+      </button>}
     </div>
 
     <div className="gallery-album-grid">
@@ -132,6 +134,8 @@ export default function PhotoGallery({ onRegister }: { onRegister: () => void })
         </div>
       </button>)}
     </div>
+
+    {canRegister && uploadOpen && <GalleryUploadDialog onClose={() => setUploadOpen(false)} />}
 
     {activeAlbum && <div className="gallery-lightbox-backdrop" onMouseDown={event => {
       if (event.target === event.currentTarget) closeAlbum();

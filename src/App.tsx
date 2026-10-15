@@ -256,7 +256,7 @@ function App() {
         onOpen={openSchedule}
       />,
     'schedule-detail': <ScheduleDetail schedule={findSchedule(activeScheduleId ?? '')} onBack={() => navigate('schedule')}/>,
-    'gallery': <Gallery notify={notify}/>,
+    'gallery': <Gallery canRegister={Boolean(user && !authPending && currentLevel)}/>,
     'equipment': <Equipment notify={notify}/>,
     'finance': <FinanceLanding onDonations={() => navigate('donations')} onExpenses={() => navigate('expenses')} canEditAccount={Boolean(user&&!authPending&&currentLevel==='president')}/>,
     'donations': <DonationHistory key={financeRevision} onBack={() => navigate('finance')} loggedIn={Boolean(user)} authPending={authPending} onLogin={showLogin} canManageDonations={Boolean(!authPending&&user&&canManageDonations)} onManage={()=>navigate('donation-manage')}/>,
