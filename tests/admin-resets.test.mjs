@@ -22,7 +22,7 @@ test('desktop and mobile menus expose exactly three independently scoped reset a
    assert.equal(app.split('>'+name).length-1,2,name);
  for(const method of ['purgeNotices()','resetClubIntroduction()','resetSiteAssets()'])
    assert.ok(app.includes(method),method);
- assert.match(app,/GitHub 이미지 파일은 그대로 유지됩니다/);
+ assert.match(app,/사진 URL과 GitHub 파일은 그대로 유지됩니다/);
 });
 
 test('all reset APIs enforce signed and stored superadmin flags',async()=>{
@@ -117,7 +117,7 @@ test('introduction reset preserves homepage, about and all eight officer photos'
  assert.equal(reset.homeImage,source.homeImage);
  assert.equal(reset.heroImage,source.heroImage);
  assert.deepEqual(reset.officers.map(person=>person.photoUrl),source.officers.map(person=>person.photoUrl));
- assert.deepEqual(reset.officers.map(({photoUrl,...person})=>person),DEFAULT_ABOUT.officers);
+ assert.deepEqual(reset.officers.map(({photoUrl,...person})=>person),DEFAULT_ABOUT.officers.map(({photoUrl,...person})=>person));
  assert.deepEqual(reset.history,DEFAULT_ABOUT.history);
  assert.equal(reset.cohortLabel,DEFAULT_ABOUT.cohortLabel);
  assert.deepEqual(resetAboutTextKeepingImages(reset),reset);
