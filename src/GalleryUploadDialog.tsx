@@ -3,17 +3,22 @@ import type { ChangeEvent, DragEvent, KeyboardEvent } from 'react';
 import { ArrowDown, ArrowUp, Download, GripVertical, Trash2, X } from 'lucide-react';
 import type { PhotoCategory } from './galleryData';
 import {validateSourceImage} from './imageCompression';
+import {uploadImagesBatch} from './imageUpload';
+import {publishGalleryAlbum} from './galleryApi';
+import type {PhotoAlbum} from './galleryData';
 
 type SelectedPhoto = { id: number; file: File; url: string };
 const maxPhotoCount = 50;
 const categoryOptions: PhotoCategory[] = ['공연', '행사', '일상'];
 
-export default function GalleryUploadDialog({ onClose }: { onClose: () => void }) {
+export default function GalleryUploadDialog({ onClose,onCreated }: { onClose: () => void; onCreated:(album:PhotoAlbum)=>void }) {
   const [category, setCategory] = useState<PhotoCategory>('공연');
   const [title, setTitle] = useState('');
   const [photos, setPhotos] = useState<SelectedPhoto[]>([]);
   const [dropActive, setDropActive] = useState(false);
   const [error, setError] = useState('');
+  const [busy,setBusy]=useState(false);
+  const busyRef=useRef(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const dialogRef = useRef<HTMLElement | null>(null);
   const closeRef = useRef<HTMLButtonElement | null>(null);
@@ -36,6 +41,7 @@ export default function GalleryUploadDialog({ onClose }: { onClose: () => void }
   }, []);
 
   function addPhotos(incoming: FileList | File[]) {
+    if(busyRef.current)return;
     const files = Array.from(incoming);
     if (!files.length) return;
     const isValid = (file:File) => { try { validateSourceImage(file); return true; } catch { return false; } };
@@ -82,6 +88,7 @@ export default function GalleryUploadDialog({ onClose }: { onClose: () => void }
   }
 
   function removePhoto(id: number) {
+    if(busyRef.current)return;
     setPhotos(previous => previous.filter(photo => {
       if (photo.id !== id) return true;
       URL.revokeObjectURL(photo.url);
@@ -91,6 +98,7 @@ export default function GalleryUploadDialog({ onClose }: { onClose: () => void }
   }
 
   function movePhoto(id: number, offset: number) {
+    if(busyRef.current)return;
     setPhotos(previous => {
       const from = previous.findIndex(photo => photo.id === id);
       const to = from + offset;
@@ -103,6 +111,7 @@ export default function GalleryUploadDialog({ onClose }: { onClose: () => void }
   }
 
   function dropPhoto(targetId: number) {
+    if(busyRef.current)return;
     const sourceId = draggedPhotoId.current;
     draggedPhotoId.current = null;
     if (sourceId === null || sourceId === targetId) return;
@@ -117,8 +126,24 @@ export default function GalleryUploadDialog({ onClose }: { onClose: () => void }
     });
   }
 
+  async function saveAlbum(){
+    if(busyRef.current)return;
+    if(!title.trim()){setError('앨범 제목을 입력해 주세요.');return;}
+    if(!photos.length){setError('사진을 한 장 이상 선택해 주세요.');return;}
+    busyRef.current=true;setBusy(true);setError('');
+    try{
+      const urls=await uploadImagesBatch(photos.map(photo=>photo.file),'gallery');
+      if(urls.length!==photos.length)throw Error('사진 저장 개수가 일치하지 않습니다.');
+      const album=await publishGalleryAlbum(category,title.trim(),urls);
+      onCreated(album);
+    }catch(reason){
+      setError(reason instanceof Error?reason.message:'사진 등록에 실패했습니다.');
+    }finally{
+      busyRef.current=false;setBusy(false);
+    }
+  }
   function onDialogKeyDown(event: KeyboardEvent<HTMLElement>) {
-    if (event.key === 'Escape') {
+    if (event.key === 'Escape'&&!busyRef.current) {
       event.preventDefault();
       onClose();
     } else if (event.key === 'Tab' && dialogRef.current) {
@@ -138,11 +163,11 @@ export default function GalleryUploadDialog({ onClose }: { onClose: () => void }
 
   const dropZone = <div className={'gallery-upload-dropzone' + (photos.length ? ' is-compact' : '') + (dropActive ? ' is-dragging' : '')}
         role="button" tabIndex={0} aria-label="사진 파일 선택 또는 드래그하여 추가"
-        onClick={() => inputRef.current?.click()}
+        onClick={() => {if(!busyRef.current)inputRef.current?.click();}}
         onKeyDown={event => {
           if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault();
-            inputRef.current?.click();
+            if(!busyRef.current)inputRef.current?.click();
           }
         }}
         onDragEnter={onAreaDragEnter} onDragOver={event => event.preventDefault()}
@@ -152,8 +177,8 @@ export default function GalleryUploadDialog({ onClose }: { onClose: () => void }
         <span className="gallery-upload-dropzone-detail">여러 장을 한 번에 선택할 수 있습니다.</span>
       </div>;
 
-  return <div className="gallery-upload-backdrop" onMouseDown={event => {
-    if (event.target === event.currentTarget) onClose();
+  return <div className="gallery-upload-backdrop" data-async-busy={busy?'true':undefined} onMouseDown={event => {
+    if (event.target === event.currentTarget&&!busyRef.current) onClose();
   }}>
     <section ref={dialogRef} className="gallery-upload-dialog" role="dialog" aria-modal="true"
       aria-labelledby="gallery-upload-title" onKeyDown={onDialogKeyDown}>
@@ -163,7 +188,7 @@ export default function GalleryUploadDialog({ onClose }: { onClose: () => void }
           <h2 id="gallery-upload-title">사진 등록</h2>
           <p>새로운 갤러리 앨범을 구성합니다.</p>
         </div>
-        <button ref={closeRef} type="button" className="gallery-close-button" onClick={onClose} aria-label="사진 등록 창 닫기"><X size={21}/></button>
+        <button ref={closeRef} type="button" className="gallery-close-button" disabled={busy} onClick={onClose} aria-label="사진 등록 창 닫기"><X size={21}/></button>
       </header>
       <p className="image-compression-notice" role="note">
         이미지를 저장할 때 자동으로 압축·크기 조정할 수 있습니다.
@@ -172,12 +197,12 @@ export default function GalleryUploadDialog({ onClose }: { onClose: () => void }
 
       <div className="gallery-upload-fields">
         <label>구분
-          <select value={category} onChange={event => setCategory(event.target.value as PhotoCategory)}>
+          <select disabled={busy} value={category} onChange={event => setCategory(event.target.value as PhotoCategory)}>
             {categoryOptions.map(option => <option value={option} key={option}>{option}</option>)}
           </select>
         </label>
         <label>제목
-          <input type="text" value={title} maxLength={150} onChange={event => setTitle(event.target.value)}
+          <input type="text" disabled={busy} value={title} maxLength={150} onChange={event => setTitle(event.target.value)}
             placeholder="앨범 제목을 입력해 주세요" />
         </label>
       </div>
@@ -188,7 +213,7 @@ export default function GalleryUploadDialog({ onClose }: { onClose: () => void }
       </div>
       {photos.length === 0 && dropZone}
       <input ref={inputRef} type="file" multiple accept="image/jpeg,image/png,image/webp"
-        className="gallery-upload-file-input" onChange={onFileChange} aria-label="갤러리 이미지 파일 선택" />
+        className="gallery-upload-file-input" disabled={busy} onChange={onFileChange} aria-label="갤러리 이미지 파일 선택" />
 
       {error && <p className="gallery-upload-error" role="alert">{error}</p>}
 
@@ -196,7 +221,7 @@ export default function GalleryUploadDialog({ onClose }: { onClose: () => void }
         <p>사진을 끌어서 순서를 변경하거나 화살표로 이동할 수 있습니다. 첫 번째 사진이 앨범 대표사진으로 사용됩니다.</p>
         <div className="gallery-upload-photo-grid">
           {photos.map((photo, index) => <div className="gallery-upload-photo-card" key={photo.id}
-            draggable onDragStart={event => {
+            draggable={!busy} onDragStart={event => {
               draggedPhotoId.current = photo.id;
               event.dataTransfer.effectAllowed = 'move';
               event.dataTransfer.setData('text/plain', String(photo.id));
@@ -210,9 +235,9 @@ export default function GalleryUploadDialog({ onClose }: { onClose: () => void }
             <div className="gallery-upload-photo-meta">
               <span title={photo.file.name}><GripVertical size={13} aria-hidden="true"/>{photo.file.name}</span>
               <div className="gallery-upload-photo-actions">
-                <button type="button" disabled={index === 0} onClick={() => movePhoto(photo.id, -1)} aria-label={(index + 1) + '번째 사진 앞으로 이동'}><ArrowUp size={15}/></button>
-                <button type="button" disabled={index === photos.length - 1} onClick={() => movePhoto(photo.id, 1)} aria-label={(index + 1) + '번째 사진 뒤로 이동'}><ArrowDown size={15}/></button>
-                <button type="button" className="gallery-upload-photo-remove" onClick={() => removePhoto(photo.id)} aria-label={(index + 1) + '번째 사진 삭제'}><Trash2 size={15}/></button>
+                <button type="button" disabled={busy||index === 0} onClick={() => movePhoto(photo.id, -1)} aria-label={(index + 1) + '번째 사진 앞으로 이동'}><ArrowUp size={15}/></button>
+                <button type="button" disabled={busy||index === photos.length - 1} onClick={() => movePhoto(photo.id, 1)} aria-label={(index + 1) + '번째 사진 뒤로 이동'}><ArrowDown size={15}/></button>
+                <button type="button" className="gallery-upload-photo-remove" disabled={busy} onClick={() => removePhoto(photo.id)} aria-label={(index + 1) + '번째 사진 삭제'}><Trash2 size={15}/></button>
               </div>
             </div>
           </div>)}
@@ -220,10 +245,10 @@ export default function GalleryUploadDialog({ onClose }: { onClose: () => void }
         </div>
       </div>}
 
-      <p className="gallery-upload-pending-note">선택한 이미지는 로컬 미리보기입니다. 갤러리 등록·저장은 다음 단계에서 연결됩니다.</p>
+      <p className="gallery-upload-pending-note">사진 등록 시 WebP로 압축해 GitHub에 업로드합니다. 이미지 배포까지 시간이 걸릴 수 있습니다.</p>
       <footer className="gallery-upload-footer">
-        <button type="button" className="outline-action" onClick={onClose}>취소</button>
-        <button type="button" className="button button-primary" disabled title="갤러리 저장 기능은 다음 단계에서 연결됩니다.">사진 등록 (준비 중)</button>
+        <button type="button" className="outline-action" disabled={busy} onClick={onClose}>취소</button>
+        <button type="button" className="button button-primary" disabled={busy||!title.trim()||photos.length===0} onClick={()=>void saveAlbum()}>{busy?'이미지 저장 중...':'사진 등록'}</button>
       </footer>
     </section>
   </div>;
