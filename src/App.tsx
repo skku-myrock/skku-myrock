@@ -17,7 +17,7 @@ import DonationManagement from './DonationManagement';
 import AboutManagement from './AboutManagement';
 import {purgeDonations} from './donationApi';
 import {purgeNotices,resetClubIntroduction,resetSiteAssets} from './adminResets';
-import {listNotices,deleteNotice} from './noticesData';
+import {listNoticesPage,getNotice,deleteNotice} from './noticesData';
 import type {NoticePost} from './noticesData';
 import NoticeComposer from './NoticeComposer';
 import {Home,About,News,NoticeDetail,Gallery,Equipment,Handover,LoginDialog,Profile,PageHeading,EmptyState} from './pages/SitePages';
@@ -41,7 +41,38 @@ function App() {
   const [notices,setNotices]=useState<NoticePost[]>([]);
   const [noticeLoading,setNoticeLoading]=useState(true);
   const [noticeError,setNoticeError]=useState('');
-  useEffect(()=>{let live=true;void listNotices().then(items=>{if(live){setNotices(items);setNoticeError('');}}).catch(e=>{if(live)setNoticeError(e instanceof Error?e.message:'공지사항 조회 실패');}).finally(()=>{if(live)setNoticeLoading(false);});return()=>{live=false;};},[]);
+  const [noticeCursor,setNoticeCursor]=useState<string|null>(null);
+  const [noticeMoreLoading,setNoticeMoreLoading]=useState(false);
+  const [noticeDetail,setNoticeDetail]=useState<NoticePost|null>(null);
+  const [noticeDetailLoading,setNoticeDetailLoading]=useState(false);
+  const [noticeDetailError,setNoticeDetailError]=useState('');
+  useEffect(()=>{
+    let live=true;
+    void listNoticesPage().then(result=>{if(live){setNotices(result.notices);setNoticeCursor(result.nextPageToken);setNoticeError('');}})
+      .catch(e=>{if(live)setNoticeError(e instanceof Error?e.message:'공지사항 조회 실패');})
+      .finally(()=>{if(live)setNoticeLoading(false);});
+    return()=>{live=false;};
+  },[]);
+  async function loadMoreNotices(){
+    if(!noticeCursor||noticeMoreLoading)return;
+    setNoticeMoreLoading(true);
+    try{
+      const result=await listNoticesPage(noticeCursor);
+      setNotices(prev=>[...prev,...result.notices.filter(item=>!prev.some(p=>p.id===item.id))]);
+      setNoticeCursor(result.nextPageToken);
+      setNoticeError('');
+    }catch(e){setNoticeError(e instanceof Error?e.message:'공지사항 조회 실패');}
+    finally{setNoticeMoreLoading(false);}
+  }
+  useEffect(()=>{
+    let live=true;
+    if(!activeNoticeId){setNoticeDetail(null);setNoticeDetailError('');setNoticeDetailLoading(false);return;}
+    setNoticeDetail(null);setNoticeDetailError('');setNoticeDetailLoading(true);
+    void getNotice(activeNoticeId).then(item=>{if(live)setNoticeDetail(item);})
+      .catch(e=>{if(live)setNoticeDetailError(e instanceof Error?e.message:'공지사항 상세 조회 실패');})
+      .finally(()=>{if(live)setNoticeDetailLoading(false);});
+    return()=>{live=false;};
+  },[activeNoticeId]);
   const [menuOpen,setMenuOpen] = useState(false);
   const [openGroup,setOpenGroup] = useState<string | null>(null);
   const [accountOpen,setAccountOpen] = useState(false);
@@ -104,12 +135,13 @@ function App() {
   const openNotice=(id:string)=>{routerNavigate(noticePath(id));setOpenGroup(null);setAccountOpen(false);setMenuOpen(false);window.scrollTo({top:0,behavior:'instant'});};
   const editNotice=(id:string)=>{routerNavigate(editNoticePath(id));window.scrollTo({top:0,behavior:'instant'});};
   const savedNotice=(post:NoticePost)=>{
+    setNoticeDetail(post);
     setNotices(prev=>[post,...prev.filter(x=>x.id!==post.id)].sort((a,b)=>b.publishedAt.localeCompare(a.publishedAt)));
     openNotice(post.id);
   };
   const removeNotice=async(post:NoticePost)=>{
     if(!window.confirm('공지사항을 삭제하시겠습니까? 삭제한 글은 되돌릴 수 없습니다.'))return;
-    try{await deleteNotice(post.id,post.updateTime);setNotices(prev=>prev.filter(x=>x.id!==post.id));navigate('news');notify('공지사항을 삭제했습니다.');}
+    try{await deleteNotice(post.id,post.updateTime);setNoticeDetail(null);setNotices(prev=>prev.filter(x=>x.id!==post.id));navigate('news');notify('공지사항을 삭제했습니다.');}
     catch(e){notify(e instanceof Error?e.message:'공지사항 삭제 실패');}
   };
   const openSchedule=(id:string)=>{if(!findSchedule(id))return;routerNavigate(schedulePath(id));setOpenGroup(null);setAccountOpen(false);setMenuOpen(false);window.scrollTo({top:0,behavior:'instant'});};
@@ -171,11 +203,11 @@ function App() {
         removed+=result.deleted;done=result.done;
       }
       if(!done)throw Error('초기화 요청 횟수를 초과했습니다.');
-      setNotices([]);setNoticeError('');navigate('news');
+      setNotices([]);setNoticeCursor(null);setNoticeDetail(null);setNoticeError('');navigate('news');
       window.alert('공지사항과 notices/ 사진 초기화가 완료되었습니다. 삭제된 공지사항: '+removed+'건');
     }catch(error){
       window.alert('공지사항 초기화가 중단되었습니다. 지금까지 삭제한 공지사항: '+removed+'건. '+(error instanceof Error?error.message:'서버 오류'));
-      void listNotices().then(setNotices).catch(()=>{});
+      void listNoticesPage().then(result=>{setNotices(result.notices);setNoticeCursor(result.nextPageToken);}).catch(()=>{});
     }finally{setNoticeResetting(false);}
   }
   async function resetIntroduction(){
@@ -208,14 +240,15 @@ function App() {
   const canManage=currentLevel!==null;
   const canManageDonations=currentLevel==='staff'||currentLevel==='president';
   const canHandover=canViewHandover(profile,hasSystemClaim);
+  const activeFullNotice=noticeDetail?.id===activeNoticeId?noticeDetail:null;
   const pageViews:Record<Page,ReactNode>={
     'home': <Home key={aboutRevision} navigate={navigate} openNotice={openNotice} notices={notices}/>,
     'about': <About key={aboutRevision} navigate={navigate} canEdit={Boolean(user&&!authPending&&canManageDonations)}/>,
     'about-manage': (authPending?<section className="container section-block"><EmptyState title="권한 확인 중" description="로그인 상태를 확인하고 있습니다."/></section>:user&&canManageDonations?<AboutManagement onBack={()=>navigate('about')} registerLeaveGuard={registerEditorLeaveGuard} onSaved={()=>{navigate('about');setAboutSaveNotice('변경 사항을 저장했습니다. 새 사진은 Cloudflare 이미지 배포 후 공개 화면에 표시됩니다.');}}/>:<section className="container section-block"><EmptyState icon={<LockKeyhole size={26}/>} title="접근 권한이 없습니다" description="동아리 소개 수정은 실무단 이상만 가능합니다."/></section>),
-    'news': <News canWrite={Boolean(user && !authPending && currentLevel)} onWrite={() => navigate('notice-compose')} openNotice={openNotice} notices={notices} loading={noticeLoading} error={noticeError}/>,
+    'news': <News canWrite={Boolean(user && !authPending && currentLevel)} onWrite={() => navigate('notice-compose')} openNotice={openNotice} notices={notices} loading={noticeLoading} error={noticeError} hasMore={Boolean(noticeCursor)} moreLoading={noticeMoreLoading} onLoadMore={()=>void loadMoreNotices()}/>,
     'notice-compose': (authPending ? <section className="container section-block"><EmptyState title="권한 확인 중" description="로그인 상태를 확인하고 있습니다." /></section> : user && currentLevel ? <NoticeComposer onBack={() => navigate('news')} onSaved={savedNotice} registerLeaveGuard={registerEditorLeaveGuard}/> : <section className="container section-block"><EmptyState icon={<LockKeyhole size={26}/>} title="접근 권한이 없습니다" description="공지사항 글쓰기는 파트장 이상 운영진만 사용할 수 있습니다." /></section>),
-    'notice-edit': (authPending?<section className="container section-block"><EmptyState title="권한 확인 중" description="로그인 상태를 확인하고 있습니다."/></section>:user&&currentLevel&&notices.some(n=>n.id===activeNoticeId)?<NoticeComposer key={activeNoticeId} initial={notices.find(n=>n.id===activeNoticeId)!} onBack={()=>activeNoticeId?openNotice(activeNoticeId):navigate('news')} onSaved={savedNotice} registerLeaveGuard={registerEditorLeaveGuard}/>:<section className="container section-block"><EmptyState title="접근 권한이 없습니다" description="공지사항 수정은 파트장 이상만 가능합니다."/></section>),
-    'notice-detail': (noticeLoading?<section className="container section-block"><p>공지사항을 불러오는 중입니다.</p></section>:<NoticeDetail key={activeNoticeId} notice={notices.find(n=>n.id===activeNoticeId)} canManage={Boolean(user&&!authPending&&currentLevel)} backToList={()=>navigate('news')} onEdit={()=>activeNoticeId&&editNotice(activeNoticeId)} onDelete={()=>{const item=notices.find(n=>n.id===activeNoticeId);if(item)void removeNotice(item);}}/>),
+    'notice-edit': (authPending||noticeDetailLoading?<section className="container section-block"><EmptyState title="공지사항 확인 중" description="공지사항과 로그인 상태를 확인하고 있습니다."/></section>:user&&currentLevel&&activeFullNotice?<NoticeComposer key={activeNoticeId} initial={activeFullNotice} onBack={()=>activeNoticeId?openNotice(activeNoticeId):navigate('news')} onSaved={savedNotice} registerLeaveGuard={registerEditorLeaveGuard}/>:<section className="container section-block"><EmptyState title="접근 권한이 없습니다" description="공지사항 수정은 파트장 이상만 가능합니다."/></section>),
+    'notice-detail': (noticeDetailLoading?<section className="container section-block"><p>공지사항을 불러오는 중입니다.</p></section>:noticeDetailError?<section className="container section-block"><EmptyState title="공지사항을 불러올 수 없습니다" description={noticeDetailError}/></section>:<NoticeDetail key={activeNoticeId} notice={activeFullNotice??undefined} canManage={Boolean(user&&!authPending&&currentLevel)} backToList={()=>navigate('news')} onEdit={()=>activeNoticeId&&editNotice(activeNoticeId)} onDelete={()=>{if(activeFullNotice)void removeNotice(activeFullNotice);}}/>),
     'schedule': <ScheduleLanding
         canCreateTeam={Boolean(user && !authPending && currentLevel)}
         onCreate={() => notify('시간표 만들기 기능은 추후 연결할 예정입니다.')}
