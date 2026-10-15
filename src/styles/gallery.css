@@ -1,5 +1,7 @@
 /* Photozone: one cover per event album, isolated from the old .photo-item
    selectors that previously pushed placeholder captions to the right. */
+/* Match the space below the page-title divider to the about edit action row. */
+.gallery-section.section-block { margin-top: 22px; }
 .gallery-toolbar { margin-bottom: 24px; }
 .gallery-album-grid {
   display: grid;
@@ -406,3 +408,11 @@
 .gallery-load-error{padding:15px;border:1px solid #e4bdbc;background:#fff7f6;color:#994b43;font-size:12px}
 .gallery-load-error button{margin-left:10px;border:0;text-decoration:underline;background:transparent;color:inherit}
 .gallery-upload-dialog .gallery-upload-error{position:relative}
+
+@media(max-width:620px){
+  .gallery-section.section-block{margin-top:18px}
+  /* Keep the tabs and management action on one compact row on phones, too. */
+  .gallery-toolbar.toolbar{flex-direction:row;align-items:flex-start;gap:10px}
+  .gallery-toolbar .gallery-tabs{flex:1 1 auto;min-width:0;gap:clamp(9px,2.8vw,16px)}
+  .gallery-toolbar .admin-only-action{align-self:flex-start;flex:0 0 auto;padding:10px 11px;font-size:11px}
+}
