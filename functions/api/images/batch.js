@@ -18,7 +18,10 @@ export async function onRequestPost({request,env}){
     catch{reject('이미지 공개 주소 설정이 올바르지 않습니다.',503);}
     if(Number(request.headers.get('content-length')??0)>17000000)reject('한 번에 업로드할 수 있는 총 용량은 16MB입니다.',413);
     if(!request.headers.get('content-type')?.includes('multipart/form-data'))reject('이미지 파일만 업로드할 수 있습니다.',415);
-    const files=(await request.formData()).getAll('images');
+    const form=await request.formData();
+    const folder=form.get('folder')??'site';
+    if(folder!=='site'&&folder!=='notices')reject('지원하지 않는 이미지 폴더입니다.',400);
+    const files=form.getAll('images');
     if(!files.length||files.length>12)reject('한 번에 1~12장의 이미지를 업로드할 수 있습니다.');
     let total=0;
     const checked=[];
@@ -36,12 +39,12 @@ export async function onRequestPost({request,env}){
     const urls=[];
     for(const image of checked){
       const blob=await github('git/blobs',token,'POST',{content:base64(image.bytes),encoding:'base64'});
-      const path='site/'+crypto.randomUUID()+'.'+extensions[image.type];
+      const path=folder+'/'+crypto.randomUUID()+'.'+extensions[image.type];
       entries.push({path,mode:'100644',type:'blob',sha:blob.sha});
       urls.push(new URL(path,publicBase).href);
     }
     const tree=await github('git/trees',token,'POST',{base_tree:commit.tree.sha,tree:entries});
-    const next=await github('git/commits',token,'POST',{message:'assets(site): upload '+files.length+' images',tree:tree.sha,parents:[head.object.sha]});
+    const next=await github('git/commits',token,'POST',{message:'assets('+folder+'): upload '+files.length+' images',tree:tree.sha,parents:[head.object.sha]});
     await github('git/refs/heads/main',token,'PATCH',{sha:next.sha,force:false});
     return success({urls,deployPending:true,commit:next.sha},201);
   }catch(error){return failure(error);}
