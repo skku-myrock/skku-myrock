@@ -2,7 +2,7 @@ import { auth } from './firebase';
 export type Officer={id:string;name:string;position:string;photoUrl:string};
 export type HistoryEntry={id:string;year:string;description:string};
 export type AboutContent={homeImage:string;heroImage:string;cohortLabel:string;officers:Officer[];history:HistoryEntry[]};
-export type AboutManageResponse={content:AboutContent;updateTime:string|null};
+export type AboutManageResponse={content:AboutContent;updateTime:string|null;siteCleanup?:{deleted:number;pending:boolean}};
 export const DEFAULT_ABOUT:AboutContent={
   homeImage:'',heroImage:'',
   cohortLabel:'28기 운영진 소개',
@@ -31,6 +31,31 @@ async function request<T>(path:string,body?:unknown,method='GET'):Promise<T>{
   if(!res.ok)throw Error(typeof data.error==='string'?data.error:'동아리 소개 정보를 처리하지 못했습니다.');
   return data as T;
 }
-export const getAbout=()=>request<{content:AboutContent}>('content');
+type PublicAboutResponse={content:AboutContent};
+const CACHE_TTL_MS=120_000;
+let cachedPublicAbout:{value:PublicAboutResponse;expires:number}|null=null;
+let pendingPublicAbout:Promise<PublicAboutResponse>|null=null;
+let cacheVersion=0;
+export const peekAboutCache=():PublicAboutResponse|null=>cachedPublicAbout&&cachedPublicAbout.expires>Date.now()?cachedPublicAbout.value:null;
+export function invalidateAboutCache():void {
+  cacheVersion++;
+  cachedPublicAbout=null;
+  pendingPublicAbout=null;
+}
+export function getAbout():Promise<PublicAboutResponse>{
+  const cached=peekAboutCache();
+  if(cached)return Promise.resolve(cached);
+  if(pendingPublicAbout)return pendingPublicAbout;
+  const version=cacheVersion;
+  pendingPublicAbout=request<PublicAboutResponse>('content').then(value=>{
+    if(version===cacheVersion)cachedPublicAbout={value,expires:Date.now()+CACHE_TTL_MS};
+    return value;
+  }).finally(()=>{if(version===cacheVersion)pendingPublicAbout=null;});
+  return pendingPublicAbout;
+}
 export const getAboutManagement=()=>request<AboutManageResponse>('manage');
-export const saveAbout=(content:AboutContent,expectedUpdateTime:string|null)=>request<AboutManageResponse>('content',{content,expectedUpdateTime},'POST');
+export async function saveAbout(content:AboutContent,expectedUpdateTime:string|null):Promise<AboutManageResponse>{
+  const result=await request<AboutManageResponse>('content',{content,expectedUpdateTime},'POST');
+  invalidateAboutCache();
+  return result;
+}

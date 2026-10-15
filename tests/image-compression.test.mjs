@@ -18,9 +18,9 @@ test('large still photographs are accepted, GIF uploads are completely rejected'
  assert.throws(()=>validateSourceImage({type:'image/png',size:0}),/JPG/);
 });
 
-test('tiny photographs are left untouched and GIF cannot be prepared',async()=>{
+test('already-small WebP is untouched and GIF cannot be prepared',async()=>{
  const gif=new File([new Uint8Array(1000)],'animation.gif',{type:'image/gif'});
- const photo=new File([new Uint8Array(1000)],'small.jpg',{type:'image/jpeg'});
+ const photo=new File([new Uint8Array(1000)],'small.webp',{type:'image/webp'});
  await assert.rejects(prepareImageForUpload(gif),/JPG/);
  assert.equal(await prepareImageForUpload(photo),photo);
 });
@@ -84,4 +84,21 @@ test('batch upload compresses before enforcing 5MB GitHub API limit',async()=>{
  }
  const api=await readFile(new URL('../functions/api/images/batch.js',import.meta.url),'utf8');
  assert.doesNotMatch(api,/image\/gif/);
+});
+
+test('small JPEG and PNG are converted to WebP even when already within upload size',async()=>{
+ const previousBitmap=globalThis.createImageBitmap,previousDoc=globalThis.document;
+ try{
+   globalThis.createImageBitmap=async()=>({width:500,height:400,close(){}});
+   globalThis.document={createElement:()=>({
+     getContext(){return {clearRect(){},drawImage(){}};},
+     toBlob(callback,type){callback(new Blob([new Uint8Array(800)],{type}));}
+   })};
+   for(const format of ['image/jpeg','image/png']){
+     const original=new File([new Uint8Array(300)],'small.'+(format==='image/jpeg'?'jpg':'png'),{type:format});
+     const actual=await prepareImageForUpload(original);
+     assert.equal(actual.type,'image/webp');
+     assert.match(actual.name,/\.webp$/);
+   }
+ }finally{globalThis.createImageBitmap=previousBitmap;globalThis.document=previousDoc;}
 });

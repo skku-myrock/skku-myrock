@@ -17,6 +17,7 @@ import DonationManagement from './DonationManagement';
 import AboutManagement from './AboutManagement';
 import {purgeDonations} from './donationApi';
 import {purgeNotices,resetClubIntroduction,resetSiteAssets} from './adminResets';
+import {invalidateAboutCache} from './aboutContent';
 import {listNoticesPage,getNotice,deleteNotice} from './noticesData';
 import type {NoticePost} from './noticesData';
 import NoticeComposer from './NoticeComposer';
@@ -216,6 +217,7 @@ function App() {
     setAboutResetting(true);setAccountOpen(false);setMenuOpen(false);
     try{
       await resetClubIntroduction();
+      invalidateAboutCache();
       setAboutRevision(v=>v+1);
       navigate('about');
       window.alert('모여락 소개 내용이 28기 운영진과 1998년·2023년 연혁으로 초기화되었습니다. 메인·동아리 소개·운영진 사진 URL과 GitHub 파일은 그대로 유지됩니다.');
@@ -229,6 +231,7 @@ function App() {
     setAssetResetting(true);setAccountOpen(false);setMenuOpen(false);
     try{
       await resetSiteAssets();
+      invalidateAboutCache();
       setAboutRevision(v=>v+1);
       window.alert('site/ 에셋과 Firebase의 메인·동아리 소개·운영진 사진 URL이 초기화되었습니다. 기존 직접 이미지 URL은 Cloudflare 캐시에 잠시 남을 수 있습니다.');
     }catch(error){
@@ -244,7 +247,7 @@ function App() {
   const pageViews:Record<Page,ReactNode>={
     'home': <Home key={aboutRevision} navigate={navigate} openNotice={openNotice} notices={notices}/>,
     'about': <About key={aboutRevision} navigate={navigate} canEdit={Boolean(user&&!authPending&&canManageDonations)}/>,
-    'about-manage': (authPending?<section className="container section-block"><EmptyState title="권한 확인 중" description="로그인 상태를 확인하고 있습니다."/></section>:user&&canManageDonations?<AboutManagement onBack={()=>navigate('about')} registerLeaveGuard={registerEditorLeaveGuard} onSaved={()=>{navigate('about');setAboutSaveNotice('변경 사항을 저장했습니다. 새 사진은 Cloudflare 이미지 배포 후 공개 화면에 표시됩니다.');}}/>:<section className="container section-block"><EmptyState icon={<LockKeyhole size={26}/>} title="접근 권한이 없습니다" description="동아리 소개 수정은 실무단 이상만 가능합니다."/></section>),
+    'about-manage': (authPending?<section className="container section-block"><EmptyState title="권한 확인 중" description="로그인 상태를 확인하고 있습니다."/></section>:user&&canManageDonations?<AboutManagement onBack={()=>navigate('about')} registerLeaveGuard={registerEditorLeaveGuard} onSaved={message=>{navigate('about');setAboutSaveNotice(message??'변경 사항을 저장했습니다. 새 사진은 Cloudflare 이미지 배포 후 공개 화면에 표시됩니다.');}}/>:<section className="container section-block"><EmptyState icon={<LockKeyhole size={26}/>} title="접근 권한이 없습니다" description="동아리 소개 수정은 실무단 이상만 가능합니다."/></section>),
     'news': <News canWrite={Boolean(user && !authPending && currentLevel)} onWrite={() => navigate('notice-compose')} openNotice={openNotice} notices={notices} loading={noticeLoading} error={noticeError} hasMore={Boolean(noticeCursor)} moreLoading={noticeMoreLoading} onLoadMore={()=>void loadMoreNotices()}/>,
     'notice-compose': (authPending ? <section className="container section-block"><EmptyState title="권한 확인 중" description="로그인 상태를 확인하고 있습니다." /></section> : user && currentLevel ? <NoticeComposer onBack={() => navigate('news')} onSaved={savedNotice} registerLeaveGuard={registerEditorLeaveGuard}/> : <section className="container section-block"><EmptyState icon={<LockKeyhole size={26}/>} title="접근 권한이 없습니다" description="공지사항 글쓰기는 파트장 이상 운영진만 사용할 수 있습니다." /></section>),
     'notice-edit': (authPending||noticeDetailLoading||(!noticeDetailError&&!activeFullNotice)?<section className="container section-block"><EmptyState title="공지사항 확인 중" description="공지사항과 로그인 상태를 확인하고 있습니다."/></section>:user&&currentLevel&&activeFullNotice?<NoticeComposer key={activeNoticeId} initial={activeFullNotice} onBack={()=>activeNoticeId?openNotice(activeNoticeId):navigate('news')} onSaved={savedNotice} registerLeaveGuard={registerEditorLeaveGuard}/>:<section className="container section-block"><EmptyState title="접근 권한이 없습니다" description="공지사항 수정은 파트장 이상만 가능합니다."/></section>),

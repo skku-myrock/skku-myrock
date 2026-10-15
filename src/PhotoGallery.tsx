@@ -11,7 +11,7 @@ type PhotoKind = 'cover' | 'large' | 'thumb';
 
 function PhotoSlot({ src, label, kind }: { src: string | null; label: string; kind: PhotoKind }) {
   if (src) {
-    return <img className={'gallery-slot-image gallery-slot-' + kind} src={src} alt={label} loading={kind === 'large' ? 'eager' : 'lazy'} />;
+    return <img className={'gallery-slot-image gallery-slot-' + kind} src={src} alt={label} loading={kind === 'large' ? 'eager' : 'lazy'} fetchPriority={kind === 'large' ? 'high' : 'low'} decoding="async" />;
   }
   return <div className={'gallery-slot-empty gallery-slot-' + kind} role="img" aria-label={label + ' (사진 미등록)'}>
     <ImageIcon size={kind === 'thumb' ? 16 : kind === 'large' ? 35 : 25} strokeWidth={1.35} aria-hidden="true" />
@@ -82,6 +82,15 @@ export default function PhotoGallery({ canRegister }: { canRegister: boolean }) 
       openerRef.current?.focus();
     };
   }, [activeAlbum]);
+
+  useEffect(() => {
+    if(!activeAlbum||!activeAlbum.photos.length)return;
+    const count=activeAlbum.photos.length;
+    for(const offset of [-1,1]){
+      const src=activeAlbum.photos[(photoIndex+offset+count)%count];
+      if(src){const image=new window.Image();image.src=src;}
+    }
+  },[activeAlbum,photoIndex]);
 
   function onTouchStart(event: ReactTouchEvent<HTMLDivElement>) {
     const touch = event.touches[0];

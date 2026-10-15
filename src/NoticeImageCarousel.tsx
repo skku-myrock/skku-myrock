@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { TouchEvent } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { galleryFrame, slideDimensions } from './noticeCarouselSizing';
@@ -15,13 +15,20 @@ export type NoticeSlide = {
 export default function NoticeImageCarousel({ slides, label }: { slides: readonly NoticeSlide[]; label: string }) {
   const [activeId, setActiveId] = useState<number | string | null>(null);
   const touchOrigin = useRef<{ x: number; y: number } | null>(null);
-  if (!slides.length) return null;
   const selectedIndex = slides.findIndex(slide => slide.id === activeId);
   const activeIndex = selectedIndex >= 0 ? selectedIndex : 0;
   const active = slides[activeIndex];
-  const frame = galleryFrame(slides);
-  const size = slideDimensions(active);
   const go = (delta: number) => setActiveId(slides[(activeIndex + delta + slides.length) % slides.length].id);
+  useEffect(()=>{
+    if(slides.length<2)return;
+    for(const offset of [-1,1]){
+      const src=slides[(activeIndex+offset+slides.length)%slides.length]?.src;
+      if(src&&!src.startsWith('blob:')){const image=new Image();image.src=src;}
+    }
+  },[slides,activeIndex]);
+  if(!slides.length)return null;
+  const frame=galleryFrame(slides);
+  const size=slideDimensions(active);
   const onTouchStart = (event: TouchEvent<HTMLDivElement>) => {
     const touch = event.touches[0];
     if (touch) touchOrigin.current = { x: touch.clientX, y: touch.clientY };
@@ -46,7 +53,7 @@ export default function NoticeImageCarousel({ slides, label }: { slides: readonl
       onTouchStart={onTouchStart} onTouchEnd={onTouchEnd} onTouchCancel={() => { touchOrigin.current = null; }}>
       <div className="notice-slide-media" style={{ width: (size.width / frame.width * 100) + '%', height: (size.height / frame.height * 100) + '%' }}>
         {active.src ?
-          <img key={active.id} src={active.src} alt={active.alt} draggable={false}
+          <img key={active.id} src={active.src} alt={active.alt} draggable={false} loading="eager" fetchPriority="high" decoding="async"
             onLoad={event => active.onLoad?.(event.currentTarget.naturalWidth, event.currentTarget.naturalHeight)}/> :
           <div className="notice-detail-photo-placeholder" role="img" aria-label={active.alt + ' 준비 중'}>
             <span aria-hidden="true">▧</span><small>{active.alt} 자리</small>

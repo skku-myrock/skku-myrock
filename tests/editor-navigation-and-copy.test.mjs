@@ -9,7 +9,7 @@ test('both editors have dirty-state guarded navigation and preserve saved exits'
   ]);
   assert.match(about,/JSON\.stringify\(content\)!==savedSnapshot.current/);
   assert.match(about,/savedSnapshot.current=JSON.stringify\(updated.content\)/);
-  assert.match(about,/registerLeaveGuard\(null\);\s*onSaved\(\)/);
+  assert.match(about,/registerLeaveGuard\(null\);\s*onSaved\(updated\.siteCleanup/);
   assert.match(composer,/const originalDraft=useRef\(JSON.stringify\(\{title,category,blocks\}\)\)/);
   assert.match(composer,/registerLeaveGuard\(null\);\s*onSaved\(saved\)/);
   assert.match(about,/useEditorLeaveGuard\(hasUnsavedChanges\|\|busy,registerLeaveGuard\)/);
@@ -21,7 +21,7 @@ test('both editors have dirty-state guarded navigation and preserve saved exits'
   assert.match(app,/blocker\.reset\(\)/);
   assert.doesNotMatch(app,/window\.history\.pushState/);
   assert.match(app,/registerLeaveGuard=\{registerEditorLeaveGuard\}/);
-  assert.match(app,/setAboutSaveNotice\('변경 사항을 저장했습니다/);
+  assert.match(app,/setAboutSaveNotice\(message\?\?'변경 사항을 저장했습니다/);
   assert.match(app,/site-bottom-toast is-success/);
 });
 test('exact introduction/photo notices and no GitHub draft implementation detail',async()=>{
@@ -48,5 +48,5 @@ test('file uploads reject GIF on client and server, while public GIF URL compati
   const [compress,server]=await Promise.all([src('src/imageCompression.ts'),src('functions/api/images/batch.js')]);
   assert.match(compress,/const types = new Set\(\['image\/jpeg','image\/png','image\/webp'\]\)/);
   assert.doesNotMatch(server,/image\/gif/);
-  assert.match(server,/const extensions=\{'image\/jpeg':'jpg','image\/png':'png','image\/webp':'webp'\}/);
+  assert.match(server,/const extensions=\{'image\/webp':'webp'\}/);
 });

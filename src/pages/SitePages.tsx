@@ -12,7 +12,7 @@ import {
 import logo from '../logo-transparent.png';
 import PasswordChange from '../PasswordChange';
 import PhotoGallery from '../PhotoGallery';
-import {DEFAULT_ABOUT,getAbout} from '../aboutContent';
+import {DEFAULT_ABOUT,getAbout,peekAboutCache} from '../aboutContent';
 import type {AboutContent} from '../aboutContent';
 import type {NoticePost} from '../noticesData';
 import NoticeImageCarousel from '../NoticeImageCarousel';
@@ -46,7 +46,7 @@ export function EmptyState({ icon, title, description }: { icon?: ReactNode; tit
 }
 
 export function Home({ navigate, openNotice, notices }: { navigate: Navigate; openNotice: (id: string) => void; notices: NoticePost[] }) {
-  const [homeImage,setHomeImage]=useState('');
+  const [homeImage,setHomeImage]=useState<string|null>(()=>peekAboutCache()?.content.homeImage??null);
   useEffect(()=>{let active=true;void getAbout().then(({content})=>{if(active)setHomeImage(content.homeImage??'');}).catch(()=>{});return()=>{active=false;};},[]);
   return <>
     <section className="hero container">
@@ -56,7 +56,7 @@ export function Home({ navigate, openNotice, notices }: { navigate: Navigate; op
         <p>성균관대학교 중앙 밴드 동아리 모여락입니다.<br />우리의 음악과 이야기를 이곳에 담습니다.</p>
         <TextLink onClick={() => navigate('about')}>동아리 소개</TextLink>
       </div>
-      <div className="hero-media">{homeImage?<img className="home-hero-image" src={homeImage} alt="메인 페이지 사진"/>:<Placeholder label="메인 페이지 사진" />}</div>
+      <div className="hero-media">{homeImage?<img className="home-hero-image" src={homeImage} alt="메인 페이지 사진" loading="eager" fetchPriority="high" decoding="async"/>:homeImage===null?<div className="home-hero-image image-pending" role="status" aria-label="메인 페이지 사진을 불러오는 중" />:<Placeholder label="메인 페이지 사진" />}</div>
     </section>
     <section className="container home-updates">
       <SectionHeading title="공지사항" aside="모여락의 새로운 소식" action="전체 보기" onAction={() => navigate('news')} />
@@ -74,11 +74,12 @@ export function Home({ navigate, openNotice, notices }: { navigate: Navigate; op
 }
 
 export function About({ navigate, canEdit }: { navigate: Navigate;canEdit:boolean }) {
-  const [content,setContent]=useState<AboutContent>(DEFAULT_ABOUT);
+  const [content,setContent]=useState<AboutContent>(()=>peekAboutCache()?.content??DEFAULT_ABOUT);
+  const [contentLoaded,setContentLoaded]=useState(()=>Boolean(peekAboutCache()));
   const [loadError,setLoadError]=useState('');
   useEffect(()=>{
     let active=true;
-    void getAbout().then(data=>{if(active)setContent(data.content);})
+    void getAbout().then(data=>{if(active){setContent(data.content);setContentLoaded(true);}})
       .catch(()=>{if(active)setLoadError('최신 소개 정보를 불러오지 못해 기본 소개 내용을 표시합니다.');});
     return()=>{active=false;};
   },[]);
@@ -88,13 +89,13 @@ export function About({ navigate, canEdit }: { navigate: Navigate;canEdit:boolea
       {loadError&&<p role="status" className="about-load-error">{loadError}</p>}
     </section>
     <section className="container about-intro section-block"><div className="about-description"><h2>음악을 좋아하는 사람들이<br />함께하는 공간</h2><p>보컬, 기타, 베이스, 드럼, 키보드. 서로 다른 소리로 모여 한 곡을 완성합니다. 이곳에는 동아리 소개와 활동 이야기가 정리될 예정입니다.</p><TextLink onClick={() => navigate('gallery')}>활동 사진 보러 가기</TextLink></div>
-      {content.heroImage?<img className="about-hero-image" src={content.heroImage} alt="동아리 소개 사진"/>:<Placeholder label="동아리 대표 사진"/>}
+      {content.heroImage?<img className="about-hero-image" src={content.heroImage} alt="동아리 소개 사진" loading="eager" fetchPriority="high" decoding="async"/>:contentLoaded?<Placeholder label="동아리 대표 사진"/>:<div className="about-hero-image image-pending" role="status" aria-label="동아리 소개 사진을 불러오는 중" />}
     </section>
     <section className="container section-block" aria-label="28기 운영진 소개">
       <SectionHeading title="운영진" aside={content.cohortLabel} />
       <div className="leadership-grid">
         {content.officers.map(officer => <article className="leader-item" key={officer.id}>
-          {officer.photoUrl?<img className="leader-photo" src={officer.photoUrl} alt={officer.name+' 사진'}/>:<Placeholder label="사진" className="leader-photo" />}
+          {officer.photoUrl?<img className="leader-photo" src={officer.photoUrl} alt={officer.name+' 사진'} loading="lazy" fetchPriority="low" decoding="async"/>:contentLoaded?<Placeholder label="사진" className="leader-photo" />:<div className="leader-photo image-pending" role="status" aria-label="운영진 사진을 불러오는 중" />}
           <div className="leader-description">
             <h3>{officer.name}</h3>
             <p>{officer.position}</p>
@@ -197,7 +198,7 @@ export function NoticeDetail({ notice, canManage, backToList, onEdit, onDelete }
       <div className="notice-detail-content">
         {notice.blocks.map((block,index)=>block.kind==='text'?<div className="notice-detail-body" key={index}><p>{block.text}</p></div>:block.kind==='gallery'?
           <div key={index} className="notice-detail-images"><NoticeImageCarousel label={notice.title+' 이미지 슬라이드'} slides={block.images.map((image,i)=>({id:i,src:image.url,alt:image.name,width:Number(image.width)||320,height:Number(image.height)||240}))}/></div>:
-          <div key={index} className="notice-detail-image-single" style={{maxWidth:Number(block.width)||800}}><img src={block.url} alt={block.name} style={{width:'100%',aspectRatio:Number(block.width)&&Number(block.height)?Number(block.width)+' / '+Number(block.height):'auto'}}/></div>)}
+          <div key={index} className="notice-detail-image-single" style={{maxWidth:Number(block.width)||800}}><img src={block.url} alt={block.name} loading="lazy" decoding="async" style={{width:'100%',aspectRatio:Number(block.width)&&Number(block.height)?Number(block.width)+' / '+Number(block.height):'auto'}}/></div>)}
       </div>
       <div className="notice-detail-footer">
         <button type="button" className="outline-action" onClick={backToList}>

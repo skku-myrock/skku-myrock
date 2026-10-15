@@ -1,4 +1,6 @@
 import {reject} from './shared.js';
+import {getAbout} from './aboutContent.js';
+import {listNotices} from './notices.js';
 const REPO='https://api.github.com/repos/skku-myrock/myrock-images/';
 const FOLDERS=new Set(['site','notices']);
 async function github(env,path,method='GET',body){
@@ -25,4 +27,51 @@ export async function clearImageFolder(env,folder){
   const next=await github(env,'git/commits','POST',{message:'maintenance: clear '+folder+' image assets',tree:tree.sha,parents:[head.object.sha]});
   await github(env,'git/refs/heads/main','PATCH',{sha:next.sha,force:false});
   return {changed:true,commit:next.sha};
+}
+
+/** Remove only previously referenced generated site assets that no longer have live references.
+ * Never delete URLs from another origin, notices/, gallery/, or unknown file names.
+ * The stored Firestore content is re-read after the write so stale editor state cannot decide deletion.
+ */
+export async function deleteUnusedSiteImages(env,obsoleteUrls){
+  if(!Array.isArray(obsoleteUrls)||!obsoleteUrls.length)return {deleted:0};
+  if(!env.MYROCK_IMAGES_PUBLIC_BASE_URL)throw Error('이미지 공개 주소가 없어 이전 파일 정리를 건너뜁니다.');
+  const base=new URL(env.MYROCK_IMAGES_PUBLIC_BASE_URL);
+  if(base.protocol!=='https:'||base.pathname!=='/'||base.search||base.hash)throw Error('이미지 주소 설정을 확인해 주세요.');
+  const toPath=value=>{
+    if(typeof value!=='string')return null;
+    let url;try{url=new URL(value);}catch{return null;}
+    if(url.origin!==base.origin||url.search||url.hash)return null;
+    const path=url.pathname.slice(1);
+    // Upload API generates a random UUID per image. No other paths qualify for automatic deletion.
+    return /^site\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(?:jpg|png|webp)$/i.test(path)?path:null;
+  };
+  const candidates=new Map(obsoleteUrls.map(url=>[toPath(url),url]).filter(([path])=>Boolean(path)));
+  if(!candidates.size)return {deleted:0};
+  const {content}=await getAbout(env);
+  const inUse=new Set([content.homeImage,content.heroImage,...content.officers.map(person=>person.photoUrl)]);
+  for(const [path,url] of candidates)if(inUse.has(url))candidates.delete(path);
+  if(!candidates.size)return {deleted:0};
+  const notices=await listNotices(env);
+  // listNotices has a 1,000-document scan limit; fail closed if the result could be incomplete.
+  if(notices.length>=1000)throw Error('공지사항 참조 검사가 제한에 도달해 사진 정리를 건너뜁니다.');
+  const noticeUrls=new Set(notices.flatMap(notice=>(notice.blocks??[]).flatMap(block=>
+    block.kind==='image'?[block.url]:block.kind==='gallery'?(block.images??[]).map(photo=>photo.url):[])));
+  for(const [path,url] of candidates)if(noticeUrls.has(url))candidates.delete(path);
+  if(!candidates.size)return {deleted:0};
+  for(let attempt=0;attempt<3;attempt++){
+    const head=await github(env,'git/ref/heads/main');
+    const previous=await github(env,'git/commits/'+head.object.sha);
+    const entries=[...candidates.keys()].map(path=>({path,mode:'100644',type:'blob',sha:null}));
+    const tree=await github(env,'git/trees','POST',{base_tree:previous.tree.sha,tree:entries});
+    if(tree.sha===previous.tree.sha)return {deleted:0};
+    const next=await github(env,'git/commits','POST',{message:'assets(site): remove '+entries.length+' replaced photos',tree:tree.sha,parents:[head.object.sha]});
+    try{
+      await github(env,'git/refs/heads/main','PATCH',{sha:next.sha,force:false});
+      return {deleted:entries.length,commit:next.sha};
+    }catch(error){
+      if(error?.status!==409||attempt===2)throw error;
+    }
+  }
+  return {deleted:0};
 }
