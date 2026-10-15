@@ -82,3 +82,32 @@ test('image sizing and slide order utilities remain correct',async()=>{
   assert.deepEqual(reorderGalleryImages([{id:1},{id:2},{id:3}],1,3).map(x=>x.id),[2,3,1]);
   assert.match(style,/notice-composer-image-picker\.is-new-image\{margin-top:16px\}/);
 });
+
+test('original pixel ratio is used even when displayed dimensions were rounded',async()=>{
+  const source=await readFile(new URL('../src/noticeImageSize.ts',import.meta.url),'utf8');
+  const js=typescript.transpileModule(source,{compilerOptions:{module:typescript.ModuleKind.ESNext,target:typescript.ScriptTarget.ES2022}}).outputText;
+  const {resizeImageDimensions}=await import('data:text/javascript;base64,'+Buffer.from(js).toString('base64'));
+  const initial={width:800,height:533,naturalWidth:4032,naturalHeight:3024};
+  assert.deepEqual(resizeImageDimensions(initial,'height',300,true),{width:400,height:300});
+  assert.deepEqual(resizeImageDimensions({...initial,width:400,height:300},'width',500,true),{width:500,height:375});
+  assert.deepEqual(resizeImageDimensions({...initial,width:500,height:375},'height',300,true),{width:400,height:300});
+});
+test('notice dimension input is editable while focused and commits on blur only',async()=>{
+  const composer=await readFile(new URL('../src/NoticeComposer.tsx',import.meta.url),'utf8');
+  const css=await readFile(new URL('../src/styles.css',import.meta.url),'utf8');
+  assert.match(composer,/dimensionDrafts/);
+  assert.match(composer,/onBlur=\{event=>commitDimension\(/);
+  assert.match(composer,/onChange=\{event=>setDimensionDrafts\(/);
+  assert.match(composer,/dimensionWarning\(image.id\)/);
+  assert.match(composer,/dimensionWarning\(block.id\)/);
+  assert.match(composer,/uploadImagesBatch\(pending.map\(url=>localFiles.current.get\(url\)!\),'notices'\)/);
+  assert.match(css,/\.notice-dimension-error\{/);
+  assert.match(css,/\.notice-table-row small\{[^}]*overflow:hidden;text-overflow:ellipsis;white-space:nowrap/);
+});
+test('image upload API accepts only site and notices folders',async()=>{
+  const api=await readFile(new URL('../functions/api/images/batch.js',import.meta.url),'utf8');
+  const client=await readFile(new URL('../src/imageUpload.ts',import.meta.url),'utf8');
+  assert.match(api,/folder!=='site'&&folder!=='notices'/);
+  assert.match(api,/const path=folder\+'\/'/);
+  assert.match(client,/body.append\('folder',folder\)/);
+});
