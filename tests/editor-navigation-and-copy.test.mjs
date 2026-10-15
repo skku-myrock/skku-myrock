@@ -9,7 +9,7 @@ test('both editors have dirty-state guarded navigation and preserve saved exits'
   ]);
   assert.match(about,/JSON\.stringify\(content\)!==savedSnapshot.current/);
   assert.match(about,/savedSnapshot.current=JSON.stringify\(updated.content\)/);
-  assert.match(about,/registerLeaveGuard\(null\);\s*onSaved\(\)/);
+  assert.match(about,/registerLeaveGuard\(null\);\s*onSaved\(updated\.siteCleanup/);
   assert.match(composer,/const originalDraft=useRef\(JSON.stringify\(\{title,category,blocks\}\)\)/);
   assert.match(composer,/registerLeaveGuard\(null\);\s*onSaved\(saved\)/);
   assert.match(about,/useEditorLeaveGuard\(hasUnsavedChanges\|\|busy,registerLeaveGuard\)/);

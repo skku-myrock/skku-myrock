@@ -2,7 +2,7 @@ import { auth } from './firebase';
 export type Officer={id:string;name:string;position:string;photoUrl:string};
 export type HistoryEntry={id:string;year:string;description:string};
 export type AboutContent={homeImage:string;heroImage:string;cohortLabel:string;officers:Officer[];history:HistoryEntry[]};
-export type AboutManageResponse={content:AboutContent;updateTime:string|null};
+export type AboutManageResponse={content:AboutContent;updateTime:string|null;siteCleanup?:{deleted:number;pending:boolean}};
 export const DEFAULT_ABOUT:AboutContent={
   homeImage:'',heroImage:'',
   cohortLabel:'28기 운영진 소개',

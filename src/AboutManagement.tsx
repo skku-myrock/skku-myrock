@@ -9,7 +9,7 @@ import type {AboutContent,Officer,HistoryEntry} from './aboutContent';
 
 type PhotoTarget={type:'home'}|{type:'hero'}|{type:'officer';id:string};
 
-export default function AboutManagement({onBack,onSaved,registerLeaveGuard}:{onBack:()=>void;onSaved:()=>void;registerLeaveGuard:(guard:(()=>boolean)|null)=>void}){
+export default function AboutManagement({onBack,onSaved,registerLeaveGuard}:{onBack:()=>void;onSaved:(message?:string)=>void;registerLeaveGuard:(guard:(()=>boolean)|null)=>void}){
   const [content,setContent]=useState<AboutContent>(structuredClone(DEFAULT_ABOUT));
   const [version,setVersion]=useState<string|null>(null);
   const savedSnapshot=useRef<string|null>(null);
@@ -70,7 +70,7 @@ export default function AboutManagement({onBack,onSaved,registerLeaveGuard}:{onB
       savedSnapshot.current=JSON.stringify(updated.content);
       setContent(updated.content);setVersion(updated.updateTime);
       registerLeaveGuard(null);
-      onSaved();
+      onSaved(updated.siteCleanup?.pending?'소개 정보는 저장했지만 이전 사진의 자동 정리가 지연되었습니다. 다음 정리 때 다시 확인해야 합니다.':undefined);
     }catch(reason){setError(reason instanceof Error?reason.message:'저장 오류');}
     finally{setBusy(false);}
   }

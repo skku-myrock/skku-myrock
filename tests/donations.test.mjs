@@ -255,17 +255,17 @@ test('private profile checks, role matrix, database writes and superadmin financ
     assert.equal((await aboutImagePost({request:publicFileRequest,env})).status,403);
     const imageEnv={...env,GITHUB_IMAGES_TOKEN:'test-server-token',MYROCK_IMAGES_PUBLIC_BASE_URL:'https://myrock-images.pages.dev/'};
     const uploadPayload=new FormData();
-    uploadPayload.append('image',new Blob([new Uint8Array([137,80,78,71,13,10,26,10])],{type:'image/png'}),'test.png');
+    uploadPayload.append('image',new Blob([new Uint8Array([82,73,70,70,0,0,0,0,87,69,66,80])],{type:'image/webp'}),'test.webp');
     const uploadReq=new Request('https://skku-myrock.pages.dev/api/about/image',{method:'POST',
       headers:{authorization:'Bearer '+token.staff},body:uploadPayload});
     const uploaded=await aboutImagePost({request:uploadReq,env:imageEnv});
     assert.equal(uploaded.status,201);
     assert.match((await uploaded.json()).url,/^https:\/\/myrock-images\.pages\.dev\/site\//);
     // Staff may maintain site assets; part leaders may publish notice photos only.
-    const imageBatchRequest=(actor,folder,type='image/png')=>{
+    const imageBatchRequest=(actor,folder,type='image/webp')=>{
       const data=new FormData();
       data.append('folder',folder);
-      data.append('images',new Blob([new Uint8Array(type==='image/gif'?[71,73,70,56,57,97]:[137,80,78,71,13,10,26,10])],{type}),type==='image/gif'?'animation.gif':'image.png');
+      data.append('images',new Blob([new Uint8Array(type==='image/gif'?[71,73,70,56,57,97]:[82,73,70,70,0,0,0,0,87,69,66,80])],{type}),type==='image/gif'?'animation.gif':'image.webp');
       return new Request('https://skku-myrock.pages.dev/api/images/batch',{method:'POST',headers:{authorization:'Bearer '+token[actor]},body:data});
     };
     assert.equal((await batchImagePost({request:imageBatchRequest('part','site'),env:imageEnv})).status,403);
