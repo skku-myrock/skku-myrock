@@ -1,3 +1,4 @@
+import {readStyles} from './readStyles.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
@@ -6,7 +7,7 @@ import {withoutAboutPhotoUrls,resetAboutTextKeepingImages,DEFAULT_ABOUT} from '.
 const source=path=>readFile(new URL('../'+path,import.meta.url),'utf8');
 
 test('notice management action stays aligned with author and date',async()=>{
- const app=await source('src/App.tsx'),style=await source('src/styles.css');
+ const app=await source('src/App.tsx'),style=await readStyles();
  const h=app.indexOf('<header className="notice-detail-header">'),e=app.indexOf('</header>',h);
  const section=app.slice(h,e);
  assert.match(section,/notice-detail-meta/);
