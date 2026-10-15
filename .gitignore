@@ -1,0 +1,19 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+.firebase/
+.DS_Store
+*.local
+
+private/
+*service-account*.json
+*credentials*.csv
+
+# Cloudflare Wrangler temporary data / local secrets
+.wrangler/
+.dev.vars
+.dev.vars.*
+*.pem
+.tmp-pages-functions/

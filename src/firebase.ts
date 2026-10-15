@@ -1,0 +1,34 @@
+import { initializeApp } from 'firebase/app';
+import { getAuth } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
+
+const config = {
+  apiKey: 'AIzaSyC-2H282ITWdqBTYVJBsoC0gnA9Y-xl4LM',
+  authDomain: 'skku-myrock.firebaseapp.com',
+  projectId: 'skku-myrock',
+  storageBucket: 'skku-myrock.firebasestorage.app',
+  messagingSenderId: '42597556706',
+  appId: '1:42597556706:web:6f6cde9d80c43cf94a59bb',
+};
+
+export const firebaseApp = initializeApp(config);
+export const auth = getAuth(firebaseApp);
+export const db = getFirestore(firebaseApp);
+
+// Firebase Authentication uses email/password internally; the UI exposes only student IDs.
+// These synthetic addresses are not real mailboxes and cannot receive password resets.
+export const accountEmail = (studentId: string) => `${studentId}@members.skku-myrock.firebaseapp.com`;
+
+export type Session = '보컬' | '기타' | '베이스' | '드럼' | '키보드';
+export type MemberRole = 'member' | 'part_leader' | 'staff' | 'president';
+export interface MemberProfile {
+  uid: string;
+  studentId: string;
+  name: string;
+  generation: string;
+  sessions: Session[];
+  positions: string[];
+  role: MemberRole;
+  handoverAccess: boolean;
+  superadmin: boolean;
+}

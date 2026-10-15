@@ -1,0 +1,21 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{uid} {
+      allow get: if request.auth != null && request.auth.uid == uid;
+      allow list, create, delete: if false;
+      allow update: if request.auth != null
+        && request.auth.uid == uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['sessions', 'updatedAt'])
+        && request.resource.data.sessions is list
+        && request.resource.data.sessions.size() >= 1
+        && request.resource.data.sessions.size() <= 5
+        && request.resource.data.sessions.hasOnly(['보컬', '기타', '베이스', '드럼', '키보드'])
+        && request.resource.data.sessions.toSet().size() == request.resource.data.sessions.size()
+        && request.resource.data.updatedAt == request.time;
+    }
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
