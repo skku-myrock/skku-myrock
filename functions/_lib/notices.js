@@ -1,5 +1,6 @@
 import {FIRESTORE_ROOT,docFields,toFields,reject} from './shared.js';
 import {googleRequest} from './google.js';
+import {firestorePage} from './firestorePages.js';
 
 const ROOT=FIRESTORE_ROOT+'/notices';
 const categories=new Set(['공지','공연','행사']);
@@ -54,6 +55,14 @@ export async function listNotices(env){
     pageToken=response.data.nextPageToken??'';if(!pageToken)break;
   }
   return items.sort((a,b)=>b.publishedAt.localeCompare(a.publishedAt));
+}
+/** Public list: only metadata and searchable text, never image blocks or serialized galleries. */
+export async function listNoticeSummariesPage(env,request){
+  const {documents,nextPageToken}=await firestorePage(env,ROOT,{
+    request,orderBy:'publishedAt desc',
+    fields:['title','category','author','authorUid','publishedAt','description','body','images']
+  });
+  return {notices:documents.map(noticeFromDoc),nextPageToken};
 }
 export async function getNotice(env,id){
   if(!idRegex.test(id))reject('잘못된 공지사항 주소입니다.',404);
