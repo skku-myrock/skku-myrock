@@ -6,6 +6,6 @@ export async function onRequestGet({request,env}){
   catch(error){return failure(error);}
 }
 export async function onRequestPost({request,env}){
-  try{secureOrigin(request);const caller=await assertAccess(request,env,'part_leader');const input=await parseBody(request);return success({notice:await createNotice(env,input,caller)},201);}
+  try{secureOrigin(request);const caller=await assertAccess(request,env,'part_leader');const input=await parseBody(request,450000);return success({notice:await createNotice(env,input,caller)},201);}
   catch(error){return failure(error);}
 }
