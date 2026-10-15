@@ -383,6 +383,7 @@ function App() {
   const [financeResetting,setFinanceResetting] = useState(false);
   const [noticeResetting,setNoticeResetting]=useState(false);
   const [aboutResetting,setAboutResetting]=useState(false);
+  const [aboutRevision,setAboutRevision]=useState(0);
   const [financeRevision,setFinanceRevision] = useState(0);
   const [rosterRevision,setRosterRevision] = useState(0);
   useEffect(()=>{
@@ -522,6 +523,7 @@ function App() {
     setAboutResetting(true);setAccountOpen(false);setMenuOpen(false);
     try{
       await resetClubIntroduction();
+      setAboutRevision(v=>v+1);
       navigate('about');
       window.alert('모여락 소개가 28기 운영진과 1998년·2023년 연혁으로 초기화되었습니다. GitHub site/도 비웠습니다. Cloudflare 배포 반영까지 시간이 걸릴 수 있습니다.');
     }catch(error){
@@ -552,7 +554,7 @@ function App() {
     </header>
     <main key={page}>
       {page==='home'&&<Home navigate={navigate} openNotice={openNotice} notices={notices}/>}
-      {page==='about'&&<About navigate={navigate} canEdit={Boolean(user&&!authPending&&canManageDonations)}/>}
+      {page==='about'&&<About key={aboutRevision} navigate={navigate} canEdit={Boolean(user&&!authPending&&canManageDonations)}/>}
        {page==='about-manage'&&(authPending?<section className="container section-block"><EmptyState title="권한 확인 중" description="로그인 상태를 확인하고 있습니다."/></section>:user&&canManageDonations?<AboutManagement onBack={()=>navigate('about')}/>:<section className="container section-block"><EmptyState icon={<LockKeyhole size={26}/>} title="접근 권한이 없습니다" description="동아리 소개 수정은 실무단 이상만 가능합니다."/></section>)}
       {page==='news'&&<News canWrite={Boolean(user && !authPending && currentLevel)} onWrite={() => navigate('notice-compose')} openNotice={openNotice} notices={notices} loading={noticeLoading} error={noticeError}/>}
       {page==='notice-compose'&&(authPending ? <section className="container section-block"><EmptyState title="권한 확인 중" description="로그인 상태를 확인하고 있습니다." /></section> : user && currentLevel ? <NoticeComposer onBack={() => navigate('news')} onSaved={savedNotice}/> : <section className="container section-block"><EmptyState icon={<LockKeyhole size={26}/>} title="접근 권한이 없습니다" description="공지사항 글쓰기는 파트장 이상 운영진만 사용할 수 있습니다." /></section>)}
