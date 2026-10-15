@@ -106,7 +106,7 @@ export default function PhotoGallery({ onRegister }: { onRegister: () => void })
 
   return <section className="container section-block gallery-section">
     <div className="toolbar toolbar-bottom gallery-toolbar">
-      <div className="tabs gallery-tabs" aria-label="포토존 분류">
+      <div className="tabs gallery-tabs" aria-label="갤러리 분류">
         {categories.map(category => <button type="button" key={category}
           aria-pressed={filter === category}
           className={filter === category ? 'active' : ''}
