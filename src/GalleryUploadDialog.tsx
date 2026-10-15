@@ -158,9 +158,11 @@ export default function GalleryUploadDialog({ onClose,onCreated,initialAlbum,onU
     }
   }
   function onDialogKeyDown(event: KeyboardEvent<HTMLElement>) {
-    if (event.key === 'Escape'&&!busyRef.current) {
+    if (event.key === 'Escape') {
+      // Do not let Escape reach the underlying album viewer while editing.
+      event.stopPropagation();
       event.preventDefault();
-      onClose();
+      if(!busyRef.current)onClose();
     } else if (event.key === 'Tab' && dialogRef.current) {
       const focusable = Array.from(dialogRef.current.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled]):not([type="file"]), select:not([disabled]), [tabindex="0"]'));
       if (!focusable.length) return;
