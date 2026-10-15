@@ -1,3 +1,4 @@
+import {readStyles} from './readStyles.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
@@ -5,7 +6,7 @@ import ts from 'typescript';
 
 const app = await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8');
 const source = await readFile(new URL('../src/SchedulePages.tsx', import.meta.url), 'utf8');
-const styles = await readFile(new URL('../src/styles.css', import.meta.url), 'utf8');
+const styles = await readStyles();
 
 const ast = ts.createSourceFile('SchedulePages.tsx', source, ts.ScriptTarget.ES2022, true, ts.ScriptKind.TSX);
 const declarations = ast.statements.filter(ts.isVariableStatement)
