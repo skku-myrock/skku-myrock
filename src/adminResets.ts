@@ -7,5 +7,7 @@ async function request<T>(path:string,confirmation:string):Promise<T>{
   if(!response.ok)throw Error(typeof data.error==='string'?data.error:'초기화 요청에 실패했습니다.');
   return data as T;
 }
-export const purgeNotices=()=>request<{deleted:number;done:boolean}>('/api/notices/purge','공지사항 초기화');
-export const resetClubIntroduction=()=>request<{reset:boolean;imagesCleared:boolean;commit:string|null}>('/api/about/reset','모여락 소개 초기화');
+export const purgeNotices=()=>request<{deleted:number;done:boolean;imagesCleared?:boolean;commit?:string|null}>('/api/notices/purge','공지사항 초기화');
+export const resetClubIntroduction=()=>request<{reset:boolean}>('/api/about/reset','모여락 소개 초기화');
+
+export const resetSiteAssets=()=>request<{reset:boolean;changed:boolean;commit:string|null}>('/api/images/reset','에셋 초기화');
