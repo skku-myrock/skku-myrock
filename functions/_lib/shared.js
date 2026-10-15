@@ -157,11 +157,11 @@ export function failure(error) {
   console.error('Cloudflare 관리자 API 실패', error);
   return success({ error: '서버 요청을 처리하지 못했습니다. 설정 및 로그를 확인해 주세요.' }, 500);
 }
-export async function parseBody(request) {
+export async function parseBody(request, maxBytes = 16000) {
   if (!request.headers.get('content-type')?.includes('application/json')) reject('JSON 요청만 지원합니다.', 415);
-  if (Number(request.headers.get('content-length') ?? '0') > 16000) reject('요청이 너무 큽니다.', 413);
+  if (Number(request.headers.get('content-length') ?? '0') > maxBytes) reject('요청이 너무 큽니다.', 413);
   const content = await request.text();
-  if (content.length > 16000) reject('요청이 너무 큽니다.', 413);
+  if (content.length > maxBytes) reject('요청이 너무 큽니다.', 413);
   try { return JSON.parse(content); }
   catch { reject('요청 JSON을 읽지 못했습니다.'); }
 }

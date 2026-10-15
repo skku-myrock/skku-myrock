@@ -1,7 +1,8 @@
-import {useEffect,useState} from 'react';
+import {useEffect,useRef,useState} from 'react';
 import type {ChangeEvent} from 'react';
 import {ArrowLeft,ArrowDown,ArrowUp,ImagePlus,Plus,Save,Trash2} from 'lucide-react';
-import {DEFAULT_ABOUT,getAboutManagement,saveAbout,uploadAboutImage} from './aboutContent';
+import {DEFAULT_ABOUT,getAboutManagement,saveAbout} from './aboutContent';
+import {uploadImagesBatch} from './imageUpload';
 import type {AboutContent,Officer,HistoryEntry} from './aboutContent';
 
 type PhotoTarget={type:'home'}|{type:'hero'}|{type:'officer';id:string};
@@ -9,6 +10,9 @@ type PhotoTarget={type:'home'}|{type:'hero'}|{type:'officer';id:string};
 export default function AboutManagement({onBack}:{onBack:()=>void}){
   const [content,setContent]=useState<AboutContent>(structuredClone(DEFAULT_ABOUT));
   const [version,setVersion]=useState<string|null>(null);
+  const staged=useRef(new Map<string,File>());
+  const uploaded=useRef(new Map<string,string>());
+  useEffect(()=>()=>{for(const key of staged.current.keys())URL.revokeObjectURL(key);},[]);
   const [loading,setLoading]=useState(true);
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState('');
@@ -35,26 +39,31 @@ export default function AboutManagement({onBack}:{onBack:()=>void}){
     [arr[index],arr[target]]=[arr[target],arr[index]];
     setContent(prev=>({...prev,[key]:arr}));setMessage('');
   }
-  async function chooseImage(event:ChangeEvent<HTMLInputElement>,target:PhotoTarget){
+  function chooseImage(event:ChangeEvent<HTMLInputElement>,target:PhotoTarget){
     const file=event.target.files?.[0];event.target.value='';
     if(!file||busy)return;
-    setError('');setMessage('');setBusy(true);
-    try{
-      const url=await uploadAboutImage(file);
-      if(target.type==='home')setContent(prev=>({...prev,homeImage:url}));
-      else if(target.type==='hero')setContent(prev=>({...prev,heroImage:url}));
-      else updateOfficer(target.id,'photoUrl',url);
-      setMessage('사진이 GitHub에 등록되었습니다. 이미지 배포 후 변경 내용을 저장해야 공개 페이지에 정상적으로 표시됩니다.');
-    }catch(reason){setError(reason instanceof Error?reason.message:'사진 업로드 실패');}
-    finally{setBusy(false);}
+    if(file.size===0||file.size>5000000||!['image/jpeg','image/png','image/webp','image/gif'].includes(file.type)){setError('5MB 이하의 JPG, PNG, WebP, GIF 이미지를 선택해 주세요.');return;}
+    const url=URL.createObjectURL(file);staged.current.set(url,file);
+    if(target.type==='home')setContent(prev=>({...prev,homeImage:url}));
+    else if(target.type==='hero')setContent(prev=>({...prev,heroImage:url}));
+    else updateOfficer(target.id,'photoUrl',url);
+    setError('');setMessage('선택한 사진은 로컬 미리보기입니다. 변경 사항 저장 시 업로드됩니다.');
   }
   async function save(){
     if(busy||loading)return;
     setError('');setMessage('');setBusy(true);
     try{
-      const updated=await saveAbout(content,version);
+      const sources=[content.homeImage,content.heroImage,...content.officers.map(o=>o.photoUrl)];
+      const pending=[...new Set(sources.filter(url=>staged.current.has(url)&&!uploaded.current.has(url)))];
+      if(pending.length){
+        const urls=await uploadImagesBatch(pending.map(url=>staged.current.get(url)!));
+        pending.forEach((url,i)=>uploaded.current.set(url,urls[i]));
+      }
+      const resolved=(url:string)=>uploaded.current.get(url)??url;
+      const next={...content,homeImage:resolved(content.homeImage),heroImage:resolved(content.heroImage),officers:content.officers.map(person=>({...person,photoUrl:resolved(person.photoUrl)}))};
+      const updated=await saveAbout(next,version);
       setContent(updated.content);setVersion(updated.updateTime);
-      setMessage('동아리 소개 변경 사항을 저장했습니다.');
+      setMessage('변경 사항을 저장했습니다. 새 사진은 Cloudflare 이미지 배포 후 공개 화면에 표시됩니다.');
     }catch(reason){setError(reason instanceof Error?reason.message:'저장 오류');}
     finally{setBusy(false);}
   }

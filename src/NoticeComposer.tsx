@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ChangeEvent, DragEvent } from 'react';
 import { ArrowDown, ArrowLeft, ArrowUp, GripVertical, ImagePlus, Link, Link2Off, Plus, RotateCcw, Trash2 } from 'lucide-react';
-import type { NoticeCategory } from './noticesData';
+import {createNotice,updateNotice} from './noticesData';
+import type {NoticeCategory,NoticePost,NoticeBlock,NoticeImage} from './noticesData';
+import {uploadImagesBatch} from './imageUpload';
 import { initialImageDimensions, MAX_IMAGE_DIMENSION, resizeImageDimensions, restoreInitialImageDimensions } from './noticeImageSize';
 import { reorderGalleryImages, shiftGalleryImage } from './noticeGalleryOrder';
 import type { DimensionAxis } from './noticeImageSize';
@@ -12,13 +14,20 @@ type ImageBlock = { id: number; kind: 'image'; url: string; name: string; width:
 type DraftBlock = { id: number; kind: 'text'; text: string } | ImageBlock | { id: number; kind: 'gallery'; images: ImageBlock[] };
 const allowedTypes = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif']);
 
-export default function NoticeComposer({ onBack }: { onBack: () => void }) {
-  const [title, setTitle] = useState('');
-  const [category, setCategory] = useState<NoticeCategory>('공지');
-  const [blocks, setBlocks] = useState<DraftBlock[]>([{ id: 1, kind: 'text', text: '' }]);
+export default function NoticeComposer({ onBack, onSaved, initial }: { onBack: () => void; onSaved: (post:NoticePost) => void; initial?:NoticePost }) {
+  const [title, setTitle] = useState(initial?.title??'');
+  const [category, setCategory] = useState<NoticeCategory>(initial?.category??'공지');
+  const [blocks, setBlocks] = useState<DraftBlock[]>(()=>{
+    if(!initial?.blocks?.length)return [{id:1,kind:'text',text:''}];
+    const hydrate=(image:NoticeImage,id:number):ImageBlock=>({...image,id,kind:'image',width:Number(image.width),height:Number(image.height),naturalWidth:Number(image.naturalWidth),naturalHeight:Number(image.naturalHeight)});
+    return initial.blocks.map((block,i)=>block.kind==='text'?{id:i+1,kind:'text',text:block.text}:block.kind==='image'?hydrate(block,i+1):{id:i+1,kind:'gallery',images:block.images.map((image,j)=>hydrate(image,1000+i*30+j))});
+  });
   const [preview, setPreview] = useState(false);
   const [error, setError] = useState('');
-  const nextId = useRef(2);
+  const [busy,setBusy]=useState(false);
+  const localFiles=useRef(new Map<string,File>());
+  const uploaded=useRef(new Map<string,string>());
+  const nextId = useRef(100000);
   const objectUrls = useRef<string[]>([]);
   const draggingSlide = useRef<{ groupId: number; imageId: number } | null>(null);
   const [dropTarget, setDropTarget] = useState<number | null>(null);
@@ -41,9 +50,9 @@ export default function NoticeComposer({ onBack }: { onBack: () => void }) {
       event.target.value = '';
       return;
     }
-    const invalid = selected.find(file => !allowedTypes.has(file.type) || file.size > 10 * 1024 * 1024);
+    const invalid = selected.find(file => !allowedTypes.has(file.type) || !file.size || file.size > 5000000);
     if (invalid) {
-      setError('PNG, JPG, WebP, GIF 형식의 10MB 이하 이미지만 추가할 수 있습니다.');
+      setError('PNG, JPG, WebP, GIF 형식의 5MB 이하 이미지만 추가할 수 있습니다.');
       event.target.value = '';
       return;
     }
@@ -56,6 +65,7 @@ export default function NoticeComposer({ onBack }: { onBack: () => void }) {
     const newImages: ImageBlock[] = selected.map(file => {
       const url = URL.createObjectURL(file);
       objectUrls.current.push(url);
+      localFiles.current.set(url,file);
       return { id: nextId.current++, kind: 'image', url, name: file.name, width: 0, height: 0,
         ratioLocked: true, naturalWidth: 0, naturalHeight: 0 };
     });
@@ -93,9 +103,9 @@ export default function NoticeComposer({ onBack }: { onBack: () => void }) {
     let parsed:URL;
     try {
       parsed=new URL(input);
-      if(!['https:','http:'].includes(parsed.protocol)||parsed.username||parsed.password)throw Error('bad protocol');
+      if(parsed.protocol!=='https:'||parsed.username||parsed.password)throw Error('bad protocol');
     }catch{
-      setError('이미지 URL은 http:// 또는 https://로 시작하는 올바른 주소여야 합니다.');
+      setError('이미지 URL은 https://로 시작하는 올바른 주소여야 합니다.');
       return;
     }
     const target=targetBlockId===undefined?null:blocks.find(block=>block.id===targetBlockId);
@@ -219,6 +229,25 @@ export default function NoticeComposer({ onBack }: { onBack: () => void }) {
   function removeBlock(id: number) {
     setBlocks(previous => previous.filter(block => block.id !== id));
   }
+  async function publish(){
+    if(busy)return;
+    if(!title.trim()){setError('제목을 입력해 주세요.');return;}
+    setError('');setBusy(true);
+    try{
+      const allImages=blocks.flatMap(block=>block.kind==='image'?[block]:block.kind==='gallery'?block.images:[]);
+      const pending=[...new Set(allImages.map(image=>image.url).filter(url=>localFiles.current.has(url)&&!uploaded.current.has(url)))];
+      if(pending.length){
+        const urls=await uploadImagesBatch(pending.map(url=>localFiles.current.get(url)!));
+        pending.forEach((url,i)=>uploaded.current.set(url,urls[i]));
+      }
+      const serialize=(image:ImageBlock):NoticeImage=>({kind:'image',url:uploaded.current.get(image.url)??image.url,name:image.name,width:image.width,height:image.height,ratioLocked:image.ratioLocked,naturalWidth:image.naturalWidth,naturalHeight:image.naturalHeight});
+      const payload:NoticeBlock[]=blocks.map(block=>block.kind==='text'?{kind:'text',text:block.text}:block.kind==='image'?serialize(block):{kind:'gallery',images:block.images.map(serialize)});
+      const input={title,category,blocks:payload};
+      const saved=initial?await updateNotice(initial.id,{...input,expectedUpdateTime:initial.updateTime}):await createNotice(input);
+      onSaved(saved);
+    }catch(reason){setError(reason instanceof Error?reason.message:'공지사항 저장에 실패했습니다.');}
+    finally{setBusy(false);}
+  }
   function back() {
     if ((title.trim() || blocks.some(block => block.kind !== 'text' || block.text.trim())) &&
         !window.confirm('현재 작성 중인 글은 저장되지 않습니다. 목록으로 돌아갈까요?')) return;
@@ -227,11 +256,11 @@ export default function NoticeComposer({ onBack }: { onBack: () => void }) {
 
   return <>
     <div className="page-heading container"><span className="eyebrow">NOTICE EDITOR</span>
-      <h1>공지사항 글쓰기</h1><p>글을 작성하고 이미지 위치를 조정할 수 있습니다.</p>
+      <h1>{initial?'공지사항 수정하기':'공지사항 글쓰기'}</h1><p>글을 작성하고 이미지 위치를 조정할 수 있습니다.</p>
     </div>
     <section className="container section-block notice-composer-page">
       <button type="button" className="notice-detail-back" onClick={back}><ArrowLeft size={16}/> 공지사항 목록</button>
-      <div className="notice-composer-info" role="note">현재는 작성 및 미리보기만 지원합니다. 게시글은 저장되지 않습니다. 페이지를 나가면 작성한 내용과 이미지는 사라집니다.</div>
+      <div className="notice-composer-info" role="note">파일을 선택하면 먼저 로컬에서 미리봅니다. 발행 또는 저장하기를 누르면 이미지와 본문을 서버에 등록합니다.</div>
       <div className="notice-composer-fields">
         <label>분류
           <select value={category} onChange={event => setCategory(event.target.value as NoticeCategory)}>
@@ -375,10 +404,10 @@ export default function NoticeComposer({ onBack }: { onBack: () => void }) {
         <button type="button" className="button button-primary" onClick={() => setPreview(previous => !previous)}>{preview ? '편집으로 돌아가기' : '미리보기'}</button>
       </div>
       <div className="notice-composer-publish">
-        <button type="button" className="button button-primary" disabled title="발행 기능은 추후 연결됩니다.">발행 (준비 중)</button>
-        <span>현재 발행할 수 없습니다. 글과 이미지는 서버에 저장되지 않습니다.</span>
+        <button type="button" className="button button-primary" disabled={busy} onClick={()=>void publish()}>{busy?"저장 중...":initial?"변경 사항 저장":"발행"}</button>
+        <span>선택한 이미지는 저장 전까지 GitHub에 커밋되지 않습니다.</span>
       </div>
-      <p className="notice-composer-footnote">이미지는 브라우저에서만 미리 표시됩니다. 실제 게시 및 파일 업로드 기능은 추후 연결될 예정입니다.</p>
+      <p className="notice-composer-footnote">사진은 저장 시 업로드됩니다. GitHub 커밋 후 이미지가 공개되기까지 Cloudflare 배포 시간이 걸릴 수 있습니다.</p>
     </section>
   </>;
 }
