@@ -12,7 +12,9 @@ async function request<T>(url:string,method='GET',body?:unknown):Promise<T>{
   if(!res.ok)throw Error(typeof data?.error==='string'?data.error:'공지사항 처리에 실패했습니다.');
   return data as T;
 }
-export const listNotices=async()=> (await request<{notices:NoticePost[]}>('/api/notices')).notices;
+export type NoticePage={notices:NoticePost[];nextPageToken:string|null};
+export const listNoticesPage=(pageToken:string|null=null)=>request<NoticePage>('/api/notices'+(pageToken?'?pageToken='+encodeURIComponent(pageToken):''));
+export const listNotices=async()=> (await listNoticesPage()).notices;
 export const getNotice=async(id:string)=>(await request<{notice:NoticePost}>('/api/notices/'+encodeURIComponent(id))).notice;
 export const createNotice=async(input:NoticeInput)=>(await request<{notice:NoticePost}>('/api/notices','POST',input)).notice;
 export const updateNotice=async(id:string,input:NoticeInput)=>(await request<{notice:NoticePost}>('/api/notices/'+encodeURIComponent(id),'PUT',input)).notice;

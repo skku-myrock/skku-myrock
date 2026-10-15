@@ -12,6 +12,7 @@ import { DEFAULT_ABOUT,normalizeAbout } from '../functions/_lib/aboutContent.js'
 import { onRequestGet as publicAboutGet,onRequestPost as aboutPost } from '../functions/api/about/content.js';
 import { onRequestGet as manageAboutGet } from '../functions/api/about/manage.js';
 import { onRequestPost as aboutImagePost } from '../functions/api/about/image.js';
+import {onRequestPost as batchImagePost} from '../functions/api/images/batch.js';
 import { normalizeAccount,normalizeTransaction,DEFAULT_ACCOUNT } from '../functions/_lib/financeTransactions.js';
 import { onRequestGet as accountGet,onRequestPost as accountPost } from '../functions/api/finance/account.js';
 import { onRequestGet as accountManageGet } from '../functions/api/finance/account-manage.js';
@@ -112,7 +113,7 @@ test('private profile checks, role matrix, database writes and superadmin financ
   const env={FIREBASE_SERVICE_ACCOUNT:JSON.stringify({project_id:'skku-myrock',
     client_email:'tests@skku-myrock.iam.gserviceaccount.com',
     private_key:'-----BEGIN PRIVATE KEY-----\n'+pem+'\n-----END PRIVATE KEY-----\n'})};
-  const actors={member:{uid:'donationMember123',role:'member',studentId:'2026300001'},
+  const actors={part:{uid:'donationPart1234',role:'part_leader',studentId:'2026300004'},member:{uid:'donationMember123',role:'member',studentId:'2026300001'},
     staff:{uid:'donationStaff1234',role:'staff',studentId:'2026300002'},
     super:{uid:'donationSuper1234',role:'member',studentId:'2026300003',superadmin:true}};
   const token={};
@@ -146,12 +147,27 @@ test('private profile checks, role matrix, database writes and superadmin financ
     const response=(value,status=200)=>new Response(JSON.stringify(value),{status,headers:{'content-type':'application/json'}});
     if(uri.pathname.includes('/service_accounts/v1/jwk/'))return response({keys:[jwk]});
     if(uri.hostname==='oauth2.googleapis.com')return response({access_token:'test-access',expires_in:3600});
-    if(uri.hostname==='api.github.com'&&uri.pathname.startsWith('/repos/skku-myrock/myrock-images/contents/site/'))return response({content:{sha:'test-image-blob'}},201);
+    if(uri.hostname==='api.github.com'&&uri.pathname.startsWith('/repos/skku-myrock/myrock-images/')){
+      if(uri.pathname.endsWith('/git/ref/heads/main'))return response({object:{sha:'mock-main'}});
+      if(uri.pathname.endsWith('/git/commits/mock-main'))return response({tree:{sha:'mock-tree'}});
+      if(uri.pathname.endsWith('/git/blobs'))return response({sha:'mock-blob'});
+      if(uri.pathname.endsWith('/git/trees'))return response({sha:'mock-new-tree'});
+      if(uri.pathname.endsWith('/git/commits'))return response({sha:'mock-new-commit'});
+      if(uri.pathname.endsWith('/git/refs/heads/main'))return response({});
+      throw Error('unexpected GitHub image API '+uri.pathname);
+    }
     if(uri.hostname==='firestore.googleapis.com'){
       let docPath=decodeURIComponent(uri.pathname.slice(uri.pathname.indexOf('/documents')+'/documents'.length));
       if(docPath===':commit'){
         for(const write of data.writes){docs.set(write.update.name,{name:write.update.name,fields:write.update.fields,updateTime:now()});}
         return response({writeResults:[]});
+      }
+      if(docPath===':runQuery'){
+        const where=data?.structuredQuery?.where?.fieldFilter;
+        assert.equal(where?.field?.fieldPath,'studentId');
+        assert.equal(where?.op,'EQUAL');
+        const matched=[...docs.values()].filter(doc=>doc.name.startsWith(root+'/donations/')&&docFields(doc).studentId===where.value.stringValue);
+        return response(matched.map(doc=>({document:doc})));
       }
       const key=root+docPath;
       if(options.method==='PATCH'){
@@ -245,6 +261,21 @@ test('private profile checks, role matrix, database writes and superadmin financ
     const uploaded=await aboutImagePost({request:uploadReq,env:imageEnv});
     assert.equal(uploaded.status,201);
     assert.match((await uploaded.json()).url,/^https:\/\/myrock-images\.pages\.dev\/site\//);
+    // Staff may maintain site assets; part leaders may publish notice photos only.
+    const imageBatchRequest=(actor,folder,type='image/png')=>{
+      const data=new FormData();
+      data.append('folder',folder);
+      data.append('images',new Blob([new Uint8Array(type==='image/gif'?[71,73,70,56,57,97]:[137,80,78,71,13,10,26,10])],{type}),type==='image/gif'?'animation.gif':'image.png');
+      return new Request('https://skku-myrock.pages.dev/api/images/batch',{method:'POST',headers:{authorization:'Bearer '+token[actor]},body:data});
+    };
+    assert.equal((await batchImagePost({request:imageBatchRequest('part','site'),env:imageEnv})).status,403);
+    const noticeUploaded=await batchImagePost({request:imageBatchRequest('part','notices'),env:imageEnv});
+    assert.equal(noticeUploaded.status,201);
+    assert.match((await noticeUploaded.json()).urls[0],/^https:\/\/myrock-images\.pages\.dev\/notices\//);
+    assert.equal((await batchImagePost({request:imageBatchRequest('part','notices','image/gif'),env:imageEnv})).status,400);
+    const legacyGif=new FormData();
+    legacyGif.append('image',new Blob([new Uint8Array([71,73,70,56,57,97])],{type:'image/gif'}),'animation.gif');
+    assert.equal((await aboutImagePost({request:new Request('https://skku-myrock.pages.dev/api/about/image',{method:'POST',headers:{authorization:'Bearer '+token.staff},body:legacyGif}),env:imageEnv})).status,400);
     assert.equal((await expensesManageGet({request:financeRequest('member','expenses-manage'),env})).status,403);
     assert.equal((await expensesManageGet({request:financeRequest('staff','expenses-manage'),env})).status,200);
     const transaction={dateTime:'2026-10-15T12:30',type:'출금',amount:'10000',balance:'50000',description:'합주실 대여'};

@@ -1,8 +1,8 @@
 import {failure,secureOrigin,parseBody,success} from '../../_lib/shared.js';
 import {assertAccess} from '../../_lib/google.js';
-import {listNotices,createNotice} from '../../_lib/notices.js';
+import {listNoticeSummariesPage,createNotice} from '../../_lib/notices.js';
 export async function onRequestGet({request,env}){
-  try{secureOrigin(request);return success({notices:await listNotices(env)});}
+  try{secureOrigin(request);return success(await listNoticeSummariesPage(env,request));}
   catch(error){return failure(error);}
 }
 export async function onRequestPost({request,env}){

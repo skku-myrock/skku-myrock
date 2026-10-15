@@ -78,7 +78,7 @@ test('server-only sensitive ledger operations and accessible manager actions rem
   }
   assert.match(api,/auth.currentUser\?\.getIdToken\(\)/);
   assert.match(publicRoute,/publicDonation\(record,registry.people\)/);
-  assert.match(mineRoute,/record.studentId === studentId/);
+  assert.match(mineRoute,/loadDonationsByStudentId\(env,studentId\)/);
   assert.match(managementRoute,/assertAccess\(request,env,'staff'\)/);
   assert.doesNotMatch(finance,/getDocs\(|collection\(/);
   assert.match(finance,/회비 집행 기록/);
