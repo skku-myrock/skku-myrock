@@ -212,13 +212,13 @@ test('both CSV managers provide matching sample formats and date guidance',async
   for(const manager of [donations,expenses]){
     assert.match(manager,/CSV 파일 선택/);
     assert.match(manager,/양식 내려받기/);
-    assert.match(manager,/날짜는 반드시 다음 예시와 같은 값을 사용해야 합니다/);
+    assert.match(manager,/날짜는 반드시 다음 예시와 같은 (?:형식|값)을 사용해야 합니다/);
     assert.match(manager,/추가 준비: \{csvRows.length\}건/);
     assert.match(manager,/CSV \{csvRows.length\}건 추가/);
     assert.match(manager,/window.confirm\('CSV '/);
   }
   assert.match(donations,/예시\) 2026-10-14/);
-  assert.match(donations,/익명 여부는 소문자 'o'일 때만 익명이며, 빈칸이면 공개됩니다/);
+  assert.match(donations,/익명으로 표시하려면 '익명 여부' 칸에 소문자 'o'를 입력해 주세요. 다른 값이나 빈칸은 익명으로 처리되지 않습니다/);
   assert.doesNotMatch(donations,/후원일, 후원자명, 학번, 후원금액, 익명여부 · o만 익명 처리합니다/);
   assert.match(donations,/myrock-donations-template.csv/);
   assert.match(expenses,/예시\) 2026-10-14 15:30/);
