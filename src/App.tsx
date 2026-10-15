@@ -475,9 +475,7 @@ function App() {
   }
   async function resetDonationFinance() {
     if(financeResetting||rosterResetting||noticeResetting||aboutResetting||assetResetting||!user||!profile?.superadmin||!hasSystemClaim)return;
-    const typed=window.prompt('모든 후원 기록과 익명자 명단, 회비 집행 내역이 영구 삭제됩니다. 계속하려면 후원 · 회계 초기화를 입력하세요.');
-    if(typed!=='후원 · 회계 초기화')return;
-    if(!window.confirm('후원과 회비 집행 내역 전체를 영구 삭제합니다. 복구할 수 없습니다. 실행할까요?'))return;
+    if(!window.confirm('경고: 모든 후원 기록, 회비 집행 내역 및 익명자 명단을 영구 삭제합니다. 복구할 수 없습니다. 계속하시겠습니까?'))return;
     setFinanceResetting(true);setAccountOpen(false);setMenuOpen(false);
     let removed=0;
     try {
@@ -497,9 +495,7 @@ function App() {
   }
   async function resetAllNotices(){
     if(rosterResetting||financeResetting||noticeResetting||aboutResetting||assetResetting||!user||!profile?.superadmin||!hasSystemClaim)return;
-    const typed=window.prompt('모든 공지사항과 GitHub notices/ 폴더의 사진을 삭제합니다. 계속하려면 공지사항 초기화를 입력하세요.');
-    if(typed!=='공지사항 초기화')return;
-    if(!window.confirm('모든 공지사항 데이터 및 notices/ 사진을 삭제합니다. gallery/와 site/는 유지됩니다. 실행할까요?'))return;
+    if(!window.confirm('경고: 모든 공지사항과 GitHub notices/ 폴더의 사진을 영구 삭제합니다. gallery/와 site/는 유지됩니다. 계속하시겠습니까?'))return;
     setNoticeResetting(true);setAccountOpen(false);setMenuOpen(false);
     let removed=0;
     try{
@@ -518,24 +514,20 @@ function App() {
   }
   async function resetIntroduction(){
     if(rosterResetting||financeResetting||noticeResetting||aboutResetting||assetResetting||!user||!profile?.superadmin||!hasSystemClaim)return;
-    const typed=window.prompt('모여락 소개 내용을 28기 운영진과 1998년·2023년 연혁으로 되돌리고 사진 URL을 비웁니다. GitHub에 저장된 파일은 삭제되지 않습니다. 계속하려면 모여락 소개 초기화를 입력하세요.');
-    if(typed!=='모여락 소개 초기화')return;
-    if(!window.confirm('모여락 소개 내용만 초기화합니다. GitHub 이미지 파일은 유지됩니다. 실행할까요?'))return;
+    if(!window.confirm('경고: 모여락 소개의 운영진 정보와 연혁을 28기 기본값으로 되돌립니다. 메인 페이지·동아리 소개·운영진 사진 URL과 GitHub 이미지 파일은 유지됩니다. 계속하시겠습니까?'))return;
     setAboutResetting(true);setAccountOpen(false);setMenuOpen(false);
     try{
       await resetClubIntroduction();
       setAboutRevision(v=>v+1);
       navigate('about');
-      window.alert('모여락 소개 내용이 28기 운영진과 1998년·2023년 연혁으로 초기화되었습니다. GitHub 이미지 파일은 그대로 유지됩니다.');
+      window.alert('모여락 소개 내용이 28기 운영진과 1998년·2023년 연혁으로 초기화되었습니다. 메인·동아리 소개·운영진 사진 URL과 GitHub 파일은 그대로 유지됩니다.');
     }catch(error){
       window.alert('모여락 소개 초기화에 실패했습니다. Firestore 상태를 확인해 주세요. '+(error instanceof Error?error.message:'서버 오류'));
     }finally{setAboutResetting(false);}
   }
   async function resetAssets(){
     if(rosterResetting||financeResetting||noticeResetting||aboutResetting||assetResetting||!user||!profile?.superadmin||!hasSystemClaim)return;
-    const typed=window.prompt('GitHub myrock-images/site/ 파일과 Firestore의 메인·동아리 소개·운영진 사진 URL을 함께 초기화합니다. site/ 이미지를 사용하는 옛 공지사항이 있다면 작업이 차단됩니다. 계속하려면 에셋 초기화를 입력하세요.');
-    if(typed!=='에셋 초기화')return;
-    if(!window.confirm('site/ 사진과 Firebase 소개 사진 URL을 초기화합니다. gallery/, notices/, 운영진 이름과 연혁은 유지됩니다. 실행할까요?'))return;
+    if(!window.confirm('경고: GitHub site/ 사진과 Firestore의 메인·동아리 소개·운영진 사진 URL을 삭제합니다. gallery/, notices/, 운영진 정보와 연혁은 유지됩니다. 계속하시겠습니까?'))return;
     setAssetResetting(true);setAccountOpen(false);setMenuOpen(false);
     try{
       await resetSiteAssets();
