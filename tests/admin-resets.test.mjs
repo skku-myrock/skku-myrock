@@ -16,18 +16,18 @@ test('notice management action stays aligned with author and date',async()=>{
  assert.match(style,/\.notice-detail-meta\{[^}]*justify-content:space-between/);
 });
 
-test('desktop and mobile menus expose exactly three independently scoped reset actions',async()=>{
+test('desktop and mobile menus expose independently scoped reset actions including gallery',async()=>{
  const app=await source('src/App.tsx');
  assert.match(app,/isDeveloperSuperadmin=Boolean\(user && profile\?\.superadmin && hasSystemClaim\)/);
- for(const name of ['공지사항 초기화','모여락 소개 초기화','에셋 초기화'])
+ for(const name of ['공지사항 초기화','모여락 소개 초기화','에셋 초기화','갤러리 초기화'])
    assert.equal(app.split('>'+name).length-1,2,name);
- for(const method of ['purgeNotices()','resetClubIntroduction()','resetSiteAssets()'])
+ for(const method of ['purgeNotices()','resetClubIntroduction()','resetSiteAssets()','purgeGallery()'])
    assert.ok(app.includes(method),method);
  assert.match(app,/사진 URL과 GitHub 파일은 그대로 유지됩니다/);
 });
 
 test('all reset APIs enforce signed and stored superadmin flags',async()=>{
- const handlers=await Promise.all(['functions/api/about/reset.js','functions/api/notices/purge.js','functions/api/images/reset.js'].map(source));
+ const handlers=await Promise.all(['functions/api/about/reset.js','functions/api/notices/purge.js','functions/api/images/reset.js','functions/api/gallery/purge.js'].map(source));
  for(const code of handlers){
    assert.match(code,/assertAccess\(request,env,'president'\)/);
    assert.match(code,/if\(!caller.superadmin\)reject/);
@@ -40,6 +40,8 @@ test('all reset APIs enforce signed and stored superadmin flags',async()=>{
  assert.match(handlers[2],/clearImageFolder\(env,'site'\)/);
  assert.match(handlers[2],/legacyPrefix/);
  assert.match(handlers[2],/listNotices/);
+ assert.match(handlers[3],/clearImageFolder\(env,'gallery'\)/);
+ assert.match(handlers[3],/BATCH_SIZE=20/);
 });
 
 test('GitHub cleanup replaces only the requested image directory',async()=>{
@@ -68,7 +70,11 @@ test('GitHub cleanup replaces only the requested image directory',async()=>{
    assert.ok(!JSON.stringify(calls).includes('gallery'));
    assert.deepEqual(calls.at(-1).body,{sha:'new-commit',force:false});
   }
-  await assert.rejects(clearImageFolder({GITHUB_IMAGES_TOKEN:'fake'},'gallery'),/허용되지 않은 이미지 폴더/);
+  const galleryResult=await clearImageFolder({GITHUB_IMAGES_TOKEN:'fake'},'gallery');
+  assert.equal(galleryResult.changed,true);
+  const mostRecentTree=calls.filter(x=>x.path.endsWith('git/trees')).at(-1);
+  assert.equal(mostRecentTree.body.tree[0].path,'gallery');
+  await assert.rejects(clearImageFolder({GITHUB_IMAGES_TOKEN:'fake'},'unknown'),/허용되지 않은 이미지 폴더/);
  }finally{globalThis.fetch=original;}
 });
 

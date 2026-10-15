@@ -107,10 +107,10 @@ test('notice dimension input is editable while focused and commits on blur only'
   assert.match(css,/\.notice-dimension-error\{/);
   assert.match(css,/\.notice-table-row small\{[^}]*overflow:hidden;text-overflow:ellipsis;white-space:nowrap/);
 });
-test('image upload API accepts only site and notices folders',async()=>{
+test('image upload API accepts site, notices and gallery folders',async()=>{
   const api=await readFile(new URL('../functions/api/images/batch.js',import.meta.url),'utf8');
   const client=await readFile(new URL('../src/imageUpload.ts',import.meta.url),'utf8');
-  assert.match(api,/folder!=='site'&&folder!=='notices'/);
+  assert.match(api,/folder!=='site'&&folder!=='notices'&&folder!=='gallery'/);
   assert.match(api,/const path=folder\+'\/'/);
   assert.match(client,/body.append\('folder',folder\)/);
 });

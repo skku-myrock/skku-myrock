@@ -21,7 +21,7 @@ test('upload modal supports files, drag-and-drop, previews, photo reordering, de
   assert.match(dialog,/onClick=\{\(\) => removePhoto\(photo\.id\)\}/);
 });
 
-test('reuses introduction image warning and JPG PNG WebP source validation, without server persistence',async()=>{
+test('reuses introduction image warning and JPG PNG WebP source validation, then persists WebP photos',async()=>{
   const [dialog,about,styles,compress]=await Promise.all([src('src/GalleryUploadDialog.tsx'),src('src/AboutManagement.tsx'),src('src/styles/management.css'),src('src/imageCompression.ts')]);
   assert.match(dialog,/import \{validateSourceImage\} from '\.\/imageCompression'/);
   assert.match(dialog,/validateSourceImage\(file\)/);
@@ -32,5 +32,8 @@ test('reuses introduction image warning and JPG PNG WebP source validation, with
   assert.match(styles,/\.image-compression-notice\{/);
   assert.match(compress,/MAX_SOURCE_IMAGE_BYTES = 30_000_000/);
   assert.doesNotMatch(dialog,/image\/gif/);
-  assert.match(dialog,/disabled title="갤러리 저장 기능은 다음 단계에서 연결됩니다."/);
+  assert.match(dialog,/await uploadImagesBatch\(photos\.map\(photo=>photo\.file\),'gallery'\)/);
+  assert.match(dialog,/await publishGalleryAlbum\(category,title\.trim\(\),urls\)/);
+  assert.match(dialog,/disabled=\{busy\|\|!title\.trim\(\)\|\|photos\.length===0\}/);
+  assert.match(dialog,/busyRef\.current/);
 });
