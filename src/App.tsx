@@ -17,6 +17,7 @@ import DonationManagement from './DonationManagement';
 import AboutManagement from './AboutManagement';
 import {purgeDonations} from './donationApi';
 import {purgeNotices,resetClubIntroduction,resetSiteAssets} from './adminResets';
+import {invalidateAboutCache} from './aboutContent';
 import {listNoticesPage,getNotice,deleteNotice} from './noticesData';
 import type {NoticePost} from './noticesData';
 import NoticeComposer from './NoticeComposer';
@@ -216,6 +217,7 @@ function App() {
     setAboutResetting(true);setAccountOpen(false);setMenuOpen(false);
     try{
       await resetClubIntroduction();
+      invalidateAboutCache();
       setAboutRevision(v=>v+1);
       navigate('about');
       window.alert('모여락 소개 내용이 28기 운영진과 1998년·2023년 연혁으로 초기화되었습니다. 메인·동아리 소개·운영진 사진 URL과 GitHub 파일은 그대로 유지됩니다.');
@@ -229,6 +231,7 @@ function App() {
     setAssetResetting(true);setAccountOpen(false);setMenuOpen(false);
     try{
       await resetSiteAssets();
+      invalidateAboutCache();
       setAboutRevision(v=>v+1);
       window.alert('site/ 에셋과 Firebase의 메인·동아리 소개·운영진 사진 URL이 초기화되었습니다. 기존 직접 이미지 URL은 Cloudflare 캐시에 잠시 남을 수 있습니다.');
     }catch(error){

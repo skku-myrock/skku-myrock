@@ -299,3 +299,9 @@ body:has([data-async-busy="true"]),body:has([data-async-busy="true"]) *{
 .image-compression-notice{margin:20px 0 6px;padding:14px 17px;border:1px solid #dbe7df;background:#f4f8f5;color:#577063;font-size:12px;line-height:1.8;word-break:keep-all}
 .image-compression-notice strong{font-weight:700;color:#375b49}
 
+
+.image-pending{display:block;background:#eff2f1;border:0}
+.hero-media .image-pending.home-hero-image{width:100%;height:100%}
+.about-intro>.image-pending.about-hero-image{min-height:335px;height:335px}
+.leader-item .image-pending.leader-photo{width:76px;min-width:76px;height:101px;min-height:101px}
+@media(max-width:620px){.about-intro>.image-pending.about-hero-image{min-height:235px;height:235px}}
