@@ -13,7 +13,7 @@ async function call<T>(path:string,body?:unknown,authorized=false):Promise<T>{
   if(!response.ok)throw Error(typeof data.error==='string'?data.error:'후원 데이터를 불러오지 못했습니다.');
   return data as T;
 }
-export const getPublicDonations=()=>call<{records:PublicDonation[]}>('public');
+export const getPublicDonations=(pageToken:string|null=null)=>call<{records:PublicDonation[];nextPageToken:string|null}>('public'+(pageToken?'?pageToken='+encodeURIComponent(pageToken):''));
 export const getOwnDonations=()=>call<{records:OwnDonation[]}>('mine',undefined,true);
 export type ManageData={records:DonationRecord[];people:AnonymousPerson[];registryUpdateTime:string|null};
 export const getDonationManagement=()=>call<ManageData>('manage',undefined,true);
