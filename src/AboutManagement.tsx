@@ -4,13 +4,15 @@ import {ArrowLeft,ArrowDown,ArrowUp,ImagePlus,Plus,Save,Trash2} from 'lucide-rea
 import {DEFAULT_ABOUT,getAboutManagement,saveAbout} from './aboutContent';
 import {uploadImagesBatch} from './imageUpload';
 import {validateSourceImage} from './imageCompression';
+import {useEditorLeaveGuard} from './useEditorLeaveGuard';
 import type {AboutContent,Officer,HistoryEntry} from './aboutContent';
 
 type PhotoTarget={type:'home'}|{type:'hero'}|{type:'officer';id:string};
 
-export default function AboutManagement({onBack}:{onBack:()=>void}){
+export default function AboutManagement({onBack,onSaved,registerLeaveGuard}:{onBack:()=>void;onSaved:()=>void;registerLeaveGuard:(guard:(()=>boolean)|null)=>void}){
   const [content,setContent]=useState<AboutContent>(structuredClone(DEFAULT_ABOUT));
   const [version,setVersion]=useState<string|null>(null);
+  const savedSnapshot=useRef<string|null>(null);
   const staged=useRef(new Map<string,File>());
   const uploaded=useRef(new Map<string,string>());
   useEffect(()=>()=>{for(const key of staged.current.keys())URL.revokeObjectURL(key);},[]);
@@ -18,10 +20,12 @@ export default function AboutManagement({onBack}:{onBack:()=>void}){
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState('');
   const [message,setMessage]=useState('');
+  const hasUnsavedChanges=!loading&&savedSnapshot.current!==null&&JSON.stringify(content)!==savedSnapshot.current;
+  useEditorLeaveGuard(hasUnsavedChanges||busy,registerLeaveGuard);
   useEffect(()=>{
     let active=true;
     void getAboutManagement().then(data=>{
-      if(active){setContent(data.content);setVersion(data.updateTime);}
+      if(active){savedSnapshot.current=JSON.stringify(data.content);setContent(data.content);setVersion(data.updateTime);}
     }).catch(reason=>{if(active)setError(reason instanceof Error?reason.message:'조회 실패');})
       .finally(()=>{if(active)setLoading(false);});
     return()=>{active=false;};
@@ -63,8 +67,10 @@ export default function AboutManagement({onBack}:{onBack:()=>void}){
       const resolved=(url:string)=>uploaded.current.get(url)??url;
       const next={...content,homeImage:resolved(content.homeImage),heroImage:resolved(content.heroImage),officers:content.officers.map(person=>({...person,photoUrl:resolved(person.photoUrl)}))};
       const updated=await saveAbout(next,version);
+      savedSnapshot.current=JSON.stringify(updated.content);
       setContent(updated.content);setVersion(updated.updateTime);
-      setMessage('변경 사항을 저장했습니다. 새 사진은 Cloudflare 이미지 배포 후 공개 화면에 표시됩니다.');
+      registerLeaveGuard(null);
+      onSaved();
     }catch(reason){setError(reason instanceof Error?reason.message:'저장 오류');}
     finally{setBusy(false);}
   }
@@ -75,7 +81,7 @@ export default function AboutManagement({onBack}:{onBack:()=>void}){
       <button className="finance-return-link" type="button" onClick={onBack}><ArrowLeft size={16}/> 소개 페이지로 돌아가기</button>
 
       {loading?<p>소개 정보를 불러오는 중입니다.</p>:<>
-        <p className="image-compression-notice" role="note">이미지를 저장할 때 자동으로 압축·크기 조정할 수 있습니다. <strong>업로드된 이미지는 원본을 대체하지 못하므로 원본 사진을 별도로 보관해 주세요.</strong> GIF 애니메이션은 압축하지 않습니다.</p>
+        <p className="image-compression-notice" role="note">이미지를 저장할 때 자동으로 압축·크기 조정할 수 있습니다. <strong>업로드된 이미지는 원본을 대체하지 못하므로 원본 사진을 별도로 보관해 주세요.</strong></p>
         <section className="about-manage-section">
           <h2>메인 페이지 사진</h2>
           <div className="about-manage-photo">
@@ -83,12 +89,12 @@ export default function AboutManagement({onBack}:{onBack:()=>void}){
             <div className="about-manage-photo-controls">
               <label>이미지 URL<input type="url" placeholder="https://..." value={content.homeImage} onChange={e=>{setContent(p=>({...p,homeImage:e.target.value}));setMessage('');}}/></label>
               <label className="outline-action about-image-upload"><ImagePlus size={14}/> 파일 업로드
-                <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" disabled={busy} onChange={e=>void chooseImage(e,{type:'home'})}/>
+                <input type="file" accept="image/png,image/jpeg,image/webp" disabled={busy} onChange={e=>void chooseImage(e,{type:'home'})}/>
               </label>
               <button type="button" className="outline-action" disabled={busy||!content.homeImage} onClick={()=>setContent(p=>({...p,homeImage:''}))}>사진 제거</button>
             </div>
           </div>
-          <p className="about-manage-hint">메인 페이지의 첫 화면에 표시되는 사진입니다. 변경 사항을 저장하면 사진을 자동 압축해 업로드합니다.</p>
+          <p className="about-manage-hint">메인 페이지의 첫 화면에 표시되는 사진입니다. 외부 HTTPS 이미지 URL 또는 JPG/PNG/WebP 사진(원본 30MB 이하)을 사용할 수 있습니다.</p>
         </section>
         <section className="about-manage-section">
           <h2>동아리 소개 사진</h2>
@@ -97,12 +103,12 @@ export default function AboutManagement({onBack}:{onBack:()=>void}){
             <div className="about-manage-photo-controls">
               <label>이미지 URL<input type="url" placeholder="https://..." value={content.heroImage} onChange={e=>{setContent(p=>({...p,heroImage:e.target.value}));setMessage('');}}/></label>
               <label className="outline-action about-image-upload"><ImagePlus size={14}/> 파일 업로드
-                <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" disabled={busy} onChange={e=>void chooseImage(e,{type:'hero'})}/>
+                <input type="file" accept="image/png,image/jpeg,image/webp" disabled={busy} onChange={e=>void chooseImage(e,{type:'hero'})}/>
               </label>
               <button type="button" className="outline-action" disabled={busy||!content.heroImage} onClick={()=>setContent(p=>({...p,heroImage:''}))}>사진 제거</button>
             </div>
           </div>
-          <p className="about-manage-hint">외부 HTTPS 이미지 URL 또는 JPG/PNG/WebP 사진(원본 30MB 이하)을 사용할 수 있습니다. 움직이는 GIF는 원본 그대로 업로드하므로 5MB 이하여야 합니다.</p>
+          <p className="about-manage-hint">동아리 소개 페이지에 표시되는 사진입니다. 외부 HTTPS 이미지 URL 또는 JPG/PNG/WebP 사진(원본 30MB 이하)을 사용할 수 있습니다.</p>
         </section>
         <section className="about-manage-section">
           <div className="about-manage-section-heading"><h2>운영진 명단</h2><button type="button" className="outline-action" disabled={busy||content.officers.length>=40} onClick={()=>{
@@ -123,7 +129,7 @@ export default function AboutManagement({onBack}:{onBack:()=>void}){
               <div className="about-manage-officer-photo">
                 {person.photoUrl&&<img src={person.photoUrl} alt={person.name+' 사진 미리보기'}/>}
                 <label className="outline-action about-image-upload"><ImagePlus size={14}/> 사진 파일 업로드
-                  <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" disabled={busy} onChange={e=>void chooseImage(e,{type:'officer',id:person.id})}/>
+                  <input type="file" accept="image/png,image/jpeg,image/webp" disabled={busy} onChange={e=>void chooseImage(e,{type:'officer',id:person.id})}/>
                 </label>
               </div>
             </article>)}

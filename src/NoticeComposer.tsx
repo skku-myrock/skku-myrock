@@ -4,6 +4,7 @@ import { ArrowDown, ArrowLeft, ArrowUp, GripVertical, ImagePlus, Link, Link2Off,
 import {createNotice,updateNotice} from './noticesData';
 import type {NoticeCategory,NoticePost,NoticeBlock,NoticeImage} from './noticesData';
 import {uploadImagesBatch} from './imageUpload';
+import {useEditorLeaveGuard} from './useEditorLeaveGuard';
 import {validateSourceImage} from './imageCompression';
 import { initialImageDimensions, MAX_IMAGE_DIMENSION, resizeImageDimensions, restoreInitialImageDimensions } from './noticeImageSize';
 import { reorderGalleryImages, shiftGalleryImage } from './noticeGalleryOrder';
@@ -14,7 +15,7 @@ import type { NoticeSlide } from './NoticeImageCarousel';
 type ImageBlock = { id: number; kind: 'image'; url: string; name: string; width: number; height: number; ratioLocked: boolean; naturalWidth: number; naturalHeight: number };
 type DraftBlock = { id: number; kind: 'text'; text: string } | ImageBlock | { id: number; kind: 'gallery'; images: ImageBlock[] };
 
-export default function NoticeComposer({ onBack, onSaved, initial }: { onBack: () => void; onSaved: (post:NoticePost) => void; initial?:NoticePost }) {
+export default function NoticeComposer({ onBack, onSaved, initial, registerLeaveGuard }: { onBack: () => void; onSaved: (post:NoticePost) => void; initial?:NoticePost; registerLeaveGuard:(guard:(()=>boolean)|null)=>void }) {
   const [title, setTitle] = useState(initial?.title??'');
   const [category, setCategory] = useState<NoticeCategory>(initial?.category??'공지');
   const [blocks, setBlocks] = useState<DraftBlock[]>(()=>{
@@ -36,6 +37,9 @@ export default function NoticeComposer({ onBack, onSaved, initial }: { onBack: (
   const [newImagePickerOpen,setNewImagePickerOpen]=useState(false);
   const [slidePickerId,setSlidePickerId]=useState<number|null>(null);
   const [pickerUrl,setPickerUrl]=useState('');
+  const originalDraft=useRef(JSON.stringify({title,category,blocks}));
+  const hasUnsavedChanges=JSON.stringify({title,category,blocks})!==originalDraft.current||Boolean(pickerUrl.trim())||Object.keys(dimensionDrafts).length>0;
+  useEditorLeaveGuard(hasUnsavedChanges||busy,registerLeaveGuard);
 
   useEffect(() => () => { objectUrls.current.forEach(url => URL.revokeObjectURL(url)); }, []);
 
@@ -146,12 +150,12 @@ export default function NoticeComposer({ onBack, onSaved, initial }: { onBack: (
         </label>
         <button type="button" className="outline-action" disabled={!pickerUrl.trim()} onClick={()=>addUrlImage(targetBlockId)}>URL 이미지 추가</button>
         <label className="outline-action notice-composer-file notice-composer-picker-file"><ImagePlus size={15}/> 파일 업로드
-          <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" multiple
+          <input type="file" accept="image/png,image/jpeg,image/webp" multiple
             onChange={event=>addImages(event,targetBlockId)}
             aria-label={targetBlockId===undefined?'본문 이미지 선택':'슬라이드에 추가할 이미지 선택'}/>
         </label>
       </div>
-      <p>여러 파일을 선택하면 이미지 슬라이드로 표시됩니다. 원본 30MB 이하의 JPG·PNG·WebP 사진은 저장 시 자동 압축됩니다. 움직이는 GIF는 5MB 이하만 지원합니다.</p>
+      <p>여러 파일을 선택하면 이미지 슬라이드로 표시됩니다. 원본 30MB 이하의 JPG·PNG·WebP 사진은 저장 시 자동 압축됩니다.</p>
     </div>;
   }
   function changeText(id: number, text: string) {
@@ -272,15 +276,12 @@ export default function NoticeComposer({ onBack, onSaved, initial }: { onBack: (
       const payload:NoticeBlock[]=blocks.map(block=>block.kind==='text'?{kind:'text',text:block.text}:block.kind==='image'?serialize(block):{kind:'gallery',images:block.images.map(serialize)});
       const input={title,category,blocks:payload};
       const saved=initial?await updateNotice(initial.id,{...input,expectedUpdateTime:initial.updateTime}):await createNotice(input);
+      registerLeaveGuard(null);
       onSaved(saved);
     }catch(reason){setError(reason instanceof Error?reason.message:'공지사항 저장에 실패했습니다.');}
     finally{setBusy(false);}
   }
-  function back() {
-    if ((title.trim() || blocks.some(block => block.kind !== 'text' || block.text.trim())) &&
-        !window.confirm('현재 작성 중인 글은 저장되지 않습니다. 목록으로 돌아갈까요?')) return;
-    onBack();
-  }
+  function back() {onBack();}
 
   return <>
     <div className="page-heading container"><span className="eyebrow">NOTICE EDITOR</span>
@@ -288,7 +289,7 @@ export default function NoticeComposer({ onBack, onSaved, initial }: { onBack: (
     </div>
     <section className="container section-block notice-composer-page">
       <button type="button" className="notice-detail-back" onClick={back}><ArrowLeft size={16}/> 공지사항 목록</button>
-      <div className="notice-composer-info" role="note">파일을 선택하면 먼저 로컬에서 미리봅니다. 발행 또는 저장 시 이미지를 자동 압축해 업로드하므로 <strong>원본 사진은 반드시 별도로 보관해 주세요.</strong> GIF 애니메이션은 압축하지 않습니다. URL로 추가한 이미지는 변환하지 않습니다.</div>
+      <div className="notice-composer-info" role="note">이미지를 저장할 때 자동으로 압축·크기 조정할 수 있습니다. <strong>업로드된 이미지는 원본을 대체하지 못하므로 원본 사진을 별도로 보관해 주세요.</strong></div>
       <div className="notice-composer-fields">
         <label>분류
           <select value={category} onChange={event => setCategory(event.target.value as NoticeCategory)}>
@@ -415,7 +416,6 @@ export default function NoticeComposer({ onBack, onSaved, initial }: { onBack: (
       </div>
       <div className="notice-composer-publish">
         <button type="button" className="button button-primary" disabled={busy} onClick={()=>void publish()}>{busy?"저장 중...":initial?"변경 사항 저장":"발행"}</button>
-        <span>선택한 이미지는 저장 전까지 GitHub에 커밋되지 않습니다.</span>
       </div>
       <p className="notice-composer-footnote">사진은 저장 시 업로드됩니다. GitHub 커밋 후 이미지가 공개되기까지 Cloudflare 배포 시간이 걸릴 수 있습니다.</p>
     </section>

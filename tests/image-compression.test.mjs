@@ -8,19 +8,20 @@ const js=ts.transpileModule(src,{compilerOptions:{module:ts.ModuleKind.ESNext,ta
 const {prepareImageForUpload,validateSourceImage,MAX_SOURCE_IMAGE_BYTES,MAX_UPLOAD_IMAGE_BYTES}=
   await import('data:text/javascript;base64,'+Buffer.from(js).toString('base64'));
 
-test('large still photographs pass selection but oversized/animated GIF originals do not',()=>{
+test('large still photographs are accepted, GIF uploads are completely rejected',()=>{
  assert.doesNotThrow(()=>validateSourceImage({type:'image/jpeg',size:22_000_000}));
  assert.doesNotThrow(()=>validateSourceImage({type:'image/png',size:MAX_SOURCE_IMAGE_BYTES}));
  assert.throws(()=>validateSourceImage({type:'image/png',size:MAX_SOURCE_IMAGE_BYTES+1}),/30MB/);
- assert.throws(()=>validateSourceImage({type:'image/gif',size:MAX_UPLOAD_IMAGE_BYTES+1}),/GIF/);
+ assert.throws(()=>validateSourceImage({type:'image/gif',size:1000}),/JPG/);
+ assert.throws(()=>validateSourceImage({type:'image/gif',size:MAX_UPLOAD_IMAGE_BYTES+1}),/JPG/);
  assert.throws(()=>validateSourceImage({type:'application/pdf',size:100}),/JPG/);
  assert.throws(()=>validateSourceImage({type:'image/png',size:0}),/JPG/);
 });
 
-test('small GIF files and tiny photos are left untouched',async()=>{
+test('tiny photographs are left untouched and GIF cannot be prepared',async()=>{
  const gif=new File([new Uint8Array(1000)],'animation.gif',{type:'image/gif'});
  const photo=new File([new Uint8Array(1000)],'small.jpg',{type:'image/jpeg'});
- assert.equal(await prepareImageForUpload(gif),gif);
+ await assert.rejects(prepareImageForUpload(gif),/JPG/);
  assert.equal(await prepareImageForUpload(photo),photo);
 });
 
@@ -77,5 +78,10 @@ test('batch upload compresses before enforcing 5MB GitHub API limit',async()=>{
  assert.match(uploader,/body\.append\('folder',folder\)/);
  assert.match(about,/validateSourceImage\(file\)/);
  assert.match(notice,/selected\.forEach\(validateSourceImage\)/);
- for(const s of [about,notice])assert.match(s,/원본 사진.*별도로 보관/);
+ for(const s of [about,notice]){
+   assert.match(s,/원본 사진.*별도로 보관/);
+   assert.doesNotMatch(s,/image\/gif|GIF 애니메이션/);
+ }
+ const api=await readFile(new URL('../functions/api/images/batch.js',import.meta.url),'utf8');
+ assert.doesNotMatch(api,/image\/gif/);
 });

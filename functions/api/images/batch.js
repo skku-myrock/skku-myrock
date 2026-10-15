@@ -1,8 +1,8 @@
 import {failure,reject,secureOrigin,success} from '../../_lib/shared.js';
 import {assertAccess} from '../../_lib/google.js';
 
-const extensions={'image/jpeg':'jpg','image/png':'png','image/webp':'webp','image/gif':'gif'};
-function validSignature(type,b){return type==='image/jpeg'?b[0]===255&&b[1]===216&&b[2]===255:type==='image/png'?b[0]===137&&b[1]===80&&b[2]===78&&b[3]===71:type==='image/webp'?b[0]===82&&b[1]===73&&b[2]===70&&b[3]===70&&b[8]===87&&b[9]===69&&b[10]===66&&b[11]===80:b[0]===71&&b[1]===73&&b[2]===70;}
+const extensions={'image/jpeg':'jpg','image/png':'png','image/webp':'webp'};
+function validSignature(type,b){return type==='image/jpeg'?b[0]===255&&b[1]===216&&b[2]===255:type==='image/png'?b[0]===137&&b[1]===80&&b[2]===78&&b[3]===71:type==='image/webp'?b[0]===82&&b[1]===73&&b[2]===70&&b[3]===70&&b[8]===87&&b[9]===69&&b[10]===66&&b[11]===80:false;}
 function base64(bytes){let result='';for(let i=0;i<bytes.length;i+=8192)result+=String.fromCharCode(...bytes.subarray(i,i+8192));return btoa(result);}
 async function github(path,token,method='GET',body){
   const response=await fetch('https://api.github.com/repos/skku-myrock/myrock-images/'+path,{method,headers:{authorization:'Bearer '+token,accept:'application/vnd.github+json','content-type':'application/json','x-github-api-version':'2022-11-28','user-agent':'MYROCK-Website'},...(body?{body:JSON.stringify(body)}:{})});
@@ -26,7 +26,7 @@ export async function onRequestPost({request,env}){
     let total=0;
     const checked=[];
     for(const file of files){
-      if(!file||typeof file.arrayBuffer!=='function'||!extensions[file.type]||file.size===0||file.size>5000000)reject('JPG, PNG, WebP, GIF 형식의 5MB 이하 이미지만 등록할 수 있습니다.');
+      if(!file||typeof file.arrayBuffer!=='function'||!extensions[file.type]||file.size===0||file.size>5000000)reject('JPG, PNG, WebP 형식의 5MB 이하 이미지만 등록할 수 있습니다.');
       total+=file.size;if(total>16000000)reject('사진 총합이 16MB를 넘었습니다.',413);
       const bytes=new Uint8Array(await file.arrayBuffer());
       if(!validSignature(file.type,bytes))reject('올바르지 않은 이미지 파일입니다.');

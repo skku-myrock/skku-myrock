@@ -29,6 +29,8 @@ export function FinanceLanding({ onDonations, onExpenses, canEditAccount }: { on
   const [version,setVersion]=useState<string|null>(null);
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState('');
+  const [accountMessage,setAccountMessage]=useState('');
+  const accountChanged=Boolean(editing&&(editing.bank.trim()!==account.bank||editing.number.trim()!==account.number||editing.holder.trim()!==account.holder));
   useEffect(()=>{
     let active=true;
     void readDonationAccount().then(data=>{if(active)setAccount(data.account);})
@@ -37,7 +39,7 @@ export function FinanceLanding({ onDonations, onExpenses, canEditAccount }: { on
   },[]);
   async function beginEdit(){
     if(busy)return;
-    setBusy(true);setError('');
+    setBusy(true);setError('');setAccountMessage('');
     try{
       const data=await readAccountForManagement();
       setAccount({bank:data.account.bank,number:data.account.number,holder:data.account.holder});
@@ -48,19 +50,22 @@ export function FinanceLanding({ onDonations, onExpenses, canEditAccount }: { on
   }
   async function persistAccount(event:FormEvent){
     event.preventDefault();
-    if(!editing||busy)return;
-    setBusy(true);setError('');
+    if(!editing||busy||!accountChanged)return;
+    setBusy(true);setError('');setAccountMessage('');
     try{
       const saved=await saveDonationAccount(editing,version);
       setVersion(saved.account.updateTime);
       setAccount({bank:saved.account.bank,number:saved.account.number,holder:saved.account.holder});
       setEditing(null);
+      setAccountMessage('저장을 완료했습니다.');
     }catch(reason){setError(reason instanceof Error?reason.message:'계좌 정보 저장에 실패했습니다.');}
     finally{setBusy(false);}
   }
   return <>
     <FinanceHeading eyebrow="SUPPORT & FINANCE" title="후원 · 회계"
       description="모여락의 다음 무대를 함께 만들어 주시는 모든 분께 감사드립니다." />
+
+    {accountMessage&&<div className="site-bottom-toast is-success" role="status" aria-live="polite"><span>{accountMessage}</span><button type="button" aria-label="알림 닫기" onClick={()=>setAccountMessage('')}>닫기</button></div>}
 
     <section className="container section-block finance-support-intro">
       <span className="eyebrow">SUPPORT MYROCK</span>
@@ -86,7 +91,7 @@ export function FinanceLanding({ onDonations, onExpenses, canEditAccount }: { on
             <label><span>예금주</span><input required maxLength={70} value={editing.holder} onChange={e=>setEditing(p=>p?{...p,holder:e.target.value}:null)}/></label>
           </div>
           <div className="finance-manager-actions finance-account-edit-actions">
-            <button type="submit" className="button button-primary" disabled={busy}>저장</button>
+            <button type="submit" className="button button-primary" disabled={busy||!accountChanged} aria-disabled={busy||!accountChanged}>저장</button>
             <button type="button" className="outline-action" disabled={busy} onClick={()=>setEditing(null)}>취소</button>
           </div>
         </form>:<div className="finance-bank-fields">
