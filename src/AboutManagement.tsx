@@ -1,0 +1,132 @@
+import {useEffect,useState} from 'react';
+import type {ChangeEvent} from 'react';
+import {ArrowLeft,ArrowDown,ArrowUp,ImagePlus,Plus,Save,Trash2} from 'lucide-react';
+import {DEFAULT_ABOUT,getAboutManagement,saveAbout,uploadAboutImage} from './aboutContent';
+import type {AboutContent,Officer,HistoryEntry} from './aboutContent';
+
+type PhotoTarget={type:'hero'}|{type:'officer';id:string};
+
+export default function AboutManagement({onBack}:{onBack:()=>void}){
+  const [content,setContent]=useState<AboutContent>(structuredClone(DEFAULT_ABOUT));
+  const [version,setVersion]=useState<string|null>(null);
+  const [loading,setLoading]=useState(true);
+  const [busy,setBusy]=useState(false);
+  const [error,setError]=useState('');
+  const [message,setMessage]=useState('');
+  useEffect(()=>{
+    let active=true;
+    void getAboutManagement().then(data=>{
+      if(active){setContent(data.content);setVersion(data.updateTime);}
+    }).catch(reason=>{if(active)setError(reason instanceof Error?reason.message:'조회 실패');})
+      .finally(()=>{if(active)setLoading(false);});
+    return()=>{active=false;};
+  },[]);
+  function updateOfficer(id:string,field:keyof Omit<Officer,'id'>,value:string){
+    setContent(previous=>({...previous,officers:previous.officers.map(x=>x.id===id?{...x,[field]:value}:x)}));
+    setMessage('');
+  }
+  function updateHistory(id:string,field:keyof Omit<HistoryEntry,'id'>,value:string){
+    setContent(previous=>({...previous,history:previous.history.map(x=>x.id===id?{...x,[field]:value}:x)}));
+    setMessage('');
+  }
+  function reorder<T extends {id:string}>(key:'officers'|'history',index:number,offset:number){
+    const arr=[...content[key]] as unknown as T[];
+    const target=index+offset;if(target<0||target>=arr.length)return;
+    [arr[index],arr[target]]=[arr[target],arr[index]];
+    setContent(prev=>({...prev,[key]:arr}));setMessage('');
+  }
+  async function chooseImage(event:ChangeEvent<HTMLInputElement>,target:PhotoTarget){
+    const file=event.target.files?.[0];event.target.value='';
+    if(!file||busy)return;
+    setError('');setMessage('');setBusy(true);
+    try{
+      const url=await uploadAboutImage(file);
+      if(target.type==='hero')setContent(prev=>({...prev,heroImage:url}));
+      else updateOfficer(target.id,'photoUrl',url);
+      setMessage('사진 업로드가 완료되었습니다. 변경 내용을 저장해야 소개 페이지에 반영됩니다.');
+    }catch(reason){setError(reason instanceof Error?reason.message:'사진 업로드 실패');}
+    finally{setBusy(false);}
+  }
+  async function save(){
+    if(busy||loading)return;
+    setError('');setMessage('');setBusy(true);
+    try{
+      const updated=await saveAbout(content,version);
+      setContent(updated.content);setVersion(updated.updateTime);
+      setMessage('동아리 소개 변경 사항을 저장했습니다.');
+    }catch(reason){setError(reason instanceof Error?reason.message:'저장 오류');}
+    finally{setBusy(false);}
+  }
+  return <>
+    <div className="page-heading container"><span className="eyebrow">CLUB INTRODUCTION MANAGEMENT</span><h1>동아리 소개 수정</h1>
+      <p>대표 사진, 운영진 명단, 연혁을 수정해 공개 소개 페이지에 반영합니다.</p></div>
+    <div className="container about-manage" data-async-busy={busy?'true':undefined}>
+      <button className="finance-return-link" type="button" onClick={onBack}><ArrowLeft size={16}/> 소개 페이지로 돌아가기</button>
+
+      {loading?<p>소개 정보를 불러오는 중입니다.</p>:<>
+        <section className="about-manage-section">
+          <h2>동아리 대표 사진</h2>
+          <div className="about-manage-photo">
+            {content.heroImage?<img src={content.heroImage} alt="동아리 대표 사진 미리보기"/>:<div className="about-manage-photo-empty">등록된 대표 사진이 없습니다.</div>}
+            <div className="about-manage-photo-controls">
+              <label>이미지 URL<input type="url" placeholder="https://..." value={content.heroImage} onChange={e=>{setContent(p=>({...p,heroImage:e.target.value}));setMessage('');}}/></label>
+              <label className="outline-action about-image-upload"><ImagePlus size={14}/> 파일 업로드
+                <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" disabled={busy} onChange={e=>void chooseImage(e,{type:'hero'})}/>
+              </label>
+              <button type="button" className="outline-action" disabled={busy||!content.heroImage} onClick={()=>setContent(p=>({...p,heroImage:''}))}>사진 제거</button>
+            </div>
+          </div>
+          <p className="about-manage-hint">외부 HTTPS 이미지 URL을 입력하거나 JPG/PNG/WebP/GIF(5MB 이하) 파일을 업로드할 수 있습니다. 선택한 파일은 업로드 후 변경 사항을 저장해야 공개 페이지에 반영됩니다.</p>
+        </section>
+        <section className="about-manage-section">
+          <div className="about-manage-section-heading"><h2>운영진 명단</h2><button type="button" className="outline-action" disabled={busy||content.officers.length>=40} onClick={()=>{
+            setContent(p=>({...p,officers:[...p.officers,{id:crypto.randomUUID(),name:'',position:'',photoUrl:''}]}));setMessage('');
+          }}><Plus size={15}/> 운영진 추가</button></div>
+          <label className="about-manage-label">소개 제목<input maxLength={80} value={content.cohortLabel} onChange={e=>setContent(p=>({...p,cohortLabel:e.target.value}))}/></label>
+          <div className="about-manage-items">
+            {content.officers.map((person,index)=><article className="about-manage-item" key={person.id}>
+              <div className="about-manage-item-head"><strong>{index+1}번째 운영진</strong><div className="about-manage-actions">
+                <button type="button" disabled={busy||index===0} onClick={()=>reorder<Officer>('officers',index,-1)} aria-label="운영진 위로 이동"><ArrowUp size={15}/></button>
+                <button type="button" disabled={busy||index===content.officers.length-1} onClick={()=>reorder<Officer>('officers',index,1)} aria-label="운영진 아래로 이동"><ArrowDown size={15}/></button>
+                <button type="button" disabled={busy} onClick={()=>setContent(p=>({...p,officers:p.officers.filter(x=>x.id!==person.id)}))}><Trash2 size={15}/> 삭제</button>
+              </div></div>
+              <div className="about-manage-fields"><label>이름<input maxLength={65} value={person.name} onChange={e=>updateOfficer(person.id,'name',e.target.value)}/></label>
+                <label>직위<input maxLength={110} value={person.position} onChange={e=>updateOfficer(person.id,'position',e.target.value)}/></label>
+                <label>사진 URL<input type="url" placeholder="https://..." value={person.photoUrl} onChange={e=>updateOfficer(person.id,'photoUrl',e.target.value)}/></label>
+              </div>
+              <div className="about-manage-officer-photo">
+                {person.photoUrl&&<img src={person.photoUrl} alt={person.name+' 사진 미리보기'}/>}
+                <label className="outline-action about-image-upload"><ImagePlus size={14}/> 사진 파일 업로드
+                  <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" disabled={busy} onChange={e=>void chooseImage(e,{type:'officer',id:person.id})}/>
+                </label>
+              </div>
+            </article>)}
+          </div>
+        </section>
+        <section className="about-manage-section">
+          <div className="about-manage-section-heading"><h2>연혁</h2><button type="button" className="outline-action" disabled={busy||content.history.length>=100} onClick={()=>{
+            setContent(p=>({...p,history:[...p.history,{id:crypto.randomUUID(),year:'',description:''}]}));setMessage('');
+          }}><Plus size={15}/> 연혁 추가</button></div>
+          <div className="about-manage-items">
+            {content.history.map((item,index)=><div className="about-manage-item" key={item.id}>
+              <div className="about-manage-item-head"><strong>{index+1}번째 연혁</strong><div className="about-manage-actions">
+                <button type="button" disabled={busy||index===0} onClick={()=>reorder<HistoryEntry>('history',index,-1)} aria-label="연혁 위로 이동"><ArrowUp size={15}/></button>
+                <button type="button" disabled={busy||index===content.history.length-1} onClick={()=>reorder<HistoryEntry>('history',index,1)} aria-label="연혁 아래로 이동"><ArrowDown size={15}/></button>
+                <button type="button" disabled={busy} onClick={()=>setContent(p=>({...p,history:p.history.filter(x=>x.id!==item.id)}))}><Trash2 size={15}/> 삭제</button>
+              </div></div>
+              <div className="about-manage-fields about-manage-history-fields">
+                <label>연도<input maxLength={40} value={item.year} placeholder="2026년" onChange={e=>updateHistory(item.id,'year',e.target.value)}/></label>
+                <label>내용<input maxLength={250} value={item.description} onChange={e=>updateHistory(item.id,'description',e.target.value)}/></label>
+              </div>
+            </div>)}
+          </div>
+        </section>
+        <div className="about-manage-footer"><button type="button" className="button button-primary" disabled={busy} onClick={()=>void save()}><Save size={16}/> 변경 사항 저장</button></div>
+      </>}
+    </div>
+    {(error||message)&&<div className={'site-bottom-toast'+(error?' is-error':' is-success')} role={error?'alert':'status'} aria-live="polite">
+      <span>{error||message}</span>
+      <button type="button" aria-label="알림 닫기" onClick={()=>{setError('');setMessage('');}}>닫기</button>
+    </div>}
+  </>;
+}
