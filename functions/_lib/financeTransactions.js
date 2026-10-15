@@ -1,5 +1,6 @@
 import { FIRESTORE_ROOT, docFields, reject, toFields } from './shared.js';
 import { googleRequest } from './google.js';
+import {firestorePage} from './firestorePages.js';
 
 export const EXPENSES = FIRESTORE_ROOT + '/expenseTransactions';
 export const ACCOUNT = FIRESTORE_ROOT + '/financeSettings/donationAccount';
@@ -48,6 +49,17 @@ export async function putAccount(env, input, expectedUpdateTime) {
   if ([409,412].includes(result.status)) reject('다른 운영진이 계좌를 수정했습니다. 새로고침해 주세요.',409);
   if (!result.ok) throw Error('후원 계좌 저장에 실패했습니다.');
   return { ...account,updateTime:result.data.updateTime ?? null };
+}
+/** Only page the public transaction timeline; manager CSV export retains all rows. */
+export async function listPublicTransactionsPage(env,request){
+  const {documents,nextPageToken}=await firestorePage(env,EXPENSES,{
+    request,orderBy:'dateTime desc',
+    fields:['dateTime','type','amount','balance','description']
+  });
+  return {
+    records:documents.map(doc=>({id:doc.name.split('/').pop(),...normalizeTransaction(docFields(doc))})),
+    nextPageToken
+  };
 }
 export async function listTransactions(env) {
   const rows=[];let cursor=null;
