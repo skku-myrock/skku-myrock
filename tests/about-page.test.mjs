@@ -4,6 +4,8 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const app=await readFile(new URL('../src/App.tsx',import.meta.url),'utf8');
+const pages=await readFile(new URL('../src/pages/SitePages.tsx',import.meta.url),'utf8');
+const routes=await readFile(new URL('../src/app/siteNavigation.ts',import.meta.url),'utf8');
 const styles=await readStyles();
 const defaults=await readFile(new URL('../src/aboutContent.ts',import.meta.url),'utf8');
 const editor=await readFile(new URL('../src/AboutManagement.tsx',import.meta.url),'utf8');
@@ -18,22 +20,22 @@ test('default introduction retains eight leaders and original two milestones',()
   assert.match(defaults,/중앙동아리 승격/);
 });
 test('public about screen loads persisted introduction and leaves social links intact',()=>{
-  assert.match(app,/function About\(\{ navigate, canEdit \}/);
-  assert.match(app,/void getAbout\(\)\.then/);
-  assert.match(app,/content\.officers\.map\(officer/);
-  assert.match(app,/content\.history\.map\(item/);
-  assert.match(app,/content\.cohortLabel/);
-  assert.match(app,/content\.heroImage\?<img/);
-  assert.match(app,/officer\.photoUrl\?<img/);
+  assert.match(pages,/function About\(\{ navigate, canEdit \}/);
+  assert.match(pages,/void getAbout\(\)\.then/);
+  assert.match(pages,/content\.officers\.map\(officer/);
+  assert.match(pages,/content\.history\.map\(item/);
+  assert.match(pages,/content\.cohortLabel/);
+  assert.match(pages,/content\.heroImage\?<img/);
+  assert.match(pages,/officer\.photoUrl\?<img/);
   assert.match(styles,/\.leader-item img\.leader-photo\{/);
-  assert.match(app,/href="https:\/\/www\.instagram\.com\/skku_m\.y\.rock\/"[^>]*target="_blank"[^>]*rel="noopener noreferrer"/);
-  assert.match(app,/href="https:\/\/www\.youtube\.com\/@SKKUMYRock"[^>]*target="_blank"[^>]*rel="noopener noreferrer"/);
+  assert.match(pages,/href="https:\/\/www\.instagram\.com\/skku_m\.y\.rock\/"[^>]*target="_blank"[^>]*rel="noopener noreferrer"/);
+  assert.match(pages,/href="https:\/\/www\.youtube\.com\/@SKKUMYRock"[^>]*target="_blank"[^>]*rel="noopener noreferrer"/);
 });
 test('protected editor supports leader management, photo upload, history and save',()=>{
-  assert.match(app,/page==='about-manage'/);
+  assert.match(routes,/page:'about-manage',path:'\/about\/manage'/);
   assert.match(app,/user&&canManageDonations\?<AboutManagement/);
   assert.match(app,/canEdit=\{Boolean\(user&&!authPending&&canManageDonations\)\}/);
-  assert.match(app,/navigate\('about-manage'\)/);
+  assert.match(pages,/navigate\('about-manage'\)/);
   assert.match(editor,/getAboutManagement\(\)/);
   assert.match(editor,/saveAbout\(next,version\)/);
   assert.match(editor,/uploadImagesBatch\(/);
@@ -54,8 +56,8 @@ test('about management save feedback is a bottom popup and the deploy-only R2 hi
 
 test('homepage and introduction images have distinct labels and fields',()=>{
   assert.match(defaults,/homeImage:''/);
-  assert.match(app,/homeImage\?<img className="home-hero-image"/);
-  assert.match(app,/alt="동아리 소개 사진"/);
+  assert.match(pages,/homeImage\?<img className="home-hero-image"/);
+  assert.match(pages,/alt="동아리 소개 사진"/);
   assert.match(editor,/type:'home'/);
   assert.match(editor,/메인 페이지 사진/);
 });
