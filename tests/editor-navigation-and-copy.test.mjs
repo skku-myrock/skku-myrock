@@ -16,9 +16,10 @@ test('both editors have dirty-state guarded navigation and preserve saved exits'
   assert.match(composer,/useEditorLeaveGuard\(hasUnsavedChanges\|\|busy,registerLeaveGuard\)/);
   assert.match(hook,/변경사항이 저장되지 않았습니다. 페이지를 나가시겠습니까\? 진행 상황은 저장되지 않습니다/);
   assert.match(hook,/beforeunload/);
-  assert.match(app,/if\(!canLeaveEditor\(\)\)return/);
-  assert.match(app,/popstate/);
-  assert.match(app,/editorPathRef.current/);
+  assert.match(app,/useBlocker\(/);
+  assert.match(app,/blocker\.proceed\(\)/);
+  assert.match(app,/blocker\.reset\(\)/);
+  assert.doesNotMatch(app,/window\.history\.pushState/);
   assert.match(app,/registerLeaveGuard=\{registerEditorLeaveGuard\}/);
   assert.match(app,/setAboutSaveNotice\('변경 사항을 저장했습니다/);
   assert.match(app,/site-bottom-toast is-success/);
