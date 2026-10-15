@@ -146,12 +146,27 @@ test('private profile checks, role matrix, database writes and superadmin financ
     const response=(value,status=200)=>new Response(JSON.stringify(value),{status,headers:{'content-type':'application/json'}});
     if(uri.pathname.includes('/service_accounts/v1/jwk/'))return response({keys:[jwk]});
     if(uri.hostname==='oauth2.googleapis.com')return response({access_token:'test-access',expires_in:3600});
-    if(uri.hostname==='api.github.com'&&uri.pathname.startsWith('/repos/skku-myrock/myrock-images/contents/site/'))return response({content:{sha:'test-image-blob'}},201);
+    if(uri.hostname==='api.github.com'&&uri.pathname.startsWith('/repos/skku-myrock/myrock-images/')){
+      if(uri.pathname.endsWith('/git/ref/heads/main'))return response({object:{sha:'mock-main'}});
+      if(uri.pathname.endsWith('/git/commits/mock-main'))return response({tree:{sha:'mock-tree'}});
+      if(uri.pathname.endsWith('/git/blobs'))return response({sha:'mock-blob'});
+      if(uri.pathname.endsWith('/git/trees'))return response({sha:'mock-new-tree'});
+      if(uri.pathname.endsWith('/git/commits'))return response({sha:'mock-new-commit'});
+      if(uri.pathname.endsWith('/git/refs/heads/main'))return response({});
+      throw Error('unexpected GitHub image API '+uri.pathname);
+    }
     if(uri.hostname==='firestore.googleapis.com'){
       let docPath=decodeURIComponent(uri.pathname.slice(uri.pathname.indexOf('/documents')+'/documents'.length));
       if(docPath===':commit'){
         for(const write of data.writes){docs.set(write.update.name,{name:write.update.name,fields:write.update.fields,updateTime:now()});}
         return response({writeResults:[]});
+      }
+      if(docPath===':runQuery'){
+        const where=data?.structuredQuery?.where?.fieldFilter;
+        assert.equal(where?.field?.fieldPath,'studentId');
+        assert.equal(where?.op,'EQUAL');
+        const matched=[...docs.values()].filter(doc=>doc.name.startsWith(root+'/donations/')&&docFields(doc).studentId===where.value.stringValue);
+        return response(matched.map(doc=>({document:doc})));
       }
       const key=root+docPath;
       if(options.method==='PATCH'){
