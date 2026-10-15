@@ -49,6 +49,25 @@ export function normalizeAbout(input){
   }));
   return {homeImage,heroImage,cohortLabel,officers,history};
 }
+/** Reset introduction text while preserving its existing image URLs.
+ * The eight 28th-cohort profiles are restored; photos follow the original
+ * officer by name where possible, otherwise remain in their existing slot.
+ */
+export function resetAboutTextKeepingImages(content){
+  const current=normalizeAbout(content);
+  const urlsByName=new Map(current.officers.map(person=>[person.name,person.photoUrl]));
+  return {
+    ...DEFAULT_ABOUT,
+    homeImage:current.homeImage,
+    heroImage:current.heroImage,
+    officers:DEFAULT_ABOUT.officers.map((person,index)=>({
+      ...person,
+      photoUrl:urlsByName.get(person.name)??current.officers[index]?.photoUrl??''
+    })),
+    history:DEFAULT_ABOUT.history.map(item=>({...item}))
+  };
+}
+
 /** Erase only image links; preserve descriptions, membership and history. */
 export function withoutAboutPhotoUrls(content){
   const valid=normalizeAbout(content);
