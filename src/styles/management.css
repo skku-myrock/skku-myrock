@@ -1,0 +1,301 @@
+/* Align the notice date heading and every visible date within the same grid column. */
+.notice-table-head>.notice-date-cell,.notice-table-row>.notice-date-cell{text-align:center}
+
+/* Desktop retains the '*' separator; mobile uses a two-line label with no separator. */
+.notice-composer-gallery-image-number::after{content:" ·";white-space:pre}
+@media(max-width:700px){.notice-composer-gallery-image-number::after{content:none}}
+
+
+/* Donation ledger management: compact, responsive tables and protected edit forms. */
+.finance-manager-entry{display:flex;justify-content:flex-end;margin:-28px 0 30px}
+.finance-record-row{display:grid;align-items:center;gap:12px;padding:19px 16px;border-bottom:1px solid var(--border);font-size:12px;line-height:1.6;color:#52685c}
+.finance-record-row>span:last-child{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.finance-personal-columns{grid-template-columns:1fr 1fr}
+.finance-manager-section{margin:30px 0 50px}
+.finance-manager-heading{display:flex;align-items:start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:19px}
+.finance-manager-heading h2{font-size:21px;margin:0 0 7px}
+.finance-manager-heading p{font-size:12px;color:#788c80;line-height:1.75;margin:0}
+.finance-manager-actions{display:flex;align-items:center;flex-wrap:wrap;gap:9px}
+.finance-manager-actions button{display:inline-flex;align-items:center;gap:7px}
+.finance-manager-import{padding:17px 19px;background:#f7faf8;border:1px solid #dde8e0;margin-bottom:23px;display:flex;align-items:center;flex-wrap:wrap;gap:14px}
+.finance-manager-import>span{font-size:11px;line-height:1.6;color:#7f9386}
+.finance-manager-upload{position:relative;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.finance-manager-upload input{position:absolute;width:1px;height:1px;opacity:0}
+.finance-manager-upload:focus-within{outline:2px solid #6a9c7d;outline-offset:2px}
+.finance-manager-import-confirm{display:flex;align-items:center;gap:12px;flex-wrap:wrap;width:100%}
+.finance-manager-import-confirm strong{font-size:12px;color:#42664f}
+.finance-manager-edit{border:1px solid #d9e7dc;background:#fbfdfb;padding:20px;margin:16px 0 23px}
+.finance-manager-edit h3{margin:0 0 18px;font-size:16px}
+.finance-manager-edit-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px;margin-bottom:17px}
+.finance-manager-edit-grid label,.finance-manager-anonymous-row label{display:flex;flex-direction:column;gap:7px;font-size:11px;color:#597365;font-weight:600}
+.finance-manager-edit-grid input,.finance-manager-edit-grid select,.finance-manager-anonymous-row input{box-sizing:border-box;width:100%;min-width:0;height:39px;padding:0 10px;border:1px solid #d9e5db;background:#fff;font-size:12px;color:var(--ink)}
+.finance-manager-table-wrap{max-width:100%;overflow-x:auto;border-top:1px solid #91a598}
+.finance-manager-table{border-collapse:collapse;width:100%;min-width:690px;text-align:left;font-size:12px;color:#567064}
+.finance-manager-table th{padding:14px 11px;font-size:11px;font-weight:600;color:#8a9d91;background:#f7faf8;white-space:nowrap}
+.finance-manager-table td{padding:13px 11px;border-bottom:1px solid #e0e8e2;white-space:nowrap}
+.finance-manager-table td:nth-child(4){font-variant-numeric:tabular-nums}
+.finance-manager-table .outline-action{padding:7px 10px;font-size:11px}
+.finance-manager-anonymous-list{display:flex;flex-direction:column;gap:10px;margin-bottom:18px}
+.finance-manager-anonymous-list>p{font-size:12px;color:#8d9b91}
+.finance-manager-anonymous-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;align-items:end;gap:12px;border-bottom:1px solid #e1e9e3;padding:10px 0}
+.finance-manager-anonymous-row button{height:39px}
+.finance-manager-success{padding:13px 15px;color:#36674f;background:#eef7f0;border:1px solid #d3e6d8;font-size:12px}
+@media(max-width:700px){
+  .finance-manager-entry{margin:0 0 25px}
+  .finance-record-row{padding:16px 12px;gap:8px;font-size:11px}
+  .finance-manager-edit-grid{grid-template-columns:1fr 1fr}
+  .finance-manager-import{padding:14px}
+  .finance-manager-anonymous-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .finance-manager-anonymous-row>button{grid-column:1/-1;justify-self:start;height:34px}
+}
+@media(max-width:420px){.finance-manager-edit-grid{grid-template-columns:1fr}.finance-manager-heading{align-items:start}}
+
+/* Total for logged-in member's student-ID matched donations. */
+.finance-personal-total{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:22px 19px;background:#f2f7f3;border-bottom:1px solid #d9e6db}
+.finance-personal-total span{font-size:12px;color:#536d5d;font-weight:600}
+.finance-personal-total strong{font-size:20px;color:#2e6047;font-variant-numeric:tabular-nums;white-space:nowrap}
+.finance-manager-anonymous-value{display:flex;flex-direction:column;gap:7px;min-width:0;justify-content:center;color:#466350}
+.finance-manager-anonymous-value small{font-size:11px;color:#738a7a}
+.finance-manager-anonymous-value strong{font-size:13px;overflow-wrap:anywhere;font-weight:600}
+@media(max-width:700px){.finance-personal-total{padding:17px 13px}.finance-personal-total strong{font-size:18px}}
+
+
+/* Inline donation and transaction editing */
+.finance-inline-edit{background:#f4faf5}
+.finance-inline-edit td{vertical-align:middle}
+.finance-inline-edit input,.finance-inline-edit select,.finance-inline-fields input,.finance-inline-fields select{
+  box-sizing:border-box;width:100%;min-width:0;height:35px;border:1px solid #b9d0be;
+  background:#fff;border-radius:3px;padding:4px 7px;color:var(--ink);font-size:12px}
+.finance-inline-edit input:focus,.finance-inline-edit select:focus,
+.finance-inline-fields input:focus,.finance-inline-fields select:focus{outline:2px solid #7caa8e;outline-offset:1px}
+.finance-row-actions{white-space:nowrap}
+.finance-row-actions button{display:inline-flex;align-items:center;justify-content:center;gap:4px;margin:2px 4px 2px 0}
+.finance-inline-add-form{padding:11px 7px}
+.finance-inline-fields{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:12px}
+.finance-inline-fields label{display:flex;flex-direction:column;gap:7px;font-size:11px;color:#60796a}
+.finance-inline-fields input,.finance-inline-fields select{height:39px}
+.finance-transactions-admin{min-width:980px}
+.finance-transactions-admin td:nth-child(4){font-variant-numeric:tabular-nums}
+.finance-transaction-scroll{overflow-x:auto}
+.finance-transaction-scroll>.finance-expense-columns{min-width:775px}
+.finance-expense-columns{grid-template-columns:1.3fr .65fr .9fr 1fr 1.65fr}
+.finance-transaction-scroll .finance-record-table-header>span:last-child,.finance-transaction-scroll .finance-record-row>span:last-child{text-align:left}
+.finance-account-heading{display:flex;align-items:start;justify-content:space-between;gap:16px}
+.finance-account-heading .section-heading{flex:1;margin-bottom:23px}
+.finance-account-heading>.outline-action{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}
+.finance-account-form{width:100%}
+.finance-account-form .finance-bank-fields label{display:flex;flex-direction:column;min-width:0}
+.finance-account-form .finance-bank-fields input{box-sizing:border-box;width:100%;height:43px;
+  padding:8px 10px;border:1px solid #b8cbbd;color:var(--ink);background:#fff;font-size:15px}
+.finance-account-edit-actions{justify-content:flex-end;margin-top:18px}
+@media(max-width:700px){
+ .finance-inline-fields{grid-template-columns:1fr 1fr}
+ .finance-account-heading{align-items:center}
+ .finance-account-heading .section-heading{margin-bottom:19px}
+ .finance-account-heading>.outline-action{font-size:11px;padding:8px 10px}
+}
+@media(max-width:420px){.finance-inline-fields{grid-template-columns:1fr}}
+
+
+/* The donation grid uses stable columns in view/edit modes, so editing never expands or shifts a column. */
+.finance-donations-admin{table-layout:fixed;min-width:900px}
+.finance-donations-admin th:nth-child(1){width:15%}
+.finance-donations-admin th:nth-child(2){width:20%}
+.finance-donations-admin th:nth-child(3){width:20%}
+.finance-donations-admin th:nth-child(4){width:19%}
+.finance-donations-admin th:nth-child(5){width:9%}
+.finance-donations-admin th:nth-child(6){width:17%}
+.finance-donations-admin td{overflow-wrap:anywhere}
+.finance-donations-admin .finance-inline-edit td{padding:10px 9px;vertical-align:middle}
+.finance-donations-admin .finance-inline-edit input,
+.finance-donations-admin .finance-inline-edit select{display:block;width:100%;height:36px;min-width:0;margin:0;font-size:12px}
+.finance-donations-admin .finance-inline-edit input[type=date]{padding-inline:5px}
+.finance-donations-admin .finance-inline-row-actions{display:flex;align-items:center;gap:6px;min-width:0}
+.finance-donations-admin .finance-inline-row-actions .outline-action{
+  flex:1;display:inline-flex;align-items:center;justify-content:center;gap:4px;
+  min-width:0;height:36px;box-sizing:border-box;padding:6px 5px;margin:0;white-space:nowrap;font-size:11px
+}
+/* Keep anonymous roster save feedback at its own action instead of the distant page header. */
+.finance-manager-people-save{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin-top:7px}
+.finance-manager-people-save>.button{flex:0 0 auto}
+.finance-manager-people-feedback{min-width:0;flex:1 1 220px}
+.finance-manager-people-error,.finance-manager-people-success{margin:0;padding:8px 11px;font-size:12px;line-height:1.6;border:1px solid transparent}
+.finance-manager-people-error{color:#a63030;background:#fff1f1;border-color:#edcece}
+.finance-manager-people-success{color:#276344;background:#eff8f1;border-color:#cfdfd2}
+@media(max-width:700px){
+  .finance-manager-people-save{align-items:stretch;gap:8px}
+  .finance-manager-people-feedback{flex-basis:100%}
+  .finance-manager-people-error,.finance-manager-people-success{padding:9px 11px}
+}
+
+
+/* Consistent CSV import controls across donation and expense managers. */
+.finance-manager-import .finance-manager-template{display:inline-flex;align-items:center;gap:7px;min-height:34px}
+.finance-manager-csv-guidance{display:flex;flex-direction:column;gap:3px;flex:1 1 100%;font-size:11px;line-height:1.75;color:#71877a}
+.finance-manager-import-confirm{margin-top:2px}
+@media(max-width:700px){.finance-manager-csv-guidance{font-size:11px}}
+
+/* Align member administration heading with the action grid, including mobile. */
+.member-live-head>span:last-child{text-align:right;justify-self:end;padding-right:2px}
+.member-live-row>.member-actions{
+  display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:7px;align-content:center;align-items:stretch;justify-items:stretch;justify-content:stretch;
+  width:100%;min-width:0
+}
+.member-live-row>.member-actions .outline-action{
+  box-sizing:border-box;width:100%;min-width:0;min-height:35px;margin:0;
+  display:inline-flex;align-items:center;justify-content:center;gap:4px;
+  text-align:center;font-size:10px;white-space:nowrap;padding:8px 5px
+}
+.member-live-row>.member-actions>button:nth-child(4){grid-column:1/span 2}
+.member-live-row>.member-actions>button:nth-child(5){grid-column:3}
+@media(max-width:760px){
+  .member-live-row>.member-actions{grid-column:1/-1;grid-row:3;justify-content:stretch;gap:7px}
+  .member-live-row>.member-actions .outline-action{font-size:10px;padding-inline:4px}
+}
+
+
+/* A saved anonymous donor stays on screen, struck through, until the save succeeds. */
+.finance-manager-anonymous-row.is-pending-removal{
+  background:#f7f8f7;border-left:3px solid #bdc8bf;padding-inline:10px 6px
+}
+.finance-manager-anonymous-row.is-pending-removal .finance-manager-anonymous-value strong,
+.finance-manager-anonymous-row.is-pending-removal input{
+  text-decoration:line-through;text-decoration-thickness:1px;
+  color:#93a199;opacity:.7
+}
+.finance-manager-anonymous-row.is-pending-removal .outline-action{
+  color:#486e58;border-color:#bdd3c2
+}
+/* Disabled because there is no pending change must visibly differ from the enabled save button. */
+.finance-manager-people-save>.button:disabled{
+  background:#e4e9e5!important;border-color:#dbe1dc!important;
+  color:#929d95!important;opacity:.65;box-shadow:none;filter:saturate(.25)
+}
+.finance-manager-people-save>.button:not(:disabled){opacity:1;filter:none}
+.finance-account-edit-actions>.button:disabled{
+  background:#e4e9e5!important;border-color:#dbe1dc!important;
+  color:#929d95!important;opacity:.65;box-shadow:none;filter:saturate(.25)
+}
+.finance-account-edit-actions>.button:not(:disabled){opacity:1;filter:none}
+/* The forbidden cursor is misleading for buttons disabled while an async task runs.
+   Keep disabled functionality intact; show an OS busy spinner everywhere during requests. */
+button:disabled{cursor:default!important}
+body:has([data-async-busy="true"]),body:has([data-async-busy="true"]) *{
+  cursor:wait!important
+}
+
+
+/* Same managerial color only for privileged actions visible on otherwise public pages. */
+.admin-only-action{display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:11px 16px;border:1px solid #355b67;background:#355b67;color:#fff;
+  font-size:12px;font-weight:700;line-height:1.3;white-space:nowrap;cursor:pointer;
+  transition:background .15s,border-color .15s}
+.admin-only-action:hover:not(:disabled){background:#254752;border-color:#254752}
+.admin-only-action:disabled{opacity:.48}
+.finance-account-heading>.admin-only-action{flex:0 0 auto}
+.about-admin-tools{display:flex;align-items:center;justify-content:flex-end;gap:16px;margin-top:10px}
+.about-load-error{margin:0;color:#a36c4c;font-size:11px}
+.about-hero-image{display:block;width:100%;max-height:450px;object-fit:contain;background:#f6f8f6}
+.leader-item img.leader-photo{display:block;width:76px;min-width:76px;aspect-ratio:3/4;object-fit:cover}
+.about-manage{margin-bottom:90px}
+.about-manage-section{border-top:1px solid #bdcec3;margin:28px 0 36px;padding-top:23px}
+.about-manage-section h2{font-size:20px;margin:0}
+.about-manage-section-heading{display:flex;justify-content:space-between;align-items:center;gap:13px;margin-bottom:20px}
+.about-manage-section .outline-action,.about-manage-actions button{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:35px}
+.about-manage-photo{display:grid;grid-template-columns:minmax(0,1fr) minmax(240px,1fr);gap:22px;margin-top:16px}
+.about-manage-photo>img,.about-manage-photo-empty{display:block;width:100%;max-height:300px;min-height:180px;object-fit:contain;background:#f2f5f2}
+.about-manage-photo-empty{display:flex;align-items:center;justify-content:center;color:#85958a;font-size:12px}
+.about-manage-photo-controls{display:flex;flex-direction:column;align-items:flex-start;gap:13px}
+.about-manage label:not(.about-image-upload){display:flex;flex-direction:column;gap:6px;min-width:0;font-size:12px;color:#596f5f}
+.about-manage label>input:not([type=file]){width:100%;min-width:0;height:41px;padding:8px 10px;
+  border:1px solid #d1dfd5;background:#fff;color:#31493b;font-size:12px}
+.about-manage-hint{margin-top:16px;color:#748677;font-size:11px;line-height:1.8}
+.about-image-upload{position:relative;cursor:pointer}
+.about-image-upload input[type=file]{position:absolute;width:1px;height:1px;opacity:0}
+.about-image-upload:focus-within{outline:2px solid #456f56}
+.about-manage-items{display:flex;flex-direction:column;gap:14px}
+.about-manage-item{background:#f8faf8;border:1px solid #dce7df;padding:18px}
+.about-manage-item-head{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:16px}
+.about-manage-item-head strong{font-size:13px;color:#3e6549}
+.about-manage-actions{display:flex;flex-wrap:wrap;gap:7px}
+.about-manage-actions button{background:#fff;border:1px solid #cfdbd1;color:#577260;padding:6px 10px;font-size:11px}
+.about-manage-actions button:disabled{opacity:.35}
+.about-manage-fields{display:grid;grid-template-columns:1fr 1.3fr 1.6fr;gap:14px}
+.about-manage-history-fields{grid-template-columns:1fr 3fr}
+.about-manage-label{max-width:350px;margin-bottom:18px}
+.about-manage-officer-photo{display:flex;align-items:center;gap:14px;margin-top:13px;flex-wrap:wrap}
+.about-manage-officer-photo img{width:70px;height:92px;object-fit:cover}
+.about-manage-footer{display:flex;justify-content:flex-end;position:sticky;bottom:0;background:rgba(252,252,251,.96);
+  padding:15px 0;border-top:1px solid #cfdfd3;z-index:3}
+.about-manage-footer .button{display:inline-flex;align-items:center;gap:8px}
+@media(max-width:700px){
+  .about-admin-tools{margin-top:4px}
+  .about-manage-photo{grid-template-columns:1fr}
+  .about-manage-fields,.about-manage-history-fields{grid-template-columns:1fr}
+  .about-manage-item{padding:13px}
+  .about-manage-item-head{flex-wrap:wrap}
+  .about-manage-section-heading h2{font-size:17px}
+}
+
+
+/* Small, persistent bottom notices remain visible while editing long forms. */
+.site-bottom-toast{position:fixed;z-index:1500;left:50%;bottom:max(22px,env(safe-area-inset-bottom));
+  transform:translateX(-50%);box-sizing:border-box;max-width:min(520px,calc(100vw - 28px));min-width:min(330px,calc(100vw - 28px));
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:14px 16px;box-shadow:0 7px 28px rgba(17,39,24,.16);
+  font-size:12px;line-height:1.65;color:#315a40;background:#f1faf2;border:1px solid #acd5b5}
+.site-bottom-toast.is-error{color:#933636;background:#fff3f1;border-color:#e7b8b3}
+.site-bottom-toast>span{min-width:0;overflow-wrap:anywhere}
+.site-bottom-toast>button{flex:0 0 auto;border:1px solid currentColor;background:transparent;color:inherit;cursor:pointer;
+  font:inherit;padding:5px 8px;border-radius:2px}
+@media(max-width:700px){.site-bottom-toast{bottom:max(12px,env(safe-area-inset-bottom));padding:12px 13px}}
+
+/* An expanded input stage for notice image URLs and local multi-file previews. */
+.notice-composer-image-picker{box-sizing:border-box;width:100%;min-width:0;padding:20px 22px;
+  background:#f9fbff;border:1px solid #b9cce5;display:flex;flex-direction:column;gap:14px}
+.notice-composer-image-picker-heading{display:flex;align-items:center;flex-wrap:wrap;gap:10px}
+.notice-composer-image-picker-heading strong{font-size:13px;color:#335875}
+.notice-composer-image-picker-heading span{font-size:11px;color:#778c99}
+.notice-composer-image-picker-controls{display:flex;align-items:flex-end;flex-wrap:wrap;gap:10px}
+.notice-composer-image-picker-url{flex:1 1 270px;display:flex;flex-direction:column;gap:8px;min-width:0;font-size:11px;color:#546f83}
+.notice-composer-image-picker-url>input{box-sizing:border-box;width:100%;height:39px;padding:8px 11px;
+  background:#fff;border:1px solid #bbcfde;border-radius:2px;color:var(--ink);font-size:12px}
+.notice-composer-image-picker-url>input:focus{outline:2px solid #86b5d2;outline-offset:1px}
+.notice-composer-image-picker-controls>.outline-action{height:39px;box-sizing:border-box;display:inline-flex;
+  justify-content:center;align-items:center;gap:6px;white-space:nowrap}
+.notice-composer-image-picker-controls>.outline-action:disabled{opacity:.38}
+.notice-composer-image-picker>p{margin:0;color:#7d90a0;font-size:11px;line-height:1.7}
+@media(max-width:620px){.notice-composer-image-picker{padding:15px 12px}
+  .notice-composer-image-picker-url{flex-basis:100%}
+  .notice-composer-image-picker-controls>.outline-action{flex:1 1 auto}
+}
+
+/* Separate the newly opened image input panel from the existing content above it. */
+.notice-composer-image-picker.is-new-image{margin-top:16px}
+
+.home-hero-image{display:block;width:100%;height:100%;object-fit:cover;background:#eff2f1}
+/* Apply a subtle lifted-card shadow to the two editable feature photos only. */
+.home-hero-image,.about-hero-image{box-shadow:0 12px 30px rgba(31,53,47,.14),0 3px 8px rgba(31,53,47,.07)}
+
+.notice-detail-meta{display:flex;align-items:center;justify-content:space-between;gap:12px 20px;width:100%;min-height:39px}
+.notice-detail-byline{display:flex;align-items:center;gap:12px 22px;flex-wrap:wrap;min-width:0}
+.notice-detail-byline>span{color:#667e70}
+.notice-manage-actions{display:flex;justify-content:flex-end;align-items:center;flex-shrink:0;margin:0 0 0 auto;position:relative}
+.notice-manage-menu{position:absolute;top:calc(100% + 5px);right:0;z-index:10;display:flex;flex-direction:column;min-width:128px;gap:5px;align-items:stretch;background:#fff;border:1px solid #e0e8e2;padding:6px;box-shadow:0 6px 20px #00000012}
+.notice-manage-menu button{border:1px solid #cad8cf;background:#fff;color:#365b46;padding:8px 14px;font-size:12px;cursor:pointer}
+.notice-manage-menu button:last-child{color:#a43f3f;border-color:#e1caca}
+.notice-manage-menu button:hover{background:#f2f7f3}
+.notice-detail-image-single{margin:22px auto;max-width:100%}
+.notice-detail-image-single img{display:block;height:auto;max-width:100%;margin:auto;object-fit:contain}
+.notice-detail-content>.notice-detail-body{margin:16px 0}
+.notice-detail-content>.notice-detail-body p{white-space:pre-wrap}
+@media(max-width:620px){.notice-detail-meta{gap:10px}.notice-detail-byline{gap:6px 12px}.notice-manage-actions{align-self:center}.notice-manage-menu{min-width:115px}}
+
+.notice-dimension-error{font-size:11px;color:#ae3f3f;margin:6px 0 3px;line-height:1.5}
+.notice-composer-dimensions input[aria-invalid="true"]{border-color:#ba5555}
+
+/* Reminder applies only to authoring surfaces, not to public photos. */
+.image-compression-notice{margin:20px 0 6px;padding:14px 17px;border:1px solid #dbe7df;background:#f4f8f5;color:#577063;font-size:12px;line-height:1.8;word-break:keep-all}
+.image-compression-notice strong{font-weight:700;color:#375b49}
+
