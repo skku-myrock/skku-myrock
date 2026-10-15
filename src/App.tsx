@@ -240,11 +240,13 @@ function NoticeDetail({ notice, canManage, backToList, onEdit, onDelete }: { not
       <header className="notice-detail-header">
         <span className="notice-detail-category">{notice.category}</span>
         <h2>{notice.title}</h2>
-        <div className="notice-detail-meta"><time dateTime={notice.publishedAt}>{notice.date}</time>
-          <span>작성자 {notice.author}</span>
+        <div className="notice-detail-meta">
+          <div className="notice-detail-byline"><time dateTime={notice.publishedAt}>{notice.date}</time>
+            <span>작성자 {notice.author}</span>
+          </div>
+          {canManage&&<div className="notice-manage-actions"><button type="button" className="outline-action" aria-expanded={manageOpen} onClick={()=>setManageOpen(x=>!x)}>관리 <ChevronDown size={15}/></button>{manageOpen&&<div className="notice-manage-menu"><button type="button" onClick={onEdit}>수정하기</button><button type="button" onClick={onDelete}>삭제하기</button></div>}</div>}
         </div>
       </header>
-      {canManage&&<div className="notice-manage-actions"><button type="button" className="outline-action" aria-expanded={manageOpen} onClick={()=>setManageOpen(x=>!x)}>관리 <ChevronDown size={15}/></button>{manageOpen&&<div className="notice-manage-menu"><button type="button" onClick={onEdit}>수정하기</button><button type="button" onClick={onDelete}>삭제하기</button></div>}</div>}
       <div className="notice-detail-content">
         {notice.blocks.map((block,index)=>block.kind==='text'?<div className="notice-detail-body" key={index}><p>{block.text}</p></div>:block.kind==='gallery'?
           <div key={index} className="notice-detail-images"><NoticeImageCarousel label={notice.title+' 이미지 슬라이드'} slides={block.images.map((image,i)=>({id:i,src:image.url,alt:image.name,width:Number(image.width)||320,height:Number(image.height)||240}))}/></div>:
