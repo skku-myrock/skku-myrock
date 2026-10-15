@@ -146,6 +146,7 @@ test('private profile checks, role matrix, database writes and superadmin financ
     const response=(value,status=200)=>new Response(JSON.stringify(value),{status,headers:{'content-type':'application/json'}});
     if(uri.pathname.includes('/service_accounts/v1/jwk/'))return response({keys:[jwk]});
     if(uri.hostname==='oauth2.googleapis.com')return response({access_token:'test-access',expires_in:3600});
+    if(uri.hostname==='api.github.com'&&uri.pathname.startsWith('/repos/skku-myrock/myrock-images/contents/site/'))return response({content:{sha:'test-image-blob'}},201);
     if(uri.hostname==='firestore.googleapis.com'){
       let docPath=decodeURIComponent(uri.pathname.slice(uri.pathname.indexOf('/documents')+'/documents'.length));
       if(docPath===':commit'){
@@ -236,16 +237,14 @@ test('private profile checks, role matrix, database writes and superadmin financ
     const publicFileRequest=await new Request('https://skku-myrock.pages.dev/api/about/image',{method:'POST',
       headers:{authorization:'Bearer '+token.member},body:imagePayload});
     assert.equal((await aboutImagePost({request:publicFileRequest,env})).status,403);
-    const imageObject=new Map();
-    const imageEnv={...env,MYROCK_IMAGES:{put:async(key,data,metadata)=>{imageObject.set(key,{data,metadata});}}};
+    const imageEnv={...env,GITHUB_IMAGES_TOKEN:'test-server-token',MYROCK_IMAGES_PUBLIC_BASE_URL:'https://myrock-images.pages.dev/'};
     const uploadPayload=new FormData();
     uploadPayload.append('image',new Blob([new Uint8Array([137,80,78,71,13,10,26,10])],{type:'image/png'}),'test.png');
     const uploadReq=new Request('https://skku-myrock.pages.dev/api/about/image',{method:'POST',
       headers:{authorization:'Bearer '+token.staff},body:uploadPayload});
     const uploaded=await aboutImagePost({request:uploadReq,env:imageEnv});
-    assert.equal(uploaded.status,200);
-    assert.match((await uploaded.json()).url,/^\/api\/about\/image\?key=about\//);
-    assert.equal(imageObject.size,1);
+    assert.equal(uploaded.status,201);
+    assert.match((await uploaded.json()).url,/^https:\/\/myrock-images\.pages\.dev\/site\//);
     assert.equal((await expensesManageGet({request:financeRequest('member','expenses-manage'),env})).status,403);
     assert.equal((await expensesManageGet({request:financeRequest('staff','expenses-manage'),env})).status,200);
     const transaction={dateTime:'2026-10-15T12:30',type:'출금',amount:'10000',balance:'50000',description:'합주실 대여'};
