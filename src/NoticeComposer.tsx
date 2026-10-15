@@ -237,7 +237,7 @@ export default function NoticeComposer({ onBack, onSaved, initial }: { onBack: (
       const allImages=blocks.flatMap(block=>block.kind==='image'?[block]:block.kind==='gallery'?block.images:[]);
       const pending=[...new Set(allImages.map(image=>image.url).filter(url=>localFiles.current.has(url)&&!uploaded.current.has(url)))];
       if(pending.length){
-        const urls=await uploadImagesBatch(pending.map(url=>localFiles.current.get(url)!));
+        const urls=await uploadImagesBatch(pending.map(url=>localFiles.current.get(url)!),'notices');
         pending.forEach((url,i)=>uploaded.current.set(url,urls[i]));
       }
       const serialize=(image:ImageBlock):NoticeImage=>({kind:'image',url:uploaded.current.get(image.url)??image.url,name:image.name,width:image.width,height:image.height,ratioLocked:image.ratioLocked,naturalWidth:image.naturalWidth,naturalHeight:image.naturalHeight});
