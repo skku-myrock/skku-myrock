@@ -127,7 +127,7 @@ export function About({ navigate, canEdit }: { navigate: Navigate;canEdit:boolea
 }
 
 
-export function News({ canWrite, onWrite, openNotice, notices, loading, error }: { canWrite: boolean; onWrite: () => void; openNotice: (id: string) => void; notices: NoticePost[]; loading:boolean; error:string }) {
+export function News({ canWrite, onWrite, openNotice, notices, loading, error, hasMore, moreLoading, onLoadMore }: { canWrite: boolean; onWrite: () => void; openNotice: (id: string) => void; notices: NoticePost[]; loading:boolean; error:string; hasMore:boolean; moreLoading:boolean; onLoadMore:()=>void }) {
   const [category, setCategory] = useState('전체');
   const [query, setQuery] = useState('');
   const search = query.trim().toLocaleLowerCase('ko');
@@ -165,7 +165,7 @@ export function News({ canWrite, onWrite, openNotice, notices, loading, error }:
         {loading&&<p role="status">공지사항을 불러오는 중입니다.</p>}
         {!loading&&filtered.length===0&&<EmptyState title="공지사항이 없습니다" description="등록된 공지사항이 없습니다." />}
       </div>
-      <div className="list-bottom"><span>총 {filtered.length}건</span></div>
+      <div className="list-bottom"><span>불러온 공지사항 {filtered.length}건</span>{hasMore&&<button type="button" className="outline-action" disabled={moreLoading} onClick={onLoadMore}>{moreLoading?"더 불러오는 중...":"공지사항 더 보기"}</button>}</div>
     </section>
   </>;
 }
