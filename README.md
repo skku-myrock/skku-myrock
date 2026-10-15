@@ -236,7 +236,7 @@ npm run check:pages
 - 로그인 계정의 **서명된 Firebase 최고관리자 클레임** 및 **Firestore 최고관리자 플래그**가 모두 유효할 때만 명단·회계·공지·소개 초기화를 표시하고 API에서도 검증합니다.
 - **공지사항 초기화**: `/api/notices/purge`가 Firestore `notices` 컬렉션을 요청당 최대 20개씩 삭제합니다. 마지막 배치에서 GitHub `notices/`의 최신 사진도 `.gitkeep`만 남기고 정리합니다. 실패하면 다시 실행하여 나머지 문서 및 사진 정리를 마칠 수 있습니다.
 - **모여락 소개 초기화**: `/api/about/reset`이 **Firestore 소개 내용만** 28기 운영진 8명과 **1998년 모여락 창단, 2023년 중앙동아리 승격**, 이미지 URL 없음 상태로 복원합니다. GitHub의 어떤 파일도 삭제하지 않습니다.
-- **에셋 초기화**: `/api/images/reset`은 GitHub `site/` 디렉터리만 비웁니다. `notices/`와 `gallery/`는 그대로 둡니다. 이전 공지사항이 `site/` URL을 참조하면 사진 유실을 방지하기 위해 작업을 차단합니다. 이 경우 사진을 `notices/`로 이전하고 URL을 수정한 후 다시 실행해야 합니다. 소개 문서의 사진 URL은 지우지 않으므로 에셋 초기화 후 화면에 빈 사진이 나올 수 있으며, 필요하면 소개 내용을 별도로 초기화하세요. 파일 정리는 현재 Git 브랜치만 변경하고 Git 이력은 유지합니다.
+- **에셋 초기화**: `/api/images/reset`은 GitHub `site/` 폴더를 비운 다음 Firebase Firestore `siteContent/clubIntroduction`의 **메인 페이지 사진(`homeImage`)·동아리 소개 사진(`heroImage`)·운영진 사진(`photoUrl`) URL만 빈 값으로 수정**합니다. 운영진 이름·직책·기수·연혁과 `gallery/`, `notices/`는 변경하지 않습니다. 이전 공지사항이 `site/` URL을 참조하는 경우 사진 유실 방지를 위해 실행을 거절하며, 먼저 해당 사진을 `notices/`로 이전해야 합니다. GitHub 정리 후 Firestore 쓰기에 실패하면 일부만 처리될 수 있으므로 다시 실행하세요. 파일 정리는 최신 Git 브랜치를 변경할 뿐 Git 이력과 Cloudflare CDN의 옛 직접 URL을 즉시 삭제하지는 않습니다.
 - Git 이력에 남은 과거 파일이 영구 제거되는 것은 아닙니다. 위 작업은 최신 `main`에서만 이미지 파일을 제거합니다. 이미지 전용 Pages 배포의 전파는 비동기입니다.
 
 ## 저장·배포 역할
