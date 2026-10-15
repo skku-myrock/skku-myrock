@@ -29,7 +29,7 @@ export async function loadLedger(env) {
 }
 /** Member view: Firestore's studentId index filters before documents are read. */
 export async function loadDonationsByStudentId(env,studentId){
-  if(!/^\\d{10}$/.test(studentId))reject('본인 학번을 확인할 수 없습니다.',403);
+  if(!/^\d{10}$/.test(studentId))reject('본인 학번을 확인할 수 없습니다.',403);
   const result=await googleRequest(env,FIRESTORE_ROOT+':runQuery',{
     method:'POST',
     body:{structuredQuery:{
