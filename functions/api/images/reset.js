@@ -2,7 +2,7 @@ import {failure,parseBody,reject,secureOrigin,success} from '../../_lib/shared.j
 import {assertAccess} from '../../_lib/google.js';
 import {listNotices} from '../../_lib/notices.js';
 import {clearImageFolder} from '../../_lib/githubImages.js';
-import {getAbout,saveAbout} from '../../_lib/aboutContent.js';
+import {getAbout,saveAbout,withoutAboutPhotoUrls} from '../../_lib/aboutContent.js';
 
 export const RESET_SITE_CONFIRMATION='에셋 초기화';
 export async function onRequestPost({request,env}){
@@ -30,10 +30,7 @@ export async function onRequestPost({request,env}){
     // officer names/roles and history while clearing only their image references.
     const {content,updateTime}=await getAbout(env);
     const photosPresent=Boolean(content.homeImage||content.heroImage||content.officers.some(person=>person.photoUrl));
-    const withoutPhotos={
-      ...content,homeImage:'',heroImage:'',
-      officers:content.officers.map(person=>({...person,photoUrl:''}))
-    };
+    const withoutPhotos=withoutAboutPhotoUrls(content);
     const cleaned=await clearImageFolder(env,'site');
     // GitHub and Firestore are independent systems. If the Firestore write fails,
     // return an error so a superadmin can retry this idempotent reset.
