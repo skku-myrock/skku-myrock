@@ -451,7 +451,7 @@ function App() {
   const showLogin=()=>{setLoginOpen(true);setMenuOpen(false);setAccountOpen(false);};
   const logout=async()=>{try{await signOut(auth);navigate('home');notify('로그아웃되었습니다.');}catch{notify('로그아웃하지 못했습니다. 잠시 후 다시 시도해 주세요.');}};
   async function resetRosterExceptMyself() {
-    if (rosterResetting || financeResetting || noticeResetting || aboutResetting || !user || !profile?.superadmin || !hasSystemClaim) return;
+    if (rosterResetting || financeResetting || noticeResetting || aboutResetting || assetResetting || !user || !profile?.superadmin || !hasSystemClaim) return;
     const confirmed = window.confirm(
       '개발용 명단 초기화입니다. 본인 계정을 제외한 모든 부원의 Firestore 프로필과 Firebase 로그인 계정이 삭제됩니다.\n\n삭제된 계정은 자동 복구할 수 없습니다. 실행할까요?'
     );
@@ -474,7 +474,7 @@ function App() {
     }
   }
   async function resetDonationFinance() {
-    if(financeResetting||rosterResetting||noticeResetting||aboutResetting||!user||!profile?.superadmin||!hasSystemClaim)return;
+    if(financeResetting||rosterResetting||noticeResetting||aboutResetting||assetResetting||!user||!profile?.superadmin||!hasSystemClaim)return;
     const typed=window.prompt('모든 후원 기록과 익명자 명단, 회비 집행 내역이 영구 삭제됩니다. 계속하려면 후원 · 회계 초기화를 입력하세요.');
     if(typed!=='후원 · 회계 초기화')return;
     if(!window.confirm('후원과 회비 집행 내역 전체를 영구 삭제합니다. 복구할 수 없습니다. 실행할까요?'))return;
@@ -532,7 +532,7 @@ function App() {
     }finally{setAboutResetting(false);}
   }
   async function resetAssets(){
-    if(rosterResetting||financeResetting||noticeResetting||aboutResetting||assetResetting||assetResetting||!user||!profile?.superadmin||!hasSystemClaim)return;
+    if(rosterResetting||financeResetting||noticeResetting||aboutResetting||assetResetting||!user||!profile?.superadmin||!hasSystemClaim)return;
     const typed=window.prompt('GitHub myrock-images/site/ 파일을 모두 정리합니다. 소개 사진은 보이지 않게 되며, site/ 이미지를 사용하는 옛 공지사항이 있다면 작업이 차단됩니다. 계속하려면 에셋 초기화를 입력하세요.');
     if(typed!=='에셋 초기화')return;
     if(!window.confirm('site/ 폴더만 초기화합니다. gallery/와 notices/는 유지되며 Git 이력은 삭제하지 않습니다. 실행할까요?'))return;
