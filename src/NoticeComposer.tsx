@@ -25,6 +25,8 @@ export default function NoticeComposer({ onBack, onSaved, initial }: { onBack: (
   const [preview, setPreview] = useState(false);
   const [error, setError] = useState('');
   const [busy,setBusy]=useState(false);
+  const [dimensionDrafts,setDimensionDrafts]=useState<Record<string,string>>({});
+  const [dimensionErrors,setDimensionErrors]=useState<Record<string,string>>({});
   const localFiles=useRef(new Map<string,File>());
   const uploaded=useRef(new Map<string,string>());
   const nextId = useRef(100000);
@@ -176,6 +178,32 @@ export default function NoticeComposer({ onBack, onSaved, initial }: { onBack: (
         ? { ...block, ...resizeImageDimensions(block, axis, value, block.ratioLocked) } : block;
     }));
   }
+  const dimensionKey=(id:number,axis:DimensionAxis)=>id+':'+axis;
+  function commitDimension(id:number,axis:DimensionAxis,raw:string){
+    const key=dimensionKey(id,axis),value=raw.trim(),number=Number(value);
+    if(!/^[0-9]+$/.test(value)||!Number.isInteger(number)||number<1||number>MAX_IMAGE_DIMENSION){
+      setDimensionErrors(prev=>({...prev,[key]:'1~'+MAX_IMAGE_DIMENSION+' 사이의 정수를 입력해 주세요.'}));
+      return;
+    }
+    setDimensionErrors(prev=>{const next={...prev};delete next[key];return next;});
+    setDimensionDrafts(prev=>{const next={...prev};delete next[key];return next;});
+    changeImageSize(id,axis,number);
+  }
+  function dimensionInput(image:ImageBlock,axis:DimensionAxis,label:string){
+    const key=dimensionKey(image.id,axis);
+    return <label>{axis==='width'?'W':'H'}
+      <input type="number" min={1} max={MAX_IMAGE_DIMENSION} step={1} inputMode="numeric"
+        aria-label={label} aria-invalid={Boolean(dimensionErrors[key])}
+        value={dimensionDrafts[key]??(image[axis]||'')} disabled={!image[axis]}
+        onChange={event=>setDimensionDrafts(prev=>({...prev,[key]:event.target.value}))}
+        onBlur={event=>commitDimension(image.id,axis,event.currentTarget.value)}/>
+      <span>px</span>
+    </label>;
+  }
+  function dimensionWarning(id:number){
+    const warning=dimensionErrors[dimensionKey(id,'width')]||dimensionErrors[dimensionKey(id,'height')];
+    return warning?<p className="notice-dimension-error" role="alert">{warning}</p>:null;
+  }
   function toggleImageRatio(id: number) {
     setBlocks(previous => previous.map(block => {
       if (block.kind === 'gallery') return { ...block, images: block.images.map(image =>
@@ -232,6 +260,10 @@ export default function NoticeComposer({ onBack, onSaved, initial }: { onBack: (
   async function publish(){
     if(busy)return;
     if(!title.trim()){setError('제목을 입력해 주세요.');return;}
+    const activeIds=new Set(blocks.flatMap(block=>block.kind==='image'?[block.id]:block.kind==='gallery'?block.images.map(image=>image.id):[]));
+    if(Object.entries(dimensionErrors).some(([key,msg])=>msg&&activeIds.has(Number(key.split(':')[0])))){
+      setError('잘못된 이미지 크기를 수정한 뒤 저장해 주세요.');return;
+    }
     setError('');setBusy(true);
     try{
       const allImages=blocks.flatMap(block=>block.kind==='image'?[block]:block.kind==='gallery'?block.images:[]);
@@ -330,23 +362,13 @@ export default function NoticeComposer({ onBack, onSaved, initial }: { onBack: (
                     </div>
                   </div>
                   <div className="notice-composer-dimensions" role="group" aria-label={(imageIndex + 1) + '번째 이미지 크기'}>
-                    <label>W
-                      <input type="number" min={1} max={MAX_IMAGE_DIMENSION} step={1} inputMode="numeric"
-                        aria-label={(imageIndex + 1) + '번째 이미지 가로 크기 (px)'} value={image.width || ''}
-                        disabled={!image.width} onChange={event => changeImageSize(image.id, 'width', Number(event.target.value))}/>
-                      <span>px</span>
-                    </label>
+                    {dimensionInput(image,'width',(imageIndex+1)+'번째 이미지 가로 크기 (px)')}
                     <button type="button" className="notice-composer-ratio-toggle" onClick={() => toggleImageRatio(image.id)}
                       aria-label={image.ratioLocked ? '가로 세로 비율 유지 해제' : '가로 세로 비율 유지'}
                       aria-pressed={image.ratioLocked} title={image.ratioLocked ? '비율 유지 중' : '비율 자유 조절'}>
                       {image.ratioLocked ? <Link size={19} aria-hidden="true"/> : <Link2Off size={19} aria-hidden="true"/>}
                     </button>
-                    <label>H
-                      <input type="number" min={1} max={MAX_IMAGE_DIMENSION} step={1} inputMode="numeric"
-                        aria-label={(imageIndex + 1) + '번째 이미지 세로 크기 (px)'} value={image.height || ''}
-                        disabled={!image.height} onChange={event => changeImageSize(image.id, 'height', Number(event.target.value))}/>
-                      <span>px</span>
-                    </label>
+                    {dimensionInput(image,'height',(imageIndex+1)+'번째 이미지 세로 크기 (px)')}
                     <button type="button" className="notice-composer-original-size" onClick={() => restoreImageSize(image.id)}
                       disabled={!image.naturalWidth || !image.naturalHeight} title="최초 삽입 크기와 원본 비율로 복원">
                       <RotateCcw size={14}/> 원본 비율 복원
@@ -354,6 +376,7 @@ export default function NoticeComposer({ onBack, onSaved, initial }: { onBack: (
                   </div>
                 </div>)}
               </div>
+              {block.images.map(image=><span key={image.id}>{dimensionWarning(image.id)}</span>)}
               {slidePickerId===block.id&&imagePicker(block.id)}
             </div> :
             <div className="notice-composer-image">
@@ -364,28 +387,19 @@ export default function NoticeComposer({ onBack, onSaved, initial }: { onBack: (
                 <img className="notice-composer-resized-image" src={block.url} alt={block.name} onLoad={event => setNaturalSize(block.id, event.currentTarget.naturalWidth, event.currentTarget.naturalHeight)}/>
               </div>
               <div className="notice-composer-dimensions" role="group" aria-label={`이미지 ${index + 1} 크기 조절`}>
-                <label>W
-                  <input type="number" min={1} max={MAX_IMAGE_DIMENSION} step={1} inputMode="numeric"
-                    aria-label={`이미지 ${index + 1} 가로 크기 (px)`} value={block.width || ''}
-                    disabled={!block.width} onChange={event => changeImageSize(block.id, 'width', Number(event.target.value))}/>
-                  <span>px</span>
-                </label>
+                {dimensionInput(block,'width',`이미지 ${index+1} 가로 크기 (px)`)}
                 <button type="button" className="notice-composer-ratio-toggle" onClick={() => toggleImageRatio(block.id)}
                   aria-label={block.ratioLocked ? '가로 세로 비율 유지 해제' : '가로 세로 비율 유지'}
                   aria-pressed={block.ratioLocked} title={block.ratioLocked ? '비율 유지 중' : '비율 자유 조절'}>
                   {block.ratioLocked ? <Link size={19} aria-hidden="true"/> : <Link2Off size={19} aria-hidden="true"/>}
                 </button>
-                <label>H
-                  <input type="number" min={1} max={MAX_IMAGE_DIMENSION} step={1} inputMode="numeric"
-                    aria-label={`이미지 ${index + 1} 세로 크기 (px)`} value={block.height || ''}
-                    disabled={!block.height} onChange={event => changeImageSize(block.id, 'height', Number(event.target.value))}/>
-                  <span>px</span>
-                </label>
+                {dimensionInput(block,'height',`이미지 ${index+1} 세로 크기 (px)`)}
                 <button type="button" className="notice-composer-original-size" onClick={() => restoreImageSize(block.id)}
                   disabled={!block.naturalWidth || !block.naturalHeight} title="최초 삽입 크기와 원본 비율로 복원">
                   <RotateCcw size={14}/> 원본 비율 복원
                 </button>
               </div>
+              {dimensionWarning(block.id)}
               <button type="button" className="outline-action notice-composer-gallery-add"
                 aria-expanded={slidePickerId===block.id} onClick={()=>toggleImagePicker(block.id)}>
                 <ImagePlus size={15}/> 슬라이드로 사진 추가
