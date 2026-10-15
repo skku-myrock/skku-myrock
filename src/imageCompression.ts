@@ -6,13 +6,11 @@ export const MAX_SOURCE_IMAGE_BYTES = 30_000_000;
 export const MAX_UPLOAD_IMAGE_BYTES = 5_000_000;
 export const MAX_COMPRESSED_IMAGE_BYTES = 2_000_000;
 export const MAX_IMAGE_EDGE = 2560;
-const types = new Set(['image/jpeg','image/png','image/webp','image/gif']);
+const types = new Set(['image/jpeg','image/png','image/webp']);
 
 export function validateSourceImage(file: Pick<File,'size'|'type'>):void {
   if (!types.has(file.type) || file.size <= 0)
-    throw new Error('JPG, PNG, WebP 또는 GIF 이미지만 선택할 수 있습니다.');
-  if (file.type === 'image/gif' && file.size > MAX_UPLOAD_IMAGE_BYTES)
-    throw new Error('움직이는 GIF는 압축하지 않으므로 5MB 이하 파일만 선택할 수 있습니다.');
+    throw new Error('JPG, PNG, WebP 이미지만 선택할 수 있습니다.');
   if (file.size > MAX_SOURCE_IMAGE_BYTES)
     throw new Error('원본 사진은 30MB 이하만 선택할 수 있습니다. 더 큰 파일은 먼저 크기를 줄여 주세요.');
 }
@@ -30,7 +28,6 @@ function canvasBlob(canvas:HTMLCanvasElement,quality:number):Promise<Blob> {
 
 export async function prepareImageForUpload(file:File):Promise<File> {
   validateSourceImage(file);
-  if(file.type==='image/gif')return file; // Preserve animation.
   if(file.type==='image/webp' && isAnimatedWebp(new Uint8Array(await file.slice(0,24).arrayBuffer()))) {
     if(file.size>MAX_UPLOAD_IMAGE_BYTES)throw new Error('움직이는 WebP는 압축하지 않으므로 5MB 이하 파일만 선택할 수 있습니다.');
     return file;
