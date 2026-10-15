@@ -1,10 +1,11 @@
+import {readStyles} from './readStyles.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import typescript from 'typescript';
 import {validateNotice} from '../functions/_lib/notices.js';
 
-const source=async path=>readFile(new URL('../'+path,import.meta.url),'utf8');
+const source=async path=>path==='src/styles.css'?readStyles():readFile(new URL('../'+path,import.meta.url),'utf8');
 const [app,composer,model,backend,index,detail,batch,style]=await Promise.all(['src/App.tsx','src/NoticeComposer.tsx','src/noticesData.ts','functions/_lib/notices.js','functions/api/notices/index.js','functions/api/notices/[id].js','functions/api/images/batch.js','src/styles.css'].map(source));
 const base={title:'새 공지',category:'공지',blocks:[{kind:'text',text:'본문'}]};
 
@@ -94,7 +95,7 @@ test('original pixel ratio is used even when displayed dimensions were rounded',
 });
 test('notice dimension input is editable while focused and commits on blur only',async()=>{
   const composer=await readFile(new URL('../src/NoticeComposer.tsx',import.meta.url),'utf8');
-  const css=await readFile(new URL('../src/styles.css',import.meta.url),'utf8');
+  const css=await readStyles();
   assert.match(composer,/dimensionDrafts/);
   assert.match(composer,/onBlur=\{event=>commitDimension\(/);
   assert.match(composer,/onChange=\{event=>setDimensionDrafts\(/);
