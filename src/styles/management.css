@@ -194,7 +194,9 @@ body:has([data-async-busy="true"]),body:has([data-async-busy="true"]) *{
 .admin-only-action:hover:not(:disabled){background:#254752;border-color:#254752}
 .admin-only-action:disabled{opacity:.48}
 .finance-account-heading>.admin-only-action{flex:0 0 auto}
-.about-admin-tools{display:flex;align-items:center;justify-content:flex-end;gap:16px;margin-top:10px}
+.about-admin-tools{display:flex;align-items:center;justify-content:flex-end;gap:16px;margin-top:22px;min-height:40px}
+/* Reserve the same compact action row for both editors and public visitors. */
+.about-admin-tools + .about-intro.section-block{margin-top:20px}
 .about-load-error{margin:0;color:#a36c4c;font-size:11px}
 .about-hero-image{display:block;width:100%;max-height:450px;object-fit:contain;background:#f6f8f6}
 .leader-item img.leader-photo{display:block;width:76px;min-width:76px;aspect-ratio:3/4;object-fit:cover}
@@ -230,7 +232,7 @@ body:has([data-async-busy="true"]),body:has([data-async-busy="true"]) *{
   padding:15px 0;border-top:1px solid #cfdfd3;z-index:3}
 .about-manage-footer .button{display:inline-flex;align-items:center;gap:8px}
 @media(max-width:700px){
-  .about-admin-tools{margin-top:4px}
+  .about-admin-tools{margin-top:18px}
   .about-manage-photo{grid-template-columns:1fr}
   .about-manage-fields,.about-manage-history-fields{grid-template-columns:1fr}
   .about-manage-item{padding:13px}
@@ -276,7 +278,7 @@ body:has([data-async-busy="true"]),body:has([data-async-busy="true"]) *{
 
 .home-hero-image{display:block;width:100%;height:100%;object-fit:cover;background:#eff2f1}
 /* Apply a subtle lifted-card shadow to the two editable feature photos only. */
-.home-hero-image,.about-hero-image{box-shadow:0 12px 30px rgba(31,53,47,.14),0 3px 8px rgba(31,53,47,.07)}
+.home-hero-image,.about-hero-image{box-shadow:0 12px 30px rgba(31,53,47,.18),0 3px 8px rgba(31,53,47,.09)}
 
 .notice-detail-meta{display:flex;align-items:center;justify-content:space-between;gap:12px 20px;width:100%;min-height:39px}
 .notice-detail-byline{display:flex;align-items:center;gap:12px 22px;flex-wrap:wrap;min-width:0}
@@ -316,3 +318,6 @@ body:has([data-async-busy="true"]),body:has([data-async-busy="true"]) *{
 
 /* Fill the predetermined feature-photo frames without blank letterboxing. */
 .home-hero-image,.about-intro>.about-hero-image{object-fit:cover}
+
+/* Placeholder keeps the portrait frame but centers its caption in both layouts. */
+.leader-item .leader-photo.placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center}
