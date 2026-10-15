@@ -1844,3 +1844,7 @@ body:has([data-async-busy="true"]),body:has([data-async-busy="true"]) *{
 
 .notice-dimension-error{font-size:11px;color:#ae3f3f;margin:6px 0 3px;line-height:1.5}
 .notice-composer-dimensions input[aria-invalid="true"]{border-color:#ba5555}
+
+/* Reminder applies only to authoring surfaces, not to public photos. */
+.image-compression-notice{margin:20px 0 6px;padding:14px 17px;border:1px solid #dbe7df;background:#f4f8f5;color:#577063;font-size:12px;line-height:1.8;word-break:keep-all}
+.image-compression-notice strong{font-weight:700;color:#375b49}
