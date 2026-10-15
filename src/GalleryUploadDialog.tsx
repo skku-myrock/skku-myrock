@@ -136,6 +136,22 @@ export default function GalleryUploadDialog({ onClose }: { onClose: () => void }
     }
   }
 
+  const dropZone = <div className={'gallery-upload-dropzone' + (photos.length ? ' is-compact' : '') + (dropActive ? ' is-dragging' : '')}
+        role="button" tabIndex={0} aria-label="사진 파일 선택 또는 드래그하여 추가"
+        onClick={() => inputRef.current?.click()}
+        onKeyDown={event => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            inputRef.current?.click();
+          }
+        }}
+        onDragEnter={onAreaDragEnter} onDragOver={event => event.preventDefault()}
+        onDragLeave={onAreaDragLeave} onDrop={onAreaDrop}>
+        <span className="gallery-upload-symbol" aria-hidden="true"><Download size={35} strokeWidth={3}/></span>
+        <strong>클릭 혹은 파일을 이곳에 드롭하세요.</strong>
+        <span className="gallery-upload-dropzone-detail">여러 장을 한 번에 선택할 수 있습니다.</span>
+      </div>;
+
   return <div className="gallery-upload-backdrop" onMouseDown={event => {
     if (event.target === event.currentTarget) onClose();
   }}>
@@ -149,6 +165,10 @@ export default function GalleryUploadDialog({ onClose }: { onClose: () => void }
         </div>
         <button ref={closeRef} type="button" className="gallery-close-button" onClick={onClose} aria-label="사진 등록 창 닫기"><X size={21}/></button>
       </header>
+      <p className="image-compression-notice" role="note">
+        이미지를 저장할 때 자동으로 압축·크기 조정할 수 있습니다.
+        <strong> 업로드된 이미지는 원본을 대체하지 못하므로 원본 사진을 별도로 보관해 주세요.</strong>
+      </p>
 
       <div className="gallery-upload-fields">
         <label>구분
@@ -166,21 +186,7 @@ export default function GalleryUploadDialog({ onClose }: { onClose: () => void }
         <strong>이미지</strong>
         <span>{photos.length} / {maxPhotoCount}장</span>
       </div>
-      <div className={'gallery-upload-dropzone' + (dropActive ? ' is-dragging' : '')}
-        role="button" tabIndex={0} aria-label="사진 파일 선택 또는 드래그하여 추가"
-        onClick={() => inputRef.current?.click()}
-        onKeyDown={event => {
-          if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault();
-            inputRef.current?.click();
-          }
-        }}
-        onDragEnter={onAreaDragEnter} onDragOver={event => event.preventDefault()}
-        onDragLeave={onAreaDragLeave} onDrop={onAreaDrop}>
-        <span className="gallery-upload-symbol" aria-hidden="true"><Download size={35} strokeWidth={3}/></span>
-        <strong>클릭 혹은 파일을 이곳에 드롭하세요.</strong>
-        <span className="gallery-upload-dropzone-detail">여러 장을 한 번에 선택할 수 있습니다.</span>
-      </div>
+      {photos.length === 0 && dropZone}
       <input ref={inputRef} type="file" multiple accept="image/jpeg,image/png,image/webp"
         className="gallery-upload-file-input" onChange={onFileChange} aria-label="갤러리 이미지 파일 선택" />
 
@@ -210,13 +216,10 @@ export default function GalleryUploadDialog({ onClose }: { onClose: () => void }
               </div>
             </div>
           </div>)}
+          {dropZone}
         </div>
       </div>}
 
-      <p className="image-compression-notice" role="note">
-        이미지를 저장할 때 자동으로 압축·크기 조정할 수 있습니다.
-        <strong> 업로드된 이미지는 원본을 대체하지 못하므로 원본 사진을 별도로 보관해 주세요.</strong>
-      </p>
       <p className="gallery-upload-pending-note">선택한 이미지는 로컬 미리보기입니다. 갤러리 등록·저장은 다음 단계에서 연결됩니다.</p>
       <footer className="gallery-upload-footer">
         <button type="button" className="outline-action" onClick={onClose}>취소</button>
