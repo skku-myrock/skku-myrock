@@ -12,10 +12,6 @@ async function github(path,token,method='GET',body){
 export async function uploadImages({request,env},{legacySingle=false}={}){
   try{
     secureOrigin(request);
-    if(!env.GITHUB_IMAGES_TOKEN||!env.MYROCK_IMAGES_PUBLIC_BASE_URL)reject('GitHub 이미지 저장소 서버 설정이 필요합니다.',503);
-    let publicBase;
-    try{publicBase=new URL(env.MYROCK_IMAGES_PUBLIC_BASE_URL);if(publicBase.protocol!=='https:'||publicBase.username||publicBase.password||publicBase.search||publicBase.hash||publicBase.pathname!=='/')throw Error('invalid');}
-    catch{reject('이미지 공개 주소 설정이 올바르지 않습니다.',503);}
     if(Number(request.headers.get('content-length')??0)>17000000)reject('한 번에 업로드할 수 있는 총 용량은 16MB입니다.',413);
     if(!request.headers.get('content-type')?.includes('multipart/form-data'))reject('이미지 파일만 업로드할 수 있습니다.',415);
     const form=await request.formData();
@@ -25,6 +21,11 @@ export async function uploadImages({request,env},{legacySingle=false}={}){
     // The two URLs share all type/size/signature checks and the same atomic Git commit.
     const files=legacySingle?[form.get('image')]:form.getAll('images');
     await assertAccess(request,env,folder==='site'?'staff':'part_leader');
+    if(!env.GITHUB_IMAGES_TOKEN||!env.MYROCK_IMAGES_PUBLIC_BASE_URL)reject('GitHub 이미지 저장소 서버 설정이 필요합니다.',503);
+    let publicBase;
+    try{publicBase=new URL(env.MYROCK_IMAGES_PUBLIC_BASE_URL);if(publicBase.protocol!=='https:'||publicBase.username||publicBase.password||publicBase.search||publicBase.hash||publicBase.pathname!=='/')throw Error('invalid');}
+    catch{reject('이미지 공개 주소 설정이 올바르지 않습니다.',503);}
+
     if(!files.length||files.length>12)reject('한 번에 1~12장의 이미지를 업로드할 수 있습니다.');
     let total=0;
     const checked=[];
