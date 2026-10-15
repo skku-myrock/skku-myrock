@@ -4,6 +4,7 @@ import { ArrowDown, ArrowLeft, ArrowUp, GripVertical, ImagePlus, Link, Link2Off,
 import {createNotice,updateNotice} from './noticesData';
 import type {NoticeCategory,NoticePost,NoticeBlock,NoticeImage} from './noticesData';
 import {uploadImagesBatch} from './imageUpload';
+import {validateSourceImage} from './imageCompression';
 import { initialImageDimensions, MAX_IMAGE_DIMENSION, resizeImageDimensions, restoreInitialImageDimensions } from './noticeImageSize';
 import { reorderGalleryImages, shiftGalleryImage } from './noticeGalleryOrder';
 import type { DimensionAxis } from './noticeImageSize';
@@ -12,7 +13,6 @@ import type { NoticeSlide } from './NoticeImageCarousel';
 
 type ImageBlock = { id: number; kind: 'image'; url: string; name: string; width: number; height: number; ratioLocked: boolean; naturalWidth: number; naturalHeight: number };
 type DraftBlock = { id: number; kind: 'text'; text: string } | ImageBlock | { id: number; kind: 'gallery'; images: ImageBlock[] };
-const allowedTypes = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif']);
 
 export default function NoticeComposer({ onBack, onSaved, initial }: { onBack: () => void; onSaved: (post:NoticePost) => void; initial?:NoticePost }) {
   const [title, setTitle] = useState(initial?.title??'');
@@ -52,12 +52,8 @@ export default function NoticeComposer({ onBack, onSaved, initial }: { onBack: (
       event.target.value = '';
       return;
     }
-    const invalid = selected.find(file => !allowedTypes.has(file.type) || !file.size || file.size > 5000000);
-    if (invalid) {
-      setError('PNG, JPG, WebP, GIF 형식의 5MB 이하 이미지만 추가할 수 있습니다.');
-      event.target.value = '';
-      return;
-    }
+    try{selected.forEach(validateSourceImage);}
+    catch(reason){setError(reason instanceof Error?reason.message:'이미지 파일을 확인해 주세요.');event.target.value='';return;}
     const existingCount = target?.kind === 'gallery' ? target.images.length : target?.kind === 'image' ? 1 : 0;
     if (selected.length + existingCount > 20) {
       setError('한 슬라이드에는 최대 20장까지 추가할 수 있습니다.');
@@ -155,7 +151,7 @@ export default function NoticeComposer({ onBack, onSaved, initial }: { onBack: (
             aria-label={targetBlockId===undefined?'본문 이미지 선택':'슬라이드에 추가할 이미지 선택'}/>
         </label>
       </div>
-      <p>여러 파일을 선택하면 이미지 슬라이드로 표시됩니다. 선택한 파일은 브라우저에서만 미리 보입니다.</p>
+      <p>여러 파일을 선택하면 이미지 슬라이드로 표시됩니다. 원본 30MB 이하의 JPG·PNG·WebP 사진은 저장 시 자동 압축됩니다. 움직이는 GIF는 5MB 이하만 지원합니다.</p>
     </div>;
   }
   function changeText(id: number, text: string) {
@@ -292,7 +288,7 @@ export default function NoticeComposer({ onBack, onSaved, initial }: { onBack: (
     </div>
     <section className="container section-block notice-composer-page">
       <button type="button" className="notice-detail-back" onClick={back}><ArrowLeft size={16}/> 공지사항 목록</button>
-      <div className="notice-composer-info" role="note">파일을 선택하면 먼저 로컬에서 미리봅니다. 발행 또는 저장하기를 누르면 이미지와 본문을 서버에 등록합니다.</div>
+      <div className="notice-composer-info" role="note">파일을 선택하면 먼저 로컬에서 미리봅니다. 발행 또는 저장 시 이미지를 자동 압축해 업로드하므로 <strong>원본 사진은 반드시 별도로 보관해 주세요.</strong> GIF 애니메이션은 압축하지 않습니다. URL로 추가한 이미지는 변환하지 않습니다.</div>
       <div className="notice-composer-fields">
         <label>분류
           <select value={category} onChange={event => setCategory(event.target.value as NoticeCategory)}>

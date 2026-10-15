@@ -1,4 +1,5 @@
 import {auth} from './firebase';
+import {prepareImageForUpload,MAX_UPLOAD_IMAGE_BYTES} from './imageCompression';
 export async function uploadImagesBatch(files:File[],folder:'site'|'notices'='site'):Promise<string[]>{
   if(!files.length)return [];
   const token=await auth.currentUser?.getIdToken();
@@ -13,8 +14,10 @@ export async function uploadImagesBatch(files:File[],folder:'site'|'notices'='si
     if(!response.ok)throw Error(typeof data?.error==='string'?data.error:'사진 저장에 실패했습니다.');
     urls.push(...(data.urls as string[]));batch=[];bytes=0;
   };
-  for(const file of files){
-    if(file.size>5000000||file.size===0||!['image/jpeg','image/png','image/webp','image/gif'].includes(file.type))throw Error('사진은 JPG, PNG, WebP, GIF 형식의 5MB 이하만 가능합니다.');
+  for(const original of files){
+    // Selection/preview remains local; compress only when saving the draft.
+    const file=await prepareImageForUpload(original);
+    if(file.size>MAX_UPLOAD_IMAGE_BYTES)throw Error('압축한 사진은 5MB 이하여야 합니다.');
     if(batch.length>=12||bytes+file.size>16000000)await flush();
     batch.push(file);bytes+=file.size;
   }
