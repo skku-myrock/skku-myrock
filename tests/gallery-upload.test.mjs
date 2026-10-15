@@ -5,7 +5,7 @@ const src=path=>readFile(new URL('../'+path,import.meta.url),'utf8');
 
 test('only authenticated part leaders and higher see the gallery registration action',async()=>{
   const [app,pages,gallery]=await Promise.all([src('src/App.tsx'),src('src/pages/SitePages.tsx'),src('src/PhotoGallery.tsx')]);
-  assert.match(app,/'gallery': <Gallery canRegister=\{Boolean\(user && !authPending && currentLevel\)\}\/>/);
+  assert.match(app,/'gallery': <Gallery key=\{galleryRevision\} canRegister=\{Boolean\(user && !authPending && currentLevel\)\}\/>/);
   assert.match(pages,/<PhotoGallery canRegister=\{canRegister\} \/>/);
   assert.match(gallery,/\{canRegister && <button type="button" className="admin-only-action"/);
   assert.match(gallery,/\{canRegister && uploadOpen && <GalleryUploadDialog/);
@@ -14,7 +14,7 @@ test('only authenticated part leaders and higher see the gallery registration ac
 
 test('upload modal supports files, drag-and-drop, previews, photo reordering, deletion and cleanup',async()=>{
   const dialog=await src('src/GalleryUploadDialog.tsx');
-  for(const token of ['role="dialog" aria-modal="true"','gallery-upload-dropzone','onDragEnter={onAreaDragEnter}','onDrop={onAreaDrop}','type="file" multiple','function movePhoto','function dropPhoto','function removePhoto','draggable onDragStart','첫 번째 사진이 앨범 대표사진으로 사용됩니다'])assert.ok(dialog.includes(token),token);
+  for(const token of ['role="dialog" aria-modal="true"','gallery-upload-dropzone','onDragEnter={onAreaDragEnter}','onDrop={onAreaDrop}','type="file" multiple','function movePhoto','function dropPhoto','function removePhoto','draggable={!busy} onDragStart','첫 번째 사진이 앨범 대표사진으로 사용됩니다'])assert.ok(dialog.includes(token),token);
   assert.match(dialog,/categoryOptions: PhotoCategory\[\] = \['공연', '행사', '일상'\]/);
   assert.match(dialog,/URL\.revokeObjectURL\(url\)/);
   assert.match(dialog,/onClick=\{\(\) => movePhoto\(photo\.id, -1\)\}/);
