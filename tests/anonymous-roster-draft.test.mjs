@@ -1,3 +1,4 @@
+import {readStyles} from './readStyles.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
@@ -38,7 +39,7 @@ test('anonymous roster save, strikeout, cursor and busy markers are wired to the
   const paths=['../src/DonationManagement.tsx','../src/ExpenseManagement.tsx',
     '../src/FinancePages.tsx','../src/MemberManager.tsx','../src/PasswordChange.tsx','../src/App.tsx'];
   const [donations,expenses,finance,members,password,app]=await Promise.all(paths.map(path=>readFile(new URL(path,import.meta.url),'utf8')));
-  const css=await readFile(new URL('../src/styles.css',import.meta.url),'utf8');
+  const css=await readStyles();
   assert.match(donations,/hasAnonymousRosterChanges\(people,data.people,pendingExclusions\)/);
   assert.match(donations,/const cleaned=activeAnonymousPeople\(people,pendingExclusions\)/);
   assert.match(donations,/setPendingExclusions\(\[\]\)/);
