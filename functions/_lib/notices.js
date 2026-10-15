@@ -60,7 +60,7 @@ export async function listNotices(env){
 export async function listNoticeSummariesPage(env,request){
   const {documents,nextPageToken}=await firestorePage(env,ROOT,{
     request,orderBy:'publishedAt desc',
-    fields:['title','category','author','authorUid','publishedAt','description','body','images']
+    fields:['title','category','author','publishedAt','description']
   });
   return {notices:documents.map(noticeFromDoc),nextPageToken};
 }
