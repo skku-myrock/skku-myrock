@@ -1,10 +1,11 @@
+import {readStyles} from './readStyles.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const finance = await readFile(new URL('../src/FinancePages.tsx', import.meta.url), 'utf8');
 const app = await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8');
-const styles = await readFile(new URL('../src/styles.css', import.meta.url), 'utf8');
+const styles = await readStyles();
 
 test('finance landing introduces donations before account instructions and transaction links', () => {
   const start = finance.indexOf('export function FinanceLanding');
