@@ -1,6 +1,6 @@
-import {failure,parseBody,reject,secureOrigin,success,toFields} from '../../_lib/shared.js';
+import {failure,parseBody,reject,secureOrigin,success,toFields,docFields} from '../../_lib/shared.js';
 import {assertAccess,googleRequest} from '../../_lib/google.js';
-import {ABOUT_DOC,DEFAULT_ABOUT} from '../../_lib/aboutContent.js';
+import {ABOUT_DOC,DEFAULT_ABOUT,resetAboutTextKeepingImages} from '../../_lib/aboutContent.js';
 
 export const RESET_ABOUT_CONFIRMATION='모여락 소개 초기화';
 export async function onRequestPost({request,env}){
@@ -17,7 +17,8 @@ export async function onRequestPost({request,env}){
       url.searchParams.set('currentDocument.updateTime',original.data.updateTime);
     }else if(original.status===404)url.searchParams.set('currentDocument.exists','false');
     else throw Error('소개 조회 실패 '+original.status);
-    const saved=await googleRequest(env,url.href,{method:'PATCH',body:{fields:toFields(DEFAULT_ABOUT)}});
+    const next=resetAboutTextKeepingImages(original.ok?docFields(original.data):DEFAULT_ABOUT);
+    const saved=await googleRequest(env,url.href,{method:'PATCH',body:{fields:toFields(next)}});
     if([409,412].includes(saved.status))reject('다른 운영진이 소개 내용을 변경했습니다. 확인 후 다시 초기화해 주세요.',409);
     if(!saved.ok)reject('Firestore 소개 정보 초기화에 실패했습니다.',503);
     return success({reset:true});
