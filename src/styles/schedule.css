@@ -451,6 +451,7 @@
    9px aligns its left edge exactly with the search button's fixed column. */
 .schedule-roster-found button{display:inline-flex;align-items:center;justify-content:center;justify-self:end;width:calc(var(--schedule-roster-action-width) - 9px);gap:5px;padding:8px 6px;min-height:34px;font-size:11px;white-space:nowrap}
 .schedule-invite-toast{z-index:100}
+.schedule-invite-warning>svg:first-child{color:#e6b54b}
 .schedule-roster-no-result{padding:12px;margin:12px 0 0;color:#a05a52;background:#fff6f4;font-size:12px}
 .schedule-roster-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:28px;border-top:1px solid var(--border);padding-top:16px}
 .schedule-roster-footer span{font-size:10px;color:var(--muted);line-height:1.8;word-break:keep-all}
