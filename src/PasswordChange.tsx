@@ -40,7 +40,7 @@ export default function PasswordChange({ user }: { user: User }) {
 
   return <div className="profile-panel password-panel" data-async-busy={busy ? "true" : undefined}>
     <div className="profile-title"><KeyRound size={20}/><h2>비밀번호 변경</h2></div>
-    <p className="profile-help">현재 비밀번호로 재인증한 다음 원하는 비밀번호로 변경할 수 있습니다. 이 사이트는 별도의 형식 제한을 두지 않지만 Firebase 자체 제한(기본 최소 6자)은 적용됩니다.</p>
+    <p className="profile-help">최소 6자 이상의 비밀번호를 사용해주세요.</p>
     <form onSubmit={event => void submit(event)} className="password-form">
       <label>현재 비밀번호<input type="password" autoComplete="current-password" value={current} onChange={event => setCurrent(event.target.value)} required/></label>
       <label>새 비밀번호<input type="password" autoComplete="new-password" value={next} onChange={event => setNext(event.target.value)} required/></label>
@@ -49,6 +49,6 @@ export default function PasswordChange({ user }: { user: User }) {
       {success && <p className="member-success" role="status">{success}</p>}
       <button type="submit" className="button button-primary" disabled={busy || !current || !next || !confirm}>{busy ? '변경 중...' : '비밀번호 변경'} <ArrowRight size={16}/></button>
     </form>
-    <p className="form-hint">현재 비밀번호를 잊었거나 로그인에 문제가 생기면 운영진에게 문의해 주세요. 자동 이메일 재설정은 지원하지 않습니다.</p>
+    <p className="form-hint">현재 비밀번호를 잊었거나 로그인에 문제가 생기면 운영진에게 문의해 주세요.</p>
   </div>;
 }
