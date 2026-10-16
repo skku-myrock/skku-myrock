@@ -47,3 +47,15 @@
 .schedule-create-actions{display:flex;align-items:center;gap:10px;margin-left:auto}
 .schedule-create-actions button{margin-left:0}
 @media(max-width:620px){.schedule-create-actions{width:100%;margin-left:0;flex-direction:column}.schedule-create-actions button{width:100%}}
+
+/* Personalised handover notes remain readable by all authorised operators. */
+.handover-editor-intro{margin:0 0 20px;font-size:12px;line-height:1.8;color:var(--muted)}
+.handover-archive-notice{font-size:12px;line-height:1.8;color:var(--muted);margin:0 0 20px}
+.handover-archive-list{border-top:1px solid #9aa9a0;background:#fff}
+.handover-archive-row{display:grid;grid-template-columns:76px minmax(0,1fr) 110px 100px;align-items:center;gap:18px;padding:18px 16px;border-bottom:1px solid var(--border);font-size:13px}
+.handover-archive-generation{color:#617c6c;font-weight:700}
+.handover-archive-positions{color:#67766e}
+.handover-archive-name{font-weight:700}
+.handover-archive-row .outline-action{min-height:34px;justify-content:center}
+.handover-archive-row .outline-action:disabled{opacity:.55;cursor:not-allowed}
+@media(max-width:620px){.handover-archive-row{grid-template-columns:65px minmax(0,1fr);gap:10px;padding:16px 9px}.handover-archive-name{grid-column:1}.handover-archive-row .outline-action{grid-column:2;justify-self:end;width:100px}}
