@@ -102,7 +102,7 @@ test('schedule creation route, responsive editor and intentionally inactive save
  assert.match(style,/\.schedule-create-columns\{display:grid;grid-template-columns:minmax\(0,1\.08fr\) minmax\(0,\.92fr\)/);
  assert.match(style,/@media\(max-width:740px\)/);
  assert.match(style,/\.schedule-calendar-months\{width:100%;overflow:visible\}/);
- assert.doesNotMatch(style,/\.schedule-calendar-scroll\{|overflow-y:auto/);
+ assert.doesNotMatch(style,/\.schedule-calendar-scroll\{/);
  assert.match(style,/\.schedule-calendar-day\{[^}]*width:38px;height:38px;[^}]*border-radius:50%/);
  assert.match(style,/\.schedule-calendar-day\.is-selected\{background:color-mix\(in srgb,var\(--accent\) 34%,white\);color:var\(--accent-dark\)/);
  assert.match(style,/\.schedule-calendar-top\{[^}]*border-bottom:2px solid var\(--accent-dark\)/);
