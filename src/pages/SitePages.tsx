@@ -168,7 +168,7 @@ export function News({ canWrite, onWrite, openNotice, notices, loading, error, h
         {loading&&<p role="status">공지사항을 불러오는 중입니다.</p>}
         {!loading&&filtered.length===0&&<EmptyState title="공지사항이 없습니다" description="등록된 공지사항이 없습니다." />}
       </div>
-      {hasMore&&<div className="list-bottom"><button type="button" className="outline-action" disabled={moreLoading} onClick={onLoadMore}>{moreLoading?"더 불러오는 중...":"공지사항 더 보기"}</button></div>}
+      {hasMore&&<div className="list-bottom notice-list-bottom"><button type="button" className="outline-action" disabled={moreLoading} onClick={onLoadMore}>{moreLoading?"더 불러오는 중...":"공지사항 더 보기"}</button></div>}
     </section>
   </>;
 }
