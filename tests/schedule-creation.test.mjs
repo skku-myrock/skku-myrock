@@ -63,48 +63,17 @@ test('candidate hour labels use Korean 12-hour notation followed by 24-hour time
  assert.equal(model.candidateHourLabel(24),'오전 12시 (24:00)');
 });
 
-test('schedule creation route, responsive editor and intentionally inactive save action',async()=>{
- const [nav,app,component,style]=await Promise.all([
+
+test('creating a schedule persists directly instead of navigating to a draft',async()=>{
+ const [nav,app,component,api,css]=await Promise.all([
   read('src/app/siteNavigation.ts'),read('src/App.tsx'),
-  read('src/ScheduleCreation.tsx'),read('src/styles/schedule.css')
- ]);
- assert.match(nav,/page:'schedule-create',path:'\/schedule\/create'/);
- assert.ok(nav.indexOf("page:'schedule-create'")<nav.indexOf("page:'schedule-detail'"));
- assert.match(app,/onCreate=\{\(\) => navigate\('schedule-create'\)\}/);
- assert.match(app,/'schedule-create': <ScheduleCreation onBack=/);
- assert.ok(app.includes("onPreview={(draft:ScheduleDraftInput)=>routerNavigate(pathFor('schedule-draft'),{state:{draft}})"));
- assert.match(component,/id="schedule-create-title"/);
- assert.match(component,/onPointerDown=\{startBrush\}/);
- assert.match(component,/onPointerMove=\{moveBrush\}/);
- assert.match(component,/onPointerUp=\{endBrush\}/);
- assert.match(component,/onPointerCancel=\{cancelBrush\}/);
- assert.match(component,/setDates\(new Set\(active\.baseline\)\)/);
- assert.match(component,/className="schedule-calendar-months"/);
- assert.match(component,/const \[visibleMonthCount,setVisibleMonthCount\]=useState\(1\)/);
- assert.match(component,/futureCalendarMonths\(today,visibleMonthCount\)/);
- assert.doesNotMatch(component,/onScroll=|revealNextMonth|schedule-calendar-scroll-guide/);
- assert.match(component,/setVisibleMonthCount\(count=>count\+1\)/);
- assert.match(component,/className="schedule-calendar-grid" role="group"/);
- assert.match(component,/aria-pressed=\{dates\.has\(cell\.iso\)\}/);
- assert.match(component,/setPointerCapture\(event\.pointerId\)/);
- assert.match(component,/onClick=\{event=>\{if\(event\.detail===0/);
- assert.match(component,/className="schedule-calendar-expand"/);
- assert.match(component,/aria-label="다음 달 달력 추가"/);
- assert.match(component,/<ChevronDown size=\{27\}/);
- assert.doesNotMatch(component,/aria-expanded=\{expanded\}|moveMonth\(|ChevronLeft|ChevronRight|ChevronUp/);
- assert.match(component,/후보 날짜 선택/);
- assert.match(component,/후보 시간대 선택/);
- assert.match(component,/<select id="schedule-start-hour"/);
- assert.match(component,/<select id="schedule-end-hour"/);
- assert.ok(component.includes("onClick={()=>onPreview({title:title.trim(),dates:[...dates].sort(),startHour,endHour})}"));
- assert.ok(component.includes("disabled={!title.trim()||dates.size===0}"));
- assert.doesNotMatch(component,/fetch\(|addDoc\(|setDoc\(|onSubmit=/);
- assert.match(style,/\.schedule-create-columns\{display:grid;grid-template-columns:minmax\(0,1\.08fr\) minmax\(0,\.92fr\)/);
- assert.match(style,/@media\(max-width:740px\)/);
- assert.match(style,/\.schedule-calendar-months\{width:100%;overflow:visible\}/);
- assert.doesNotMatch(style,/\.schedule-calendar-scroll\{/);
- assert.match(style,/\.schedule-calendar-day\{[^}]*width:38px;height:38px;[^}]*border-radius:50%/);
- assert.match(style,/\.schedule-calendar-day\.is-selected\{background:color-mix\(in srgb,var\(--accent\) 34%,white\);color:var\(--accent-dark\)/);
- assert.match(style,/\.schedule-calendar-top\{[^}]*border-bottom:2px solid var\(--accent-dark\)/);
- assert.match(style,/touch-action:pan-y/);
+  read('src/ScheduleCreation.tsx'),read('src/scheduleApi.ts'),read('src/styles/schedule.css')]);
+ assert.doesNotMatch(nav,/page:'schedule-draft'/);
+ assert.match(nav,/page:'schedule-detail',path:'\/schedule\/:id'/);
+ assert.match(component,/await createSchedule\(input\)/);
+ assert.match(component,/onCreated\(result\.id\)/);
+ assert.match(component,/disabled=\{!title\.trim\(\)\|\|dates\.size===0\|\|creating\}/);
+ assert.match(app,/onCreated=\{openSchedule\}/);
+ assert.match(api,/export const createSchedule/);
+ assert.match(css,/\.schedule-create-columns/);
 });
