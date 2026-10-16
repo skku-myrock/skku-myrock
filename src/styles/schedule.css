@@ -398,7 +398,6 @@
 .schedule-calendar-expand{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;width:100%;margin-top:12px;padding:9px 0 3px;border:0;background:transparent;color:var(--accent-dark);cursor:pointer}
 .schedule-calendar-expand:hover{color:var(--accent)}
 .schedule-calendar-expand span{font-size:11px;color:var(--muted)}
-.schedule-create-selection-summary{min-height:16px;margin:17px 0 0;color:#668274;font-size:11px;text-align:center}
 .schedule-create-time-fields{display:grid;grid-template-columns:42px minmax(0,1fr);align-items:center;gap:15px 10px}
 .schedule-create-time-fields label{color:#203744;font-size:13px;font-weight:700}
 .schedule-create-time-fields select{width:100%;height:45px;padding:0 13px;box-sizing:border-box;border:1px solid #d2dce1;border-radius:4px;background:#fff;color:#183443;font-size:13px;font-weight:500;cursor:pointer}
@@ -407,7 +406,8 @@
 .schedule-create-time-summary strong{display:block;color:#365744;font-weight:700}
 .schedule-create-footer{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:30px;padding-top:20px;border-top:1px solid #e0e8e4}
 .schedule-create-footer p{margin:0;color:#85988c;font-size:12px;line-height:1.8;word-break:keep-all}
-.schedule-create-footer button{flex:0 0 auto;opacity:.5;cursor:not-allowed}
+.schedule-create-footer button{flex:0 0 auto;margin-left:auto;opacity:1;cursor:pointer}
+.schedule-create-footer button:disabled{opacity:.5;cursor:not-allowed}
 @media(max-width:900px){
   .schedule-create-columns{gap:14px}
   .schedule-create-panel{padding:21px 19px}
