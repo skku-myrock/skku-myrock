@@ -219,13 +219,13 @@ export function Gallery({ canRegister }: { canRegister: boolean }) {
 
 export function Equipment({ notify }: { notify: Notify }) {
   const gears = [
-    {name:'기타',product:'바커스 BST-2-RSM',status:'대여 가능'},
-    {name:'마이크',product:'제품명 미등록',status:'대여 승인 대기중'},
-    {name:'DI 박스',product:'제품명 미등록',status:'대여중'},
-    {name:'마이크 스탠드',product:'제품명 미등록',status:'반납 확인중'},
+    {name:'기타',product:'바커스 BST-2-RSM',status:'대여 가능',tone:'available'},
+    {name:'마이크',product:'슈어 SM98',status:'대여 승인 대기중',tone:'pending'},
+    {name:'DI 박스',product:'래디얼 ProDI',status:'대여중',tone:'borrowed'},
+    {name:'마이크 스탠드',product:'K&M 210/9',status:'반납 확인중',tone:'returning'},
   ];
   return <><PageHeading tag="EQUIPMENT" title="장비 대여" description="동아리 장비 목록을 보고 대여를 신청하는 공간입니다." />
-    <section className="container section-block"><div className="toolbar toolbar-bottom"><div><h2 className="plain-h2">장비 목록</h2></div><button type="button" className="button button-secondary" onClick={() => notify()}><ClipboardList size={16}/> 내 대여 내역</button></div><div className="equipment-list">{gears.map(g => <div className="equipment-row" key={g.name}><Placeholder label="장비 사진" /><div className="equipment-info"><h3>{g.name}</h3><p>{g.product}</p><span>{g.status}</span></div><button type="button" className="outline-action" onClick={() => notify()}>대여 신청 <ArrowRight size={15} /></button></div>)}</div><div className="process-note"><strong>대여 절차</strong><div>{['대여 신청','운영진 승인','장비 반납','반납 확인'].map((s,i) => <span key={s}>{i+1}. {s}</span>)}</div></div></section>
+    <section className="container section-block"><div className="toolbar toolbar-bottom"><div><h2 className="plain-h2">장비 목록</h2></div><button type="button" className="button button-secondary" onClick={() => notify()}><ClipboardList size={16}/> 내 대여 내역</button></div><div className="equipment-list">{gears.map(g => <div className="equipment-row" key={g.name}><Placeholder label="장비 사진" /><div className="equipment-info"><h3>{g.name}</h3><p>{g.product}</p><span className={"equipment-status equipment-status-"+g.tone}>{g.status}</span></div><button type="button" className="outline-action" onClick={() => notify()}>대여 신청 <ArrowRight size={15} /></button></div>)}</div><div className="process-note"><strong>대여 절차</strong><div>{['대여 신청','운영진 승인','장비 반납','반납 확인'].map((s,i) => <span key={s}>{i+1}. {s}</span>)}</div></div></section>
   </>;
 }
 
