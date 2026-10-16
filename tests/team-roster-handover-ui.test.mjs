@@ -43,6 +43,8 @@ test('handover archive uses authenticated persisted author records instead of sa
  ]);
  assert.doesNotMatch(view,/exampleArchive|const exampleArchive/);
  assert.doesNotMatch(view,/현직 운영진과 OB 운영진 모두 작성된 인수인계를 확인할 수 있습니다/);
+ assert.match(view,/역대 운영진이 남긴 인수인계 내용을 확인할 수 있습니다/);
+ assert.doesNotMatch(view,/선배 운영진이 남긴 인수인계 내용을 찾아볼 수 있습니다/);
  assert.match(view,/getHandoverArchive\(\)\.then\(result=>/);
  assert.match(view,/filtered\.map\(entry=><div className="handover-archive-row"/);
  assert.match(view,/기수, 이름 또는 직책 검색/);
