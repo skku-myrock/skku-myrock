@@ -31,7 +31,7 @@ export async function onRequestPost({request,env,params}){
   if(schedule.participantUids?.includes(uid))return success({message:GENERIC});
   const id=params.id+'_'+uid,url=invitationDoc(id);
   const existing=await getDocument(env,url);
-  if(existing&&existing.fields?.status?.stringValue!=='declined')return success({message:GENERIC});
+  if(existing&&!['declined','removed'].includes(existing.fields?.status?.stringValue))return success({message:GENERIC});
   const createdAt=new Date().toISOString();
   try{
    await commit(env,[toWrite(url,{
