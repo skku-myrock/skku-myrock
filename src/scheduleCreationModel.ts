@@ -30,10 +30,43 @@ export function calendarWeeks(month:string,today:string,weeks:number):CandidateC
     return {iso,day:date.getUTCDate(),month:date.getUTCMonth()+1,weekday,week,past:iso<today};
   }));
 }
+
+/** The current month starts at today's week; following months stack below it.
+ * Past dates and spillover dates stay empty, so every date is shown only once.
+ */
+export type FutureCalendarMonth={
+  key:string;
+  year:number;
+  monthNumber:number;
+  weeks:(CandidateCell|null)[][];
+};
+export function futureCalendarMonths(today:string,count:number):FutureCalendarMonth[]{
+  const [baseYear,baseMonth]=today.slice(0,7).split('-').map(Number);
+  let weekOffset=0;
+  return Array.from({length:count},(_,offset)=>{
+    const first=new Date(Date.UTC(baseYear,baseMonth-1+offset,1));
+    const key=dateKey(first).slice(0,7);
+    const firstVisible=sundayOf(offset===0?today:dateKey(first));
+    const last=new Date(Date.UTC(first.getUTCFullYear(),first.getUTCMonth()+1,0));
+    const rows=Math.ceil((last.getTime()-firstVisible.getTime()+86400000)/(7*86400000));
+    const weeks=Array.from({length:rows},(_,row)=>{
+      const weekIndex=weekOffset+row;
+      return Array.from({length:7},(_,weekday):CandidateCell|null=>{
+        const date=new Date(firstVisible.getTime()+(row*7+weekday)*86400000);
+        const iso=dateKey(date);
+        if(iso.slice(0,7)!==key||iso<today)return null;
+        return {iso,day:date.getUTCDate(),month:date.getUTCMonth()+1,weekday,week:weekIndex,past:false};
+      });
+    });
+    weekOffset+=rows;
+    return {key,year:first.getUTCFullYear(),monthNumber:first.getUTCMonth()+1,weeks};
+  });
+}
+
 /** Brush selects a rectangle of displayed calendar cells, not a continuous date interval. */
 export function brushCalendarDays(
   baseline:ReadonlySet<string>,
-  weeks:readonly (readonly CandidateCell[])[],
+  weeks:readonly (readonly (CandidateCell|null)[])[],
   start:CandidateCell,
   end:CandidateCell,
   activate:boolean,
