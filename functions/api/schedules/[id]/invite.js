@@ -4,7 +4,7 @@ import {callerProfile,commit,docData,getSchedule,getDocument,invitationDoc,requi
 
 const GENERIC='초대 요청을 접수했습니다.';
 async function requestId(scheduleId,studentId){
- // Identical, stable document identities for registered and unregistered student IDs.
+ // Stable identity allows a manual retry after a previously nonexistent ID is registered.
  const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(scheduleId+':'+studentId));
  const hash=[...new Uint8Array(digest)].map(x=>x.toString(16).padStart(2,'0')).join('');
  return scheduleId+'_'+hash;
@@ -32,30 +32,38 @@ export async function onRequestPost({request,env,params}){
   const id=await requestId(params.id,studentId);
   const url=invitationDoc(id);
   const existing=await getDocument(env,url);
-  if(existing&&['pending','accepted'].includes(existing.fields?.status?.stringValue))return success({message:GENERIC});
-
   const account=await lookupAccount(env,studentId+'@members.skku-myrock.firebaseapp.com');
   const candidateUid=account?.localId??null;
-  // Account existence, role, and already-a-member status must never affect the creator's visible result.
   const registered=candidateUid?await getFirestoreDocument(env,candidateUid):null;
-  const eligible=Boolean(registered&&candidateUid!==caller.uid&&!schedule.participantUids?.includes(candidateUid));
-  const recipientUid=eligible?candidateUid:'';
-
-  // Historical invites were keyed by UID rather than the student ID digest.
-  // Do not create a second deliverable invitation if an older active invite already exists.
-  if(eligible){
-   const legacy=await getDocument(env,invitationDoc(params.id+'_'+candidateUid));
-   if(legacy?.fields?.status?.stringValue==='pending')return success({message:GENERIC});
+  const found=Boolean(registered);
+  const alreadyMember=found&&(candidateUid===caller.uid||schedule.participantUids?.includes(candidateUid));
+  if(!found){
+   // A terminal request record is visible to the owner, but is NEVER deliverable.
+   // It has no recipient UID, and cannot become an invitation after later registration.
+   const createdAt=new Date().toISOString();
+   try{
+    await commit(env,[toWrite(url,{
+     scheduleId:params.id,studentId,recipientUid:'',inviterUid:caller.uid,
+     status:'not_found',createdAt,updatedAt:createdAt,
+    },existing?{updateTime:existing.updateTime}:{exists:false})]);
+   }catch(error){if(error.status!==409)throw error;}
+   return success({message:'존재하지 않는 학번입니다.',status:'not_found'});
   }
+  if(alreadyMember)return success({message:'이미 참여 중인 학번입니다.',status:'already_member'});
+  if(existing&&['pending','accepted'].includes(existing.fields?.status?.stringValue))
+   return success({message:GENERIC,status:existing.fields.status.stringValue});
+
+  // Invites created before this feature used scheduleID_UID as the document ID.
+  // Prevent duplicate invitations from appearing in the recipient's inbox.
+  const legacy=await getDocument(env,invitationDoc(params.id+'_'+candidateUid));
+  if(legacy?.fields?.status?.stringValue==='pending')return success({message:GENERIC,status:'pending'});
   const createdAt=new Date().toISOString();
   try{
    await commit(env,[toWrite(url,{
-    scheduleId:params.id,studentId,recipientUid,inviterUid:caller.uid,
+    scheduleId:params.id,studentId,recipientUid:candidateUid,inviterUid:caller.uid,
     status:'pending',createdAt,updatedAt:createdAt,
    },existing?{updateTime:existing.updateTime}:{exists:false})]);
-  }catch(error){
-   if(error.status!==409)throw error;
-  }
-  return success({message:GENERIC});
+  }catch(error){if(error.status!==409)throw error;}
+  return success({message:GENERIC,status:'pending'});
  }catch(error){return failure(error);}
 }

@@ -13,7 +13,7 @@ export async function onRequestPost({request,env,params}){
   const invitation=docData(inviteDoc);
   if(invitation.scheduleId!==params.id||invitation.inviterUid!==caller.uid)
    reject('초대 요청을 취소할 권한이 없습니다.',403);
-  if(invitation.status!=='pending')reject('이미 처리된 초대 요청입니다.',409);
+  if(!['pending','not_found'].includes(invitation.status))reject('이미 처리된 초대 요청입니다.',409);
   await commit(env,[toWrite(invitationDoc(invitationId),{
    scheduleId:invitation.scheduleId,inviterUid:invitation.inviterUid,
    recipientUid:invitation.recipientUid??'',

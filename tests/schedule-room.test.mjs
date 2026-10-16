@@ -89,8 +89,11 @@ test('backend requests verify identities and separate consent from participant c
  assert.match(invite,/status:'pending'/);
  assert.match(ownerInvites,/requireOwner\(schedule,caller\.uid\)/);
  assert.match(ownerInvites,/invitation\.studentId/);
+ assert.match(ownerInvites,/\['pending','not_found'\]/);
+ assert.match(invite,/status:'not_found'/);
+ assert.match(invite,/recipientUid:''/);
  assert.match(cancelInvites,/requireOwner\(schedule,caller\.uid\)/);
- assert.match(cancelInvites,/invitation\.status!=='pending'/);
+ assert.match(cancelInvites,/\['pending','not_found'\]\.includes\(invitation\.status\)/);
  assert.match(cancelInvites,/status:'cancelled'/);
  assert.match(invite,/count>=20/);
  assert.match(invite,/requireOwner\(schedule,caller\.uid\)/);
@@ -118,12 +121,14 @@ test('roster owner can see and cancel student-ID-only pending invitations',async
  const [view,api,css]=await Promise.all([
   read('src/ScheduleRoom.tsx'),read('src/scheduleApi.ts'),read('src/styles/schedule.css')
  ]);
- assert.match(view,/초대 대기 명단 \(\{pendingInvites\.length\}\)/);
+ assert.match(view,/초대 요청 명단 \(\{pendingInvites\.length\}\)/);
+ assert.match(view,/item\.status==='not_found'/);
+ assert.match(view,/setInviteFeedback\('존재하지 않는 학번입니다\.'\)/);
  assert.match(view,/item\.studentId/);
  assert.match(view,/await cancelScheduleInvitation\(id,item\.id\)/);
  assert.match(view,/await listPendingScheduleInvitations\(id\)/);
  assert.match(view,/await loadPending\(\)/);
- assert.match(view,/학번의 회원 가입 여부는 표시하지 않습니다/);
+ assert.match(view,/나중에 가입하더라도 자동으로 전달되지 않습니다/);
  assert.match(api,/export type PendingScheduleInvitation/);
  assert.match(api,/export const cancelScheduleInvitation/);
  assert.match(css,/\.schedule-roster-pending-list\{/);

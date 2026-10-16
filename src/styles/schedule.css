@@ -503,3 +503,7 @@
 .schedule-roster-pending-item button{display:flex;align-items:center;gap:4px;border:0;background:transparent;color:#a45959;font-size:11px}
 .schedule-roster-pending-item button:disabled{opacity:.5}
 .schedule-roster-pending-help{margin:10px 0 0;font-size:11px;color:var(--muted);line-height:1.7;word-break:keep-all}
+
+.schedule-roster-invalid-id{margin:7px 0 0;font-size:11px;font-weight:400;color:#a45959;line-height:1.6}
+.schedule-roster-pending-item .schedule-roster-invalid-id{flex:1;min-width:0}
+@media(max-width:480px){.schedule-roster-pending-item{flex-wrap:wrap}.schedule-roster-pending-item .schedule-roster-invalid-id{flex-basis:100%;order:1}}
