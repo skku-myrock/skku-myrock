@@ -1,6 +1,6 @@
 import {useEffect,useMemo,useRef,useState} from 'react';
 import type {PointerEvent as ReactPointerEvent} from 'react';
-import {ArrowLeft,Check,LogOut,Trash2,Users,X} from 'lucide-react';
+import {AlertTriangle,ArrowLeft,Check,LogOut,Trash2,Users,X} from 'lucide-react';
 import {decodeBits,encodeBits,rectangleTimeSelection,blockKey} from './scheduleGrid';
 import {cancelScheduleInvitation,getSchedule,inviteMember,leaveSchedule,listPendingScheduleInvitations,removeScheduleMember,saveAvailability} from './scheduleApi';
 import type {PendingScheduleInvitation} from './scheduleApi';
@@ -304,8 +304,8 @@ export default function ScheduleRoom({id,onBack,registerLeaveGuard}:{
     </div>
    </div>
   </div>}
-  {notice&&<div className="toast schedule-invite-toast" role="status" aria-live="polite">
-   <Check size={17}/><span>{notice}</span><button type="button" aria-label="알림 닫기" onClick={()=>setNotice('')}><X size={15}/></button>
+  {notice&&<div className={"toast schedule-invite-toast"+(notice==="존재하지 않는 학번입니다."?" schedule-invite-warning":"")} role={notice==="존재하지 않는 학번입니다."?"alert":"status"} aria-live={notice==="존재하지 않는 학번입니다."?"assertive":"polite"}>
+   {notice==="존재하지 않는 학번입니다."?<AlertTriangle size={17}/>:<Check size={17}/>}<span>{notice}</span><button type="button" aria-label="알림 닫기" onClick={()=>setNotice('')}><X size={15}/></button>
   </div>}
  </>;
 }
