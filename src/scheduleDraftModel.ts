@@ -6,7 +6,7 @@ export type ScheduleDraftInput={
   endHour:number;
 };
 export const INITIAL_DRAFT_PARTICIPANTS=['갑길동','을길동','병길동','정길동'] as const;
-export const DEMO_INVITATION={studentId:'2027000001',name:'무길동'} as const;
+export const DEMO_INVITATION={studentId:'2027000001'} as const;
 
 export function draftFromRoute(value:unknown):ScheduleDraftInput|null{
   if(!value||typeof value!=='object')return null;
@@ -43,5 +43,5 @@ export function rectangleTimeSelection(
   return result;
 }
 export function mockFindInvitee(studentId:string):string|null{
-  return studentId.trim()===DEMO_INVITATION.studentId?DEMO_INVITATION.name:null;
+  return studentId.trim()===DEMO_INVITATION.studentId?DEMO_INVITATION.studentId:null;
 }
