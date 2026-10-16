@@ -48,3 +48,11 @@ test('time grid layout retains fixed left hour axis and visible 30-minute lines'
  assert.match(styles,/\.schedule-time-slot\s*\{[^}]*flex:\s*0 0 20px;[^}]*height:\s*20px;/s);
  assert.match(styles,/\.schedule-time-slot\s*\{[^}]*border-top:\s*1px solid #cfded3;[^}]*border-right:\s*1px solid #cfded3;/s);
 });
+
+test('schedule landing omits the obsolete usage guide',()=>{
+ assert.doesNotMatch(landing,/schedule-usage-guide|schedule-usage-heading|schedule-usage-list|시간표 사용 안내/);
+ assert.doesNotMatch(styles,/\.schedule-usage-guide|\.schedule-usage-heading|\.schedule-usage-list/);
+ assert.match(landing,/시간표 만들기/);
+ assert.match(landing,/내가 참여한 시간표/);
+ assert.match(landing,/초대 \{invitations\.length\}건/);
+});
