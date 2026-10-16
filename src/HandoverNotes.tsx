@@ -148,7 +148,7 @@ export function HandoverNotesView({onBack}:{onBack:()=>void}){
   return()=>window.removeEventListener('keydown',onKeyDown);
  },[selected]);
  return <>
-  <PageHeading tag="HANDOVER ARCHIVE" title="인수인계 확인하기" description="선배 운영진이 남긴 인수인계 내용을 찾아볼 수 있습니다."/>
+  <PageHeading tag="HANDOVER ARCHIVE" title="인수인계 확인하기" description="역대 운영진이 남긴 인수인계 내용을 확인할 수 있습니다."/>
   <section className="container section-block handover-editor-page">
    <button type="button" className="schedule-back-button" onClick={onBack}><ArrowLeft size={16}/> 인수인계로 돌아가기</button>
    <div className="handover-archive-toolbar">
