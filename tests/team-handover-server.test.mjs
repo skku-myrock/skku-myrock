@@ -174,6 +174,14 @@ test('every authorised operator may read another author’s past role notes, but
   // Saved metadata includes historical author, generation and position snapshots.
   const noteDocs=[...mock.docs.values()].filter(doc=>doc.name.includes('/handoverNotes/'));
   assert.ok(noteDocs.some(doc=>docFields(doc).authorUid===authorUid&&docFields(doc).generation==='27'&&docFields(doc).position==='기타 파트장'));
+  // Moving to another position does not make the previously authored content unreadable.
+  const profilePath=root+'/users/'+authorUid,oldProfile=mock.docs.get(profilePath);
+  mock.docs.set(profilePath,{...oldProfile,fields:toFields({...persons.lead,positions:['보컬 파트장']})});
+  assert.equal((await call(readHandover,'lead',roleQuery)).data.content,'27기 기타파트 안내');
+  assert.equal((await call(readHandover,'ob',roleQuery)).data.content,'27기 기타파트 안내');
+  assert.equal((await call(saveHandover,'lead','handover-notes',{
+   kind:'role',position:'기타 파트장',content:'과거 직책 임의 변경',expectedUpdateTime:first.data.updateTime,
+  })).status,403);
  }finally{mock.restore();}
 });
 
