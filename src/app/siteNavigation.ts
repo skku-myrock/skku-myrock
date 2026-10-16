@@ -1,7 +1,7 @@
 import {matchPath} from 'react-router-dom';
 
 export type Page = 'home' | 'about' | 'about-manage' | 'news' | 'notice-detail' | 'notice-compose' | 'notice-edit'
- | 'schedule' | 'schedule-create' | 'schedule-draft' | 'schedule-detail' | 'gallery' | 'equipment' | 'finance' | 'donations'
+ | 'schedule' | 'schedule-create' | 'schedule-detail' | 'gallery' | 'equipment' | 'finance' | 'donations'
  | 'donation-manage' | 'expenses' | 'expense-manage' | 'handover' | 'members' | 'profile';
 export type Navigate = (page:Page)=>void;
 export type Notify = (message?:string)=>void;
@@ -26,7 +26,6 @@ export const routeDefinitions:{page:Page;path:string}[]=[
  {page:'notice-detail',path:'/news/:id'},
  {page:'schedule',path:'/schedule'},
  {page:'schedule-create',path:'/schedule/create'},
- {page:'schedule-draft',path:'/schedule/draft'},
  {page:'schedule-detail',path:'/schedule/:id'},
  {page:'gallery',path:'/gallery'},
  {page:'equipment',path:'/equipment'},

@@ -10,10 +10,10 @@ import {ArrowRight,ChevronDown,Trash2,CircleHelp,LockKeyhole,Mail,Menu,X,UserRou
 import logo from './logo-transparent.png';
 import MemberManager from './MemberManager';
 import {purgeAllOtherMembers} from './memberAdmin';
-import {findSchedule,ScheduleDetail,ScheduleLanding} from './SchedulePages';
+import {ScheduleLanding} from './SchedulePages';
+import ScheduleRoom from './ScheduleRoom';
 import ScheduleCreation from './ScheduleCreation';
-import ScheduleDraft from './ScheduleDraft';
-import type {ScheduleDraftInput} from './scheduleDraftModel';
+import type {ScheduleInput} from './scheduleGrid';
 import {DonationHistory,ExpenseHistory,FinanceLanding} from './FinancePages';
 import ExpenseManagement from './ExpenseManagement';
 import DonationManagement from './DonationManagement';
@@ -134,7 +134,7 @@ function App() {
     if(leaveGuardRef.current?.()??true)blocker.proceed();
     else blocker.reset();
   },[blocker]);
-  useEffect(()=>{document.title=`${page==='notice-compose' ? '공지사항 글쓰기' : page==='notice-edit' ? '공지사항 수정하기' : page==='notice-detail' ? (notices.find(item=>item.id===activeNoticeId)?.title??'공지사항') : page==='schedule-create' ? '시간표 만들기' : page==='schedule-detail' ? (findSchedule(activeScheduleId ?? '')?.title ?? '합주 시간표') : page==='donations' ? '후원 내역' : page==='expense-manage' ? '회비 집행 내역 관리' : page==='expenses' ? '회비 집행 내역' : page==='about-manage' ? '동아리 소개 수정' : page==='home' ? '모여락' : allNav.find(n=>n.id===page)?.label ?? '모여락'} | MYROCK`;},[page,activeNoticeId,activeScheduleId,notices]);
+  useEffect(()=>{document.title=`${page==='notice-compose' ? '공지사항 글쓰기' : page==='notice-edit' ? '공지사항 수정하기' : page==='notice-detail' ? (notices.find(item=>item.id===activeNoticeId)?.title??'공지사항') : page==='schedule-create' ? '시간표 만들기' : page==='schedule-detail' ? '합주 시간표' : page==='donations' ? '후원 내역' : page==='expense-manage' ? '회비 집행 내역 관리' : page==='expenses' ? '회비 집행 내역' : page==='about-manage' ? '동아리 소개 수정' : page==='home' ? '모여락' : allNav.find(n=>n.id===page)?.label ?? '모여락'} | MYROCK`;},[page,activeNoticeId,activeScheduleId,notices]);
   useEffect(()=>{document.body.style.overflow=loginOpen?'hidden':'';return()=>{document.body.style.overflow='';};},[loginOpen]);
   useEffect(()=>{const onEscape=(e:KeyboardEvent)=>{if(e.key==='Escape'){setOpenGroup(null);setAccountOpen(false);setMenuOpen(false);}};window.addEventListener('keydown',onEscape);return()=>window.removeEventListener('keydown',onEscape);},[]);
   const navigate:Navigate=next=>{const path=pathFor(next);if(location.pathname!==path)routerNavigate(path);setOpenGroup(null);setAccountOpen(false);setMenuOpen(false);window.scrollTo({top:0,behavior:'instant'});};
@@ -150,7 +150,7 @@ function App() {
     try{await deleteNotice(post.id,post.updateTime);setNoticeDetail(null);setNotices(prev=>prev.filter(x=>x.id!==post.id));navigate('news');notify('공지사항을 삭제했습니다.');}
     catch(e){notify(e instanceof Error?e.message:'공지사항 삭제 실패');}
   };
-  const openSchedule=(id:string)=>{if(!findSchedule(id))return;routerNavigate(schedulePath(id));setOpenGroup(null);setAccountOpen(false);setMenuOpen(false);window.scrollTo({top:0,behavior:'instant'});};
+  const openSchedule=(id:string)=>{routerNavigate(schedulePath(id));setOpenGroup(null);setAccountOpen(false);setMenuOpen(false);window.scrollTo({top:0,behavior:'instant'});};
   const notify: Notify = (message='아직 연결되지 않은 기능입니다. 현재는 화면 구성 미리보기입니다.') => {setToast(message);window.setTimeout(()=>setToast(''),3500);};
   const showLogin=()=>{setLoginOpen(true);setMenuOpen(false);setAccountOpen(false);};
   const logout=async()=>{if(!canLeaveEditor())return;try{await signOut(auth);leaveGuardRef.current=null;navigate('home');notify('로그아웃되었습니다.');}catch{notify('로그아웃하지 못했습니다. 잠시 후 다시 시도해 주세요.');}};
@@ -279,16 +279,20 @@ function App() {
     'notice-detail': (noticeDetailLoading||(!noticeDetailError&&!activeFullNotice)?<section className="container section-block"><p>공지사항을 불러오는 중입니다.</p></section>:noticeDetailError?<section className="container section-block"><EmptyState title="공지사항을 불러올 수 없습니다" description={noticeDetailError}/></section>:<NoticeDetail key={activeNoticeId} notice={activeFullNotice??undefined} canManage={Boolean(user&&!authPending&&currentLevel)} backToList={()=>navigate('news')} onEdit={()=>activeNoticeId&&editNotice(activeNoticeId)} onDelete={()=>{if(activeFullNotice)void removeNotice(activeFullNotice);}}/>),
     'schedule': <ScheduleLanding
         canCreateTeam={Boolean(user && !authPending && currentLevel)}
+        loggedIn={Boolean(user && profile && !authPending)}
+        authPending={authPending}
+        onLogin={showLogin}
         onCreate={() => navigate('schedule-create')}
         onCreateTeam={() => notify('구성팀 시간표 만들기 기능은 추후 연결할 예정입니다.')}
         onOpen={openSchedule}
       />,
-    'schedule-create': <ScheduleCreation onBack={() => navigate('schedule')}
-      initial={(location.state as {draft?:unknown}|null)?.draft}
-      onPreview={(draft:ScheduleDraftInput)=>routerNavigate(pathFor('schedule-draft'),{state:{draft}})}/> ,
-    'schedule-draft': <ScheduleDraft initial={(location.state as {draft?:unknown}|null)?.draft}
-      onBack={()=>routerNavigate(pathFor('schedule-create'),{state:{draft:(location.state as {draft?:unknown}|null)?.draft}})}/> ,
-    'schedule-detail': <ScheduleDetail schedule={findSchedule(activeScheduleId ?? '')} onBack={() => navigate('schedule')}/>,
+    'schedule-create': authPending
+      ? <section className="container section-block"><p>로그인 상태를 확인하고 있습니다.</p></section>
+      : !user || !profile ? <section className="container section-block"><p>시간표 생성은 로그인한 부원만 사용할 수 있습니다.</p><button type="button" className="button button-primary" onClick={showLogin}>로그인</button></section>
+      : <ScheduleCreation onBack={() => navigate('schedule')} onCreated={openSchedule}/>,
+    'schedule-detail': activeScheduleId && user && profile && !authPending
+      ? <ScheduleRoom key={activeScheduleId} id={activeScheduleId} onBack={() => navigate('schedule')} registerLeaveGuard={registerEditorLeaveGuard}/>
+      : <section className="container section-block"><p>시간표를 확인하려면 로그인해 주세요.</p><button type="button" className="button button-primary" onClick={showLogin}>로그인</button></section>,
     'gallery': <Gallery key={galleryRevision} canRegister={Boolean(user && !authPending && currentLevel)}/>,
     'equipment': <Equipment notify={notify}/>,
     'finance': <FinanceLanding onDonations={() => navigate('donations')} onExpenses={() => navigate('expenses')} canEditAccount={Boolean(user&&!authPending&&currentLevel==='president')}/>,

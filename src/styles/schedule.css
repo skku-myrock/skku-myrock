@@ -506,3 +506,9 @@
 .schedule-invitations-footer{display:flex;justify-content:flex-end;margin-top:22px;border-top:1px solid var(--border);padding-top:15px}
 .schedule-invitations-footer button{font-size:12px}
 @media(max-width:420px){.schedule-invitations-item{align-items:stretch}.schedule-invitations-actions{justify-content:flex-end}}
+
+/* Live schedule editor and invitation status. */
+.schedule-unsaved-message{margin-right:auto;color:#ad6b42;font-size:12px}
+.schedule-draft-save-row{align-items:center;gap:12px}
+.schedule-invitations-empty{margin:26px 0 10px;text-align:center;color:var(--muted);font-size:13px;padding:26px 8px}
+.schedule-roster-search-form .button-primary{color:#fff;background:var(--accent-dark);border-color:var(--accent-dark)}
