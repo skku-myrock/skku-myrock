@@ -26,8 +26,10 @@ test('finance landing introduces donations before account instructions and trans
 });
 test('bank account defaults to the requested Nonghyup account and president-only account form',async()=>{
   const financeTypes=await readFile(new URL('../src/financeTransactions.ts',import.meta.url),'utf8');
-  assert.match(financeTypes,/bank:'농협',number:'302-0000-0000-31',holder:'나재원'/);
-  assert.match(finance,/canEditAccount&&!editing&&<button/);
+  const accountServer=await readFile(new URL('../functions/_lib/financeTransactions.js',import.meta.url),'utf8');
+  assert.match(accountServer,/bank: '농협', number: '302-0000-0000-31', holder: '나재원'/);
+  assert.doesNotMatch(financeTypes,/302-0000-0000-31|DEFAULT_ACCOUNT/);
+  assert.match(finance,/loggedIn&&!authPending&&canEditAccount&&!editing&&account&&<button/);
   assert.match(finance,/readAccountForManagement\(\)/);
   assert.match(finance,/saveDonationAccount\(editing,version\)/);
   assert.match(app,/canEditAccount=\{Boolean\(user&&!authPending&&currentLevel==='president'\)\}/);
@@ -247,4 +249,21 @@ test('unchanged bank account uses the same gray disabled save design as anonymou
   assert.match(styles,/\.finance-account-edit-actions>\.button:disabled\{/);
   assert.match(styles,/background:#e4e9e5!important;border-color:#dbe1dc!important/);
   assert.match(styles,/\.finance-account-edit-actions>\.button:not\(:disabled\)\{opacity:1;filter:none\}/);
+});
+
+test('donation account is hidden from guests and available only to authenticated members',async()=>{
+ const financeModel=await readFile(new URL('../src/financeTransactions.ts',import.meta.url),'utf8');
+ const accountHandler=await readFile(new URL('../functions/api/finance/account.js',import.meta.url),'utf8');
+ assert.match(app,/loggedIn=\{Boolean\(user&&profile&&!authPending\)\} authPending=\{authPending\} onLogin=\{showLogin\}/);
+ assert.match(finance,/if\(!loggedIn\|\|authPending\)return/);
+ assert.match(finance,/authPending\|\|!loggedIn\?<div className="finance-account-locked" role="status">/);
+ assert.match(finance,/후원 계좌 정보는 비공개입니다\./);
+ assert.match(finance,/후원 계좌는 로그인 후 확인할 수 있습니다\./);
+ assert.match(finance,/onClick=\{onLogin\}/);
+ assert.match(finance,/회칙에 따라 <strong>회원인 동아리 부원 및 OB만 후원할 수 있습니다\.<\/strong>/);
+ assert.match(accountHandler,/await assertAccess\(request,env,'member'\)/);
+ assert.match(financeModel,/readDonationAccount=\(\)=>request<\{account:DonationAccount\}>\('account',undefined,true\)/);
+ assert.doesNotMatch(financeModel,/302-0000-0000-31|DEFAULT_ACCOUNT/);
+ assert.match(styles,/\.finance-account-locked\{/);
+ assert.match(styles,/\.finance-support-eligibility\{/);
 });

@@ -297,3 +297,15 @@
 }
 
 
+
+/* Donation bank details are visible only to authenticated club members. */
+.finance-account-locked{display:flex;align-items:center;gap:16px;padding:25px 0 0;color:var(--accent-dark)}
+.finance-account-locked>svg{flex:0 0 auto}
+.finance-account-locked>div{min-width:0;flex:1}
+.finance-account-locked strong{display:block;font-size:14px;color:var(--ink)}
+.finance-account-locked p{margin:7px 0 0;color:var(--muted);font-size:12px;line-height:1.7}
+.finance-account-locked .button{display:inline-flex;align-items:center;gap:8px;flex-shrink:0}
+.finance-account-loading{margin:24px 0 0;color:var(--muted);font-size:12px}
+.finance-support-eligibility{margin:15px 0 0;color:#647b6e;font-size:12px;line-height:1.8;word-break:keep-all}
+.finance-support-eligibility strong{font-weight:700;color:#405d4e}
+@media(max-width:520px){.finance-account-locked{flex-wrap:wrap}.finance-account-locked .button{margin-left:auto}}

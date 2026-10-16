@@ -3,7 +3,7 @@ import { assertAccess } from '../../_lib/google.js';
 import { getAccount,putAccount } from '../../_lib/financeTransactions.js';
 
 export async function onRequestGet({request,env}){
-  try {secureOrigin(request);const row=await getAccount(env);
+  try {secureOrigin(request);await assertAccess(request,env,'member');const row=await getAccount(env);
     return success({account:{bank:row.bank,number:row.number,holder:row.holder}});
   }catch(error){return failure(error);}
 }

@@ -294,7 +294,7 @@ function App() {
       : <section className="container section-block"><p>시간표를 확인하려면 로그인해 주세요.</p><button type="button" className="button button-primary" onClick={showLogin}>로그인</button></section>,
     'gallery': <Gallery key={galleryRevision} canRegister={Boolean(user && !authPending && currentLevel)}/>,
     'equipment': <Equipment notify={notify}/>,
-    'finance': <FinanceLanding onDonations={() => navigate('donations')} onExpenses={() => navigate('expenses')} canEditAccount={Boolean(user&&!authPending&&currentLevel==='president')}/>,
+    'finance': <FinanceLanding onDonations={() => navigate('donations')} onExpenses={() => navigate('expenses')} canEditAccount={Boolean(user&&!authPending&&currentLevel==='president')} loggedIn={Boolean(user&&profile&&!authPending)} authPending={authPending} onLogin={showLogin}/>,
     'donations': <DonationHistory key={financeRevision} onBack={() => navigate('finance')} loggedIn={Boolean(user)} authPending={authPending} onLogin={showLogin} canManageDonations={Boolean(!authPending&&user&&canManageDonations)} onManage={()=>navigate('donation-manage')}/>,
     'donation-manage': (authPending?<section className="container section-block"><EmptyState title="권한 확인 중" description="로그인 상태 확인 중입니다."/></section>:user&&canManageDonations?<DonationManagement onBack={()=>navigate('donations')}/>:<section className="container section-block"><EmptyState icon={<LockKeyhole size={26}/>} title="접근 권한이 없습니다" description="후원 내역 관리는 실무단 이상만 가능합니다."/></section>),
     'expenses': <ExpenseHistory onBack={() => navigate('finance')} canManageExpenses={Boolean(user&&!authPending&&canManageDonations)} onManage={()=>navigate('expense-manage')}/>,
