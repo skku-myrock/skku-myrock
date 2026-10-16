@@ -41,6 +41,9 @@ function setupMock(){
  for(const [uid,name,studentId] of [[alice,'갑길동','2026300001'],[bob,'을길동','2026300002'],[eve,'병길동','2026300003']])
   createDoc(root+'/users/'+uid,toFields({name,studentId,role:'member'}));
  const json=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:{'content-type':'application/json'}});
+ // The real Firestore REST API rejects HTTPS URLs in Write.update.name/Write.delete.
+ const resourceBase='projects/skku-myrock/databases/(default)/documents/';
+ const urlFromResource=name=>root+'/'+name.slice(resourceBase.length);
  function check(name,condition){
   const current=documents.get(name);
   if(condition?.exists===false&&current)return false;
@@ -59,12 +62,14 @@ function setupMock(){
   const pathname=raw.split('?')[0],body=init.body?JSON.parse(init.body):{};
   if(pathname===root+':commit'&&method==='POST'){
    for(const w of body.writes){
-    const name=w.update?.name??w.delete;
-    if(!check(name,w.currentDocument))return json({error:{status:'FAILED_PRECONDITION'}},412);
+    const resource=w.update?.name??w.delete;
+    if(typeof resource!=='string'||!resource.startsWith(resourceBase))
+     return json({error:{status:'INVALID_ARGUMENT',message:'Write document name must be a resource path'}},400);
+    if(!check(urlFromResource(resource),w.currentDocument))return json({error:{status:'FAILED_PRECONDITION'}},412);
    }
    for(const w of body.writes){
-    if(w.delete){documents.delete(w.delete);stats.writes++;continue;}
-    createDoc(w.update.name,w.update.fields);stats.writes++;
+    if(w.delete){documents.delete(urlFromResource(w.delete));stats.writes++;continue;}
+    createDoc(urlFromResource(w.update.name),w.update.fields);stats.writes++;
    }
    return json({writeResults:[]});
   }
