@@ -163,7 +163,7 @@ test('full Firestore invitation, consent and explicit bitset save lifecycle uses
   const accepted=await call(respond,bob,'POST','/api/schedule-invitations/'+inviteId+'/respond',{action:'accept'},{id:inviteId});
   assert.equal(accepted.status,200,JSON.stringify(accepted));
   assert.equal((await call(inbox,bob,'GET','/api/schedule-invitations')).data.invitations.length,0);
-  assert.deepEqual((await call(ownerInvitations,alice,'GET','/api/schedules/'+id+'/invitations',undefined,{id})).data.invitations,[]);
+  assert.deepEqual((await call(ownerInvitations,alice,'GET','/api/schedules/'+id+'/invitations',undefined,{id})).data.invitations.map(x=>x.studentId),['2026999999']);
   assert.equal((await call(cancelInvite,alice,'POST','/api/schedules/'+id+'/cancel-invite',{invitationId:inviteId},{id})).status,409);
   assert.equal((await call(list,bob,'GET','/api/schedules')).data.schedules.length,1);
   const details=(await call(detail,bob,'GET','/api/schedules/'+id,undefined,{id})).data;
