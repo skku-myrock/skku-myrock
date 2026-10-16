@@ -29,6 +29,7 @@ export default function ScheduleRoom({id,onBack,registerLeaveGuard}:{
  const [studentId,setStudentId]=useState(''),[inviteBusy,setInviteBusy]=useState(false);
  const [pendingInvites,setPendingInvites]=useState<PendingScheduleInvitation[]>([]);
  const [pendingBusy,setPendingBusy]=useState(false);
+ const [inviteFeedback,setInviteFeedback]=useState('');
  const [notice,setNotice]=useState(''),[selectedCell,setSelectedCell]=useState<Cell|null>(null);
  const stroke=useRef<Stroke|null>(null);
  async function refresh(){
@@ -131,17 +132,21 @@ export default function ScheduleRoom({id,onBack,registerLeaveGuard}:{
  }
  async function invite(){
   if(!schedule||inviteBusy||!/^[0-9]{10}$/.test(studentId))return;
-  setInviteBusy(true);setError('');
+  setInviteBusy(true);setError('');setInviteFeedback('');
   try{
    const result=await inviteMember(id,studentId);
-   setNotice(result.message);setStudentId('');
+   if(result.status==='not_found'){
+    setInviteFeedback('존재하지 않는 학번입니다.');
+   }else{
+    setNotice(result.message);setStudentId('');
+   }
    await loadPending();
   }catch(e){setError(e instanceof Error?e.message:'초대 요청에 실패했습니다.');}
   finally{setInviteBusy(false);}
  }
  async function cancelInvite(item:PendingScheduleInvitation){
   if(inviteBusy)return;
-  if(!window.confirm(item.studentId+' 학번의 초대 요청을 취소하시겠습니까?'))return;
+  if(!window.confirm(item.studentId+(item.status==='not_found'?' 학번의 요청 내역을 삭제하시겠습니까?':' 학번의 초대 요청을 취소하시겠습니까?')))return;
   setInviteBusy(true);setError('');
   try{
    await cancelScheduleInvitation(id,item.id);
@@ -259,23 +264,25 @@ export default function ScheduleRoom({id,onBack,registerLeaveGuard}:{
     <form className="schedule-roster-search-form" onSubmit={e=>{e.preventDefault();void invite();}}>
      <label htmlFor="schedule-invite-id">학번으로 초대</label>
      <div><input id="schedule-invite-id" type="text" inputMode="numeric" maxLength={10}
-      pattern="[0-9]{10}" value={studentId} onChange={e=>setStudentId(e.target.value)}
+      pattern="[0-9]{10}" value={studentId} onChange={e=>{setStudentId(e.target.value);setInviteFeedback('');}}
       placeholder="학번을 입력하세요"/>
       <button type="submit" className="button button-primary" disabled={inviteBusy||!/^[0-9]{10}$/.test(studentId)}>초대하기</button></div>
+     {inviteFeedback&&<p className="schedule-roster-invalid-id" role="status">{inviteFeedback}</p>}
     </form>
     <section className="schedule-roster-pending" aria-label="초대 대기 명단">
-     <h3>초대 대기 명단 ({pendingInvites.length})</h3>
+     <h3>초대 요청 명단 ({pendingInvites.length})</h3>
      {pendingBusy?<p className="schedule-roster-pending-help">초대 목록을 불러오는 중입니다.</p>:
-      pendingInvites.length===0?<p className="schedule-roster-pending-help">초대 대기 중인 학번이 없습니다.</p>:
+      pendingInvites.length===0?<p className="schedule-roster-pending-help">초대 요청 내역이 없습니다.</p>:
       <div className="schedule-roster-pending-list">
        {pendingInvites.map(item=><div className="schedule-roster-pending-item" key={item.id}>
         <span>{item.studentId}</span>
+        {item.status==='not_found'&&<span className="schedule-roster-invalid-id">존재하지 않는 학번입니다.</span>}
         <button type="button" disabled={inviteBusy} onClick={()=>void cancelInvite(item)}>
-         <X size={14} aria-hidden="true"/> 취소
+         <X size={14} aria-hidden="true"/> {item.status==='not_found'?'삭제':'취소'}
         </button>
        </div>)}
       </div>}
-     <p className="schedule-roster-pending-help">학번의 회원 가입 여부는 표시하지 않습니다. 미가입 학번에는 실제 초대가 전달되지 않습니다.</p>
+     <p className="schedule-roster-pending-help">존재하지 않는 학번에는 초대가 전달되지 않으며, 나중에 가입하더라도 자동으로 전달되지 않습니다.</p>
     </section>
     <div className="schedule-roster-footer"><span>상대방이 초대를 수락한 뒤에만 명단에 표시됩니다.</span>
      <button type="button" className="outline-action" onClick={()=>setRosterOpen(false)}>닫기</button>
