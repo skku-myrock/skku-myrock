@@ -243,14 +243,15 @@
   box-sizing: border-box;
   padding: 0;
   border: 0;
-  border-top: 1px solid #fff;
-  border-right: 1px solid #fff;
+  /* Subtle green-grey dividers remain visible on empty and colored blocks. */
+  border-top: 1px solid #cfded3;
+  border-right: 1px solid #cfded3;
   border-radius: 0;
   cursor: crosshair;
   transition: box-shadow .08s ease;
 }
-.schedule-time-slot.starts-hour { border-top-color: #fff; }
-.schedule-time-slot:last-child { border-bottom: 1px solid #fff; }
+.schedule-time-slot.starts-hour { border-top-color: #b3c9ba; }
+.schedule-time-slot:last-child { border-bottom: 1px solid #cfded3; }
 .schedule-time-slot:hover,
 .schedule-time-slot.is-hovered,
 .schedule-time-slot:focus-visible {
