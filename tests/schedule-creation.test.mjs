@@ -8,20 +8,24 @@ const code=await read('src/scheduleCreationModel.ts');
 const js=ts.transpileModule(code,{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText;
 const model=await import('data:text/javascript;base64,'+Buffer.from(js).toString('base64'));
 
-test('calendar begins at current week and shows three weeks, expandable to ten',()=>{
- const weeks=model.calendarWeeks('2026-10','2026-10-16',3);
- assert.equal(weeks.length,3);
- assert.equal(weeks[0][0].iso,'2026-10-11');
- assert.equal(weeks[2][6].iso,'2026-10-31');
- assert.equal(weeks[0][4].past,true);
- assert.equal(weeks[0][5].past,false);
- assert.equal(model.calendarWeeks('2026-10','2026-10-16',10).length,10);
- const future=model.calendarWeeks('2026-11','2026-10-16',3);
- assert.equal(future[0][0].iso,'2026-11-01');
+test('calendar begins at current week and stacks future months without past dates',()=>{
+ const months=model.futureCalendarMonths('2026-10-16',3);
+ assert.equal(months.length,3);
+ assert.deepEqual(months.map(month=>month.key),['2026-10','2026-11','2026-12']);
+ const october=months[0];
+ assert.equal(october.weeks[0][0],null);
+ assert.equal(october.weeks[0][5].iso,'2026-10-16');
+ assert.equal(october.weeks.at(-1)[6].iso,'2026-10-31');
+ const november=months[1];
+ assert.equal(november.weeks[0][0].iso,'2026-11-01');
+ assert.equal(november.weeks.at(-1).flat().filter(Boolean).at(-1).iso,'2026-11-30');
+ assert.equal(months[1].weeks[0][0].week,months[0].weeks.length);
+ assert.equal(model.futureCalendarMonths('2026-12-31',2)[1].key,'2027-01');
+ assert.equal(model.futureCalendarMonths('2026-10-16',4).length,4);
 });
 
 test('drag brush selects rectangle of cells from Oct 19 to Oct 30, not a date interval',()=>{
- const weeks=model.calendarWeeks('2026-10','2026-10-16',3);
+ const weeks=model.futureCalendarMonths('2026-10-16',1)[0].weeks;
  const start=weeks[1][1],end=weeks[2][5];
  assert.equal(start.iso,'2026-10-19');
  assert.equal(end.iso,'2026-10-30');
@@ -35,7 +39,7 @@ test('drag brush selects rectangle of cells from Oct 19 to Oct 30, not a date in
 });
 
 test('drag direction derives from starting day and does not toggle intermediate dates twice',()=>{
- const weeks=model.calendarWeeks('2026-10','2026-10-16',3);
+ const weeks=model.futureCalendarMonths('2026-10-16',1)[0].weeks;
  const start=weeks[1][1],end=weeks[2][5];
  const baseline=new Set(['2026-10-19','2026-10-22','2026-10-24','2026-11-01']);
  const deselected=model.brushCalendarDays(baseline,weeks,start,end,false);
@@ -45,8 +49,11 @@ test('drag direction derives from starting day and does not toggle intermediate 
  assert.ok(selected.has('2026-10-30'));
  assert.ok(selected.has('2026-10-24'));
  // Past dates must remain unchanged even if crossed by a brush.
- const past=model.brushCalendarDays(new Set(),weeks,weeks[0][5],weeks[0][0],true);
- assert.deepEqual([...past],['2026-10-16']);
+ // Past days are invisible; an existing selected day remains unaffected when brushing a different month.
+ const extra=model.futureCalendarMonths('2026-10-16',2);
+ const allWeeks=extra.flatMap(month=>month.weeks);
+ const past=model.brushCalendarDays(new Set(['2026-10-16']),allWeeks,allWeeks[1][1],allWeeks[2][5],false);
+ assert.ok(past.has('2026-10-16'));
 });
 
 test('candidate hour labels use Korean 12-hour notation followed by 24-hour time',()=>{
@@ -70,11 +77,15 @@ test('schedule creation route, responsive editor and intentionally inactive save
  assert.match(component,/onPointerMove=\{moveBrush\}/);
  assert.match(component,/onPointerUp=\{endBrush\}/);
  assert.match(component,/onPointerCancel=\{endBrush\}/);
- assert.match(component,/role="group" aria-label="후보 날짜 달력"/);
+ assert.match(component,/role="region" tabIndex=\{0\}/);
+ assert.match(component,/futureCalendarMonths\(today,visibleMonthCount\)/);
+ assert.match(component,/onScroll=\{revealNextMonth\}/);
+ assert.match(component,/setVisibleMonthCount\(count=>count\+1\)/);
+ assert.match(component,/className="schedule-calendar-grid" role="group"/);
  assert.match(component,/aria-pressed=\{dates\.has\(cell\.iso\)\}/);
  assert.match(component,/setPointerCapture\(event\.pointerId\)/);
  assert.match(component,/onClick=\{event=>\{if\(event\.detail===0/);
- assert.match(component,/aria-expanded=\{expanded\}/);
+ assert.doesNotMatch(component,/aria-expanded=\{expanded\}|moveMonth\(|ChevronLeft|ChevronRight|ChevronUp|schedule-calendar-expand/);
  assert.match(component,/후보 날짜 선택/);
  assert.match(component,/후보 시간대 선택/);
  assert.match(component,/<select id="schedule-start-hour"/);
@@ -83,4 +94,7 @@ test('schedule creation route, responsive editor and intentionally inactive save
  assert.doesNotMatch(component,/fetch\(|addDoc\(|setDoc\(|onSubmit=/);
  assert.match(style,/\.schedule-create-columns\{display:grid;grid-template-columns:minmax\(0,1\.08fr\) minmax\(0,\.92fr\)/);
  assert.match(style,/@media\(max-width:740px\)/);
+ assert.match(style,/\.schedule-calendar-scroll\{max-height:465px;overflow-y:auto/);
+ assert.match(style,/\.schedule-calendar-day\{[^}]*width:38px;height:38px;[^}]*border-radius:50%/);
+ assert.match(style,/\.schedule-calendar-day\.is-selected\{background:#b9edd0;color:#16583b/);
 });

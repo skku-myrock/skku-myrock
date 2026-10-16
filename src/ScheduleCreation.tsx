@@ -1,7 +1,7 @@
 import {useMemo,useRef,useState} from 'react';
 import type {PointerEvent as ReactPointerEvent} from 'react';
-import {ArrowLeft,CalendarDays,ChevronDown,ChevronLeft,ChevronRight,ChevronUp,Clock3} from 'lucide-react';
-import {brushCalendarDays,calendarWeeks,candidateHourLabel,isoLocalToday} from './scheduleCreationModel';
+import {ArrowLeft,CalendarDays,Clock3} from 'lucide-react';
+import {brushCalendarDays,futureCalendarMonths,candidateHourLabel,isoLocalToday} from './scheduleCreationModel';
 import type {CandidateCell} from './scheduleCreationModel';
 
 const weekdays=['일','월','화','수','목','금','토'] as const;
@@ -9,20 +9,19 @@ type BrushState={pointerId:number;start:CandidateCell;baseline:Set<string>;activ
 
 export default function ScheduleCreation({onBack}:{onBack:()=>void}){
   const [today]=useState(()=>isoLocalToday());
-  const [month,setMonth]=useState(today.slice(0,7));
-  const [expanded,setExpanded]=useState(false);
+  const [visibleMonthCount,setVisibleMonthCount]=useState(2);
   const [title,setTitle]=useState('');
   const [dates,setDates]=useState<Set<string>>(()=>new Set());
   const [startHour,setStartHour]=useState(9);
   const [endHour,setEndHour]=useState(17);
   const brush=useRef<BrushState|null>(null);
 
-  const weeks=useMemo(()=>calendarWeeks(month,today,expanded?10:3),[month,today,expanded]);
-  const [year,monthNumber]=month.split('-').map(Number);
-  function moveMonth(delta:number){
-    const next=new Date(Date.UTC(year,monthNumber-1+delta,1));
-    setMonth(next.toISOString().slice(0,7));
-    brush.current=null;
+  const months=useMemo(()=>futureCalendarMonths(today,visibleMonthCount),[today,visibleMonthCount]);
+  const weeks=useMemo(()=>months.flatMap(month=>month.weeks),[months]);
+  function revealNextMonth(event:React.UIEvent<HTMLDivElement>){
+    const node=event.currentTarget;
+    if(node.scrollHeight-node.scrollTop-node.clientHeight<140)
+      setVisibleMonthCount(count=>count+1);
   }
   function startBrush(event:ReactPointerEvent<HTMLDivElement>){
     if(event.button!==0&&event.pointerType==='mouse')return;
@@ -87,38 +86,38 @@ export default function ScheduleCreation({onBack}:{onBack:()=>void}){
             <span className="schedule-create-panel-icon"><CalendarDays size={20} aria-hidden="true"/></span>
             <div><h2 id="candidate-date-title">후보 날짜 선택</h2><p>날짜를 누르거나 드래그하여 여러 날짜를 선택하세요.</p></div>
           </div>
-          <div className="schedule-calendar-top">
-            <strong>{year}년 {monthNumber}월</strong>
-            <div className="schedule-calendar-month-actions">
-              <button type="button" onClick={()=>moveMonth(-1)} aria-label="이전 달"><ChevronLeft size={19}/></button>
-              <button type="button" onClick={()=>moveMonth(1)} aria-label="다음 달"><ChevronRight size={19}/></button>
-            </div>
-          </div>
-          <div className="schedule-calendar-weekdays" aria-hidden="true">
-            {weekdays.map((day,index)=><span key={day} className={index===0?'is-sunday':index===6?'is-saturday':''}>{day}</span>)}
-          </div>
-          <div className="schedule-calendar-grid" role="group" aria-label="후보 날짜 달력"
+          <p className="schedule-calendar-scroll-guide">미래 날짜는 아래로 스크롤하면 다음 달까지 계속 볼 수 있습니다.</p>
+          <div className="schedule-calendar-scroll" role="region" tabIndex={0}
+            aria-label="후보 날짜 달력, 아래로 스크롤하여 다음 달 보기"
+            onScroll={revealNextMonth}
             onPointerDown={startBrush} onPointerMove={moveBrush}
             onPointerUp={endBrush} onPointerCancel={endBrush}
             onLostPointerCapture={()=>{brush.current=null;}}>
-            {weeks.map((week,index)=>week.map(cell=><button type="button" key={cell.iso}
-              data-candidate-date={cell.iso} data-week={index} data-day={cell.weekday}
-              className={'schedule-calendar-day'+(dates.has(cell.iso)?' is-selected':'')+
-                (cell.iso===today?' is-today':'')+(cell.weekday===0?' is-sunday':'')+
-                (cell.weekday===6?' is-saturday':'')+
-                (cell.iso.slice(0,7)!==month?' is-other-month':'')}
-              aria-label={`${cell.iso} ${weekdays[cell.weekday]}요일`}
-              aria-pressed={dates.has(cell.iso)} disabled={cell.past}
-              onClick={event=>{if(event.detail===0&&!cell.past)toggleKeyboard(cell);}}>
-              {cell.day===1&&cell.iso.slice(0,7)!==month?<small>{cell.month}월</small>:null}
-              {cell.day}
-            </button>))}
+            {months.map(month=><div className="schedule-calendar-month" key={month.key}>
+              <div className="schedule-calendar-top">
+                <strong>{month.year}년 {month.monthNumber}월</strong>
+              </div>
+              <div className="schedule-calendar-weekdays" aria-hidden="true">
+                {weekdays.map((day,index)=><span key={day}
+                  className={index===0?'is-sunday':index===6?'is-saturday':''}>{day}</span>)}
+              </div>
+              <div className="schedule-calendar-grid" role="group"
+                aria-label={`${month.year}년 ${month.monthNumber}월 후보 날짜`}>
+                {month.weeks.flatMap((week,rowIndex)=>week.map((cell,weekday)=>
+                  cell?<button type="button" key={cell.iso}
+                    data-candidate-date={cell.iso} data-week={cell.week} data-day={cell.weekday}
+                    className={'schedule-calendar-day'+(dates.has(cell.iso)?' is-selected':'')+
+                      (cell.iso===today?' is-today':'')+
+                      (cell.weekday===0?' is-sunday':'')+(cell.weekday===6?' is-saturday':'')}
+                    aria-label={`${cell.iso} ${weekdays[cell.weekday]}요일`}
+                    aria-pressed={dates.has(cell.iso)}
+                    onClick={event=>{if(event.detail===0)toggleKeyboard(cell);}}>
+                    {cell.day}
+                  </button>:<span aria-hidden="true" key={`${month.key}-${rowIndex}-${weekday}`}
+                    className="schedule-calendar-empty"/>))}
+              </div>
+            </div>)}
           </div>
-          <button type="button" className="schedule-calendar-expand" aria-expanded={expanded}
-            aria-label={expanded?'달력 접기':'달력 더 보기'} onClick={()=>{brush.current=null;setExpanded(value=>!value);}}>
-            {expanded?<ChevronUp size={27} strokeWidth={2.4}/>:<ChevronDown size={27} strokeWidth={2.4}/>}
-            <span>{expanded?'달력 접기':'달력 더 보기'}</span>
-          </button>
           <p className="schedule-create-selection-summary" role="status">
             {candidateCount?`선택한 날짜 ${candidateCount}일 · ${displayDates[0]}부터`:'선택한 날짜가 없습니다.'}
           </p>
