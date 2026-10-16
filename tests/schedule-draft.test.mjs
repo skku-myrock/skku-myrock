@@ -117,3 +117,16 @@ test('roster search and invite actions align using a shared grid column rather t
  assert.match(draft,/setInviteNotice\('초대했습니다'\)/);
  assert.doesNotMatch(draft,/addMember\(|fetch\(|setDoc\(|updateDoc\(/);
 });
+
+test('the draft timetable reuses the sticky time axis and pinned corner', async () => {
+ const [css, draft] = await Promise.all([
+   read('src/styles/schedule.css'),
+   read('src/ScheduleDraft.tsx'),
+ ]);
+ assert.match(draft, /className="schedule-date-corner"/);
+ assert.match(draft, /className="schedule-time-axis"/);
+ assert.match(css, /\.schedule-date-corner\s*\{[^}]*position:\s*sticky;[^}]*left:\s*0;/s);
+ assert.match(css, /\.schedule-time-axis\s*\{[^}]*position:\s*sticky;[^}]*left:\s*0;/s);
+ assert.match(draft, /width:64\+dates\.length\*70/);
+ assert.match(draft, /height:slots\.length\*20/);
+});
