@@ -28,7 +28,7 @@ test('each role is rendered as an independent editor with individually guarded s
  assert.match(view,/disabled=\{loading\|\|saving\|\|!dirty\}/);
  assert.match(view,/description=\{'후배 '\+position\+'에게 전달하고 싶은 내용을 작성해주세요\.'\}/);
  assert.match(view,/후배 운영진 모두에게 전달하고 싶은 내용을 작성해주세요/);
- assert.match(view,/현직 운영진과 OB 운영진 모두 작성된 인수인계를 확인할 수 있습니다/);
+ assert.doesNotMatch(view,/현직 운영진과 OB 운영진 모두 작성된 인수인계를 확인할 수 있습니다/);
  assert.match(view,/const writerSubtitle=.*positions\.join\(' · '\).*name/);
  assert.match(api,/authorUid/);
  assert.match(server,/const NOTES=FIRESTORE_ROOT\+'\/handoverNotes'/);
@@ -36,27 +36,26 @@ test('each role is rendered as an independent editor with individually guarded s
  assert.match(server,/authorUid:caller\.uid/);
 });
 
-test('handover archive is an explicitly labeled sample person list',async()=>{
- const view=await read('src/HandoverNotes.tsx');
- for(const sample of [
-  "generation:'27기',positions:'보컬파트장',name:'나재원'",
-  "generation:'28기',positions:'회장, 보컬파트장',name:'김서연'",
-  "generation:'28기',positions:'공연부장, 기타파트장',name:'배은성'",
- ])assert.ok(view.includes(sample),sample);
- assert.match(view,/아래 목록과 열람 내용은 화면 구성 예시입니다/);
- assert.doesNotMatch(view,/실제 작성된 기록이 아닌 예시 내용입니다/);
- assert.match(view,/onClick=\{\(\)=>setSelectedIndex\(index\)\}/);
- assert.match(view,/selected&&<div className="handover-preview-backdrop"/);
- assert.match(view,/role="dialog" aria-modal="true" aria-labelledby="handover-preview-title"/);
- assert.match(view,/\{\[selected\.generation,selected\.positions\.split\(','\)\.map\(position=>position\.trim\(\)\)\.join\(' · '\),selected\.name\]\.join\(' '\)\}/);
- assert.doesNotMatch(view,/\{selected\.name\}의 인수인계/);
- assert.doesNotMatch(view,/\{selected\.generation\} · \{selected\.positions\}/);
- assert.doesNotMatch(view,/aria-describedby="handover-preview-description"/);
- assert.match(view,/selected\.notes\.map\(note=><section/);
- assert.match(view,/event\.key==='Escape'/);
- assert.doesNotMatch(view,/className="outline-action" disabled title="상세 열람은 추후 지원 예정입니다/);
+test('handover archive uses authenticated persisted author records instead of sample entries',async()=>{
+ const [view,api,server,archive]=await Promise.all([
+  read('src/HandoverNotes.tsx'),read('src/handoverNotesApi.ts'),
+  read('functions/_lib/handoverNotes.js'),read('functions/api/handover-notes/archive.js'),
+ ]);
+ assert.doesNotMatch(view,/exampleArchive|const exampleArchive/);
+ assert.doesNotMatch(view,/현직 운영진과 OB 운영진 모두 작성된 인수인계를 확인할 수 있습니다/);
+ assert.match(view,/getHandoverArchive\(\)\.then\(result=>/);
+ assert.match(view,/filtered\.map\(entry=><div className="handover-archive-row"/);
+ assert.match(view,/기수, 이름 또는 직책 검색/);
+ assert.match(view,/entry\.generation,archiveGeneration\(entry\.generation\),entry\.name,\.\.\.entry\.positions/);
+ assert.match(view,/검색 결과가 없습니다/);
+ assert.match(view,/저장된 인수인계가 없습니다/);
+ assert.match(view,/onClick=\{\(\)=>setSelected\(entry\)\}/);
+ assert.match(api,/getHandoverArchive/);
+ assert.match(archive,/await handoverCaller\(request,env\)/);
+ assert.match(server,/export async function listHandoverArchive\(env\)/);
+ assert.match(server,/data\.content\.trim\(\)/);
+ assert.match(server,/generationValue\(b\.generation\)-generationValue\(a\.generation\)/);
 });
-
 
 test('writer generation subtitle drops fractional .5 and is visually near heading size',async()=>{
  const [view,css]=await Promise.all([read('src/HandoverNotes.tsx'),read('src/styles/handover-team.css')]);
@@ -71,13 +70,17 @@ test('writer generation subtitle drops fractional .5 and is visually near headin
  assert.match(css,/\.handover-writer-heading>\.handover-writer-guidance\{font-size:13px;/);
 });
 
-test('each illustrated writer opens their own notes without page navigation',async()=>{
- const view=await read('src/HandoverNotes.tsx');
- for(const heading of ['직책별 인수인계 · 보컬파트장','직책별 인수인계 · 회장','직책별 인수인계 · 공연부장','직책별 인수인계 · 기타파트장','운영진 공통 인수인계']){
-  assert.ok(view.includes(heading),heading);
- }
- assert.match(view,/const selected=selectedIndex===null\?null:exampleArchive\[selectedIndex\]/);
- assert.match(view,/onMouseDown=\{event=>\{if\(event\.target===event\.currentTarget\)setSelectedIndex\(null\);\}\}/);
- assert.match(view,/onClick=\{\(\)=>setSelectedIndex\(null\)\}/);
+test('handover dialog loads real notes lazily and shows title/body divider',async()=>{
+ const [view,css]=await Promise.all([read('src/HandoverNotes.tsx'),read('src/styles/handover-team.css')]);
+ assert.match(view,/selected\.notes\.map\(async note=>/);
+ assert.match(view,/getHandoverNote\(note\.kind,note\.position,selected\.uid\)/);
+ assert.match(view,/Promise\.all\(selected\.notes\.map/);
+ assert.match(view,/selected&&<div className="handover-preview-backdrop"/);
+ assert.match(view,/role="dialog" aria-modal="true" aria-labelledby="handover-preview-title"/);
+ assert.match(view,/notes\.map\(note=><section className="handover-preview-note"/);
+ assert.match(view,/event\.key==='Escape'/);
+ assert.match(view,/인수인계 내용을 불러오는 중입니다/);
+ assert.match(css,/\.handover-preview-notes\{display:flex;flex-direction:column;margin-top:19px;border-top:1px solid var\(--border\)/);
+ assert.doesNotMatch(view,/실제 작성된 기록이 아닌 예시 내용입니다/);
  assert.doesNotMatch(view,/navigate\(|window\.location/);
 });
