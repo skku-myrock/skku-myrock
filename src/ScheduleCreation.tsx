@@ -3,20 +3,28 @@ import type {PointerEvent as ReactPointerEvent} from 'react';
 import {ArrowLeft,CalendarDays,ChevronDown,Clock3} from 'lucide-react';
 import {brushCalendarDays,futureCalendarMonths,candidateHourLabel,isoLocalToday} from './scheduleCreationModel';
 import type {CandidateCell} from './scheduleCreationModel';
-import {draftFromRoute} from './scheduleDraftModel';
-import type {ScheduleDraftInput} from './scheduleDraftModel';
+import {createSchedule} from './scheduleApi';
+import type {ScheduleInput} from './scheduleGrid';
 
 const weekdays=['일','월','화','수','목','금','토'] as const;
 type BrushState={pointerId:number;start:CandidateCell;baseline:Set<string>;activate:boolean;lastIso:string};
 
-export default function ScheduleCreation({onBack,onPreview,initial}:{onBack:()=>void;onPreview:(draft:ScheduleDraftInput)=>void;initial?:unknown}){
-  const [restored]=useState(()=>draftFromRoute(initial));
+export default function ScheduleCreation({onBack,onCreated}:{onBack:()=>void;onCreated:(id:string)=>void}){
+  const [creating,setCreating]=useState(false);
+  const [error,setError]=useState('');
+  async function submit(input:ScheduleInput){
+    if(creating)return;
+    setCreating(true);setError('');
+    try{const result=await createSchedule(input);onCreated(result.id);}
+    catch(e){setError(e instanceof Error?e.message:'시간표 생성에 실패했습니다.');}
+    finally{setCreating(false);}
+  }
   const [today]=useState(()=>isoLocalToday());
   const [visibleMonthCount,setVisibleMonthCount]=useState(1);
-  const [title,setTitle]=useState(restored?.title??'');
-  const [dates,setDates]=useState<Set<string>>(()=>new Set(restored?.dates??[]));
-  const [startHour,setStartHour]=useState(restored?.startHour??9);
-  const [endHour,setEndHour]=useState(restored?.endHour??17);
+  const [title,setTitle]=useState('');
+  const [dates,setDates]=useState<Set<string>>(()=>new Set());
+  const [startHour,setStartHour]=useState(9);
+  const [endHour,setEndHour]=useState(17);
   const brush=useRef<BrushState|null>(null);
 
   const months=useMemo(()=>futureCalendarMonths(today,visibleMonthCount),[today,visibleMonthCount]);
@@ -155,10 +163,11 @@ export default function ScheduleCreation({onBack,onPreview,initial}:{onBack:()=>
         </section>
       </div>
       <div className="schedule-create-footer">
-        <p>{title.trim()&&dates.size?'저장하지 않고 빈 시간표 화면을 미리 확인합니다.':'제목과 후보 날짜를 선택하면 빈 시간표를 확인할 수 있습니다.'}</p>
+        <p>{title.trim()&&dates.size?'시간표를 생성하면 본인만 참여자로 등록됩니다.':'제목과 후보 날짜를 선택해 주세요.'}</p>
         <button type="button" className="button button-primary"
-          disabled={!title.trim()||dates.size===0}
-          onClick={()=>onPreview({title:title.trim(),dates:[...dates].sort(),startHour,endHour})}>시간표 생성</button>
+          disabled={!title.trim()||dates.size===0||creating}
+          onClick={()=>void submit({title:title.trim(),dates:[...dates].sort(),startHour,endHour})}>{creating?'생성 중…':'시간표 생성'}</button>
+        {error&&<p role="alert" className="schedule-side-warning">{error}</p>}
       </div>
     </section>
   </>;
