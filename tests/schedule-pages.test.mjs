@@ -72,7 +72,7 @@ test('calendar generation uses inclusive, timezone-safe dates and 30-minute bloc
   assert.match(source, /schedule-time-tick/);
   assert.match(source, /slotStart % 60 === 0 \? ' starts-hour'/);
   assert.match(styles, /\.schedule-time-tick\s*\{[^}]*position:\s*absolute;/s);
-  assert.match(styles, /\.schedule-time-slot\.starts-hour\s*\{[^}]*border-top-color:\s*#fff;/s);
+  assert.match(styles, /\.schedule-time-slot\.starts-hour\s*\{[^}]*border-top-color:\s*#b3c9ba;/s);
 });
 
 test('each available-person count maps to a different shade from white to dark green', () => {
@@ -169,8 +169,8 @@ test('long date ranges scroll horizontally and full-day hours flow vertically', 
   assert.match(styles, /\.schedule-timetable-scroll\s*\{[^}]*overflow-x:\s*auto;/s);
   assert.match(styles, /\.schedule-day-slots\s*\{[^}]*display:\s*flex;[^}]*flex-direction:\s*column;/s);
   assert.match(styles, /\.schedule-time-slot\s*\{[^}]*flex:\s*0 0 20px;[^}]*height:\s*20px;/s);
-  assert.match(styles, /\.schedule-time-slot\s*\{[^}]*border-top:\s*1px solid #fff;[^}]*border-right:\s*1px solid #fff;/s);
-  assert.match(styles, /\.schedule-time-slot:last-child\s*\{[^}]*border-bottom:\s*1px solid #fff;/s);
+  assert.match(styles, /\.schedule-time-slot\s*\{[^}]*border-top:\s*1px solid #cfded3;[^}]*border-right:\s*1px solid #cfded3;/s);
+  assert.match(styles, /\.schedule-time-slot:last-child\s*\{[^}]*border-bottom:\s*1px solid #cfded3;/s);
   assert.match(styles, /@media \(max-width:\s*740px\)\s*\{[\s\S]*?\.schedule-detail-layout\s*\{\s*grid-template-columns:\s*minmax\(0, 1fr\);/);
   assert.doesNotMatch(source, /setDoc\(|addDoc\(|updateDoc\(|fetch\(/);
 });
