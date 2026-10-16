@@ -17,6 +17,7 @@ import {purgeAllOtherMembers} from './memberAdmin';
 import {ScheduleLanding} from './SchedulePages';
 import ScheduleRoom from './ScheduleRoom';
 import ScheduleCreation from './ScheduleCreation';
+import HandoverNotesEditor,{HandoverNotesView} from './HandoverNotes';
 import {DonationHistory,ExpenseHistory,FinanceLanding} from './FinancePages';
 import ExpenseManagement from './ExpenseManagement';
 import DonationManagement from './DonationManagement';
@@ -328,13 +329,18 @@ function App() {
         authPending={authPending}
         onLogin={showLogin}
         onCreate={() => navigate('schedule-create')}
-        onCreateTeam={() => notify('구성팀 시간표 만들기 기능은 추후 연결할 예정입니다.')}
+        onCreateTeam={() => navigate('schedule-team-create')}
         onOpen={openSchedule}
       />,
     'schedule-create': authPending
       ? <section className="container section-block"><p>로그인 상태를 확인하고 있습니다.</p></section>
       : !user || !profile ? <section className="container section-block"><p>시간표 생성은 로그인한 부원만 사용할 수 있습니다.</p><button type="button" className="button button-primary" onClick={showLogin}>로그인</button></section>
       : <ScheduleCreation onBack={() => navigate('schedule')} onCreated={openSchedule}/>,
+    'schedule-team-create': authPending
+      ? <section className="container section-block"><EmptyState title="권한 확인 중" description="로그인 상태를 확인하고 있습니다."/></section>
+      : !user || !currentLevel || !profile
+      ? <section className="container section-block"><EmptyState title="접근 권한이 없습니다" description="구성팀 시간표 만들기는 파트장 이상만 사용할 수 있습니다."/></section>
+      : <ScheduleCreation teamMode onBack={()=>navigate('schedule')} onCreated={openSchedule}/>,
     'schedule-detail': activeScheduleId && user && profile && !authPending
       ? <ScheduleRoom key={activeScheduleId} id={activeScheduleId} onBack={() => navigate('schedule')} registerLeaveGuard={registerEditorLeaveGuard}/>
       : <section className="container section-block"><p>시간표를 확인하려면 로그인해 주세요.</p><button type="button" className="button button-primary" onClick={showLogin}>로그인</button></section>,
@@ -347,8 +353,10 @@ function App() {
     'expenses': <ExpenseHistory onBack={() => navigate('finance')} canManageExpenses={Boolean(user&&!authPending&&canManageDonations)} onManage={()=>navigate('expense-manage')}/>,
     'expense-manage': (authPending?<section className="container section-block"><EmptyState title="권한 확인 중" description="로그인 상태를 확인하고 있습니다."/></section>:user&&canManageDonations?<ExpenseManagement onBack={()=>navigate('expenses')}/>:<section className="container section-block"><EmptyState icon={<LockKeyhole size={26}/>} title="접근 권한이 없습니다" description="회비 집행 내역 관리는 실무단 이상만 가능합니다."/></section>),
     'profile': <Profile user={user} profile={profile} pending={authPending} error={profileError} notify={notify} onSaved={next=>setProfile(previous=>previous?{...previous,sessions:next}:null)}/>,
-    'handover': (authPending?<section className="container section-block"><EmptyState title="권한 확인 중" description="로그인 상태를 확인하고 있습니다." /></section>:page==='members'&&canManage&&user?<><PageHeading tag="MEMBER MANAGEMENT" title="부원 관리" description="부원 명단 조회와 운영 권한에 따른 부원 정보 수정"/><MemberManager key={rosterRevision} currentUid={user.uid} level={currentLevel!} notify={notify}/></>:page==='handover'&&canHandover?<Handover openLogin={showLogin} notify={notify}/>:<section className="container section-block"><EmptyState icon={<LockKeyhole size={26}/>} title="접근 권한이 없습니다" description="해당 메뉴에 접근할 수 있는 운영진 권한이 필요합니다." /></section>),
-    'members': (authPending?<section className="container section-block"><EmptyState title="권한 확인 중" description="로그인 상태를 확인하고 있습니다." /></section>:page==='members'&&canManage&&user?<><PageHeading tag="MEMBER MANAGEMENT" title="부원 관리" description="부원 명단 조회와 운영 권한에 따른 부원 정보 수정"/><MemberManager key={rosterRevision} currentUid={user.uid} level={currentLevel!} notify={notify}/></>:page==='handover'&&canHandover?<Handover openLogin={showLogin} notify={notify}/>:<section className="container section-block"><EmptyState icon={<LockKeyhole size={26}/>} title="접근 권한이 없습니다" description="해당 메뉴에 접근할 수 있는 운영진 권한이 필요합니다." /></section>),
+    'handover': (authPending?<section className="container section-block"><EmptyState title="권한 확인 중" description="로그인 상태를 확인하고 있습니다." /></section>:page==='members'&&canManage&&user?<><PageHeading tag="MEMBER MANAGEMENT" title="부원 관리" description="부원 명단 조회와 운영 권한에 따른 부원 정보 수정"/><MemberManager key={rosterRevision} currentUid={user.uid} level={currentLevel!} notify={notify}/></>:page==='handover'&&canHandover?<Handover openView={()=>navigate('handover-view')} openWrite={()=>navigate('handover-write')} notify={notify}/>:<section className="container section-block"><EmptyState icon={<LockKeyhole size={26}/>} title="접근 권한이 없습니다" description="해당 메뉴에 접근할 수 있는 운영진 권한이 필요합니다." /></section>),
+    'handover-view': authPending?<section className="container section-block"><EmptyState title="권한 확인 중" description="로그인 상태를 확인하고 있습니다."/></section>:user&&canHandover?<HandoverNotesView onBack={()=>navigate('handover')}/>:<section className="container section-block"><EmptyState title="접근 권한이 없습니다" description="인수인계 접근 권한이 필요합니다."/></section>,
+    'handover-write': authPending?<section className="container section-block"><EmptyState title="권한 확인 중" description="로그인 상태를 확인하고 있습니다."/></section>:user&&canHandover?<HandoverNotesEditor onBack={()=>navigate('handover')}/>:<section className="container section-block"><EmptyState title="접근 권한이 없습니다" description="인수인계 접근 권한이 필요합니다."/></section>,
+    'members': (authPending?<section className="container section-block"><EmptyState title="권한 확인 중" description="로그인 상태를 확인하고 있습니다." /></section>:page==='members'&&canManage&&user?<><PageHeading tag="MEMBER MANAGEMENT" title="부원 관리" description="부원 명단 조회와 운영 권한에 따른 부원 정보 수정"/><MemberManager key={rosterRevision} currentUid={user.uid} level={currentLevel!} notify={notify}/></>:page==='handover'&&canHandover?<Handover openView={()=>navigate('handover-view')} openWrite={()=>navigate('handover-write')} notify={notify}/>:<section className="container section-block"><EmptyState icon={<LockKeyhole size={26}/>} title="접근 권한이 없습니다" description="해당 메뉴에 접근할 수 있는 운영진 권한이 필요합니다." /></section>),
   };
   return <div className="site-root" data-async-busy={rosterResetting||financeResetting||noticeResetting||aboutResetting||assetResetting||galleryResetting ? "true" : undefined}>
     <header className="site-header"><div className="container header-inner">

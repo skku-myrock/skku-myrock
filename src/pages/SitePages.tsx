@@ -7,7 +7,7 @@ import {auth,db,accountEmail} from '../firebase';
 import type {MemberProfile,Session} from '../firebase';
 import {
   ArrowRight,ArrowUpRight,CalendarDays,Check,ChevronDown,CircleHelp,ClipboardList,
-  ExternalLink,FileText,Instagram,LockKeyhole,Plus,Search,Users,X,UserRound,
+  ExternalLink,FileText,Instagram,Plus,Search,Users,X,UserRound,
 } from 'lucide-react';
 import logo from '../logo-transparent.png';
 import PasswordChange from '../PasswordChange';
@@ -263,10 +263,26 @@ export function Equipment({items,canManage,onManage,loggedIn,onLogin,loading,err
  </>;
 }
 
-export function Handover({ openLogin, notify }: { openLogin: () => void; notify: Notify }) {
-  return <><PageHeading tag="HANDOVER" title="인수인계" description="운영진이 해마다 업무와 기록을 이어갈 수 있도록 마련한 공간입니다." />
-    <section className="container section-block"><div className="handover-gate"><LockKeyhole size={23}/><div><h2>운영진 전용 공간</h2><p>직책별 인수인계 기록과 자료는 권한이 있는 운영진에게만 공개됩니다. 현재는 레이아웃 미리보기입니다.</p></div><button type="button" className="button button-primary" onClick={openLogin}>운영진 로그인 <ArrowRight size={16}/></button></div><div className="section-heading handover-heading"><div><h2>인수인계 자료</h2><p>자료 목록 구성 예시</p></div></div><div className="handover-items"><button type="button" onClick={() => notify()}><FileText size={21}/><span><strong>직책별 인수인계 노트</strong><small>회장단 · 실무단 · 파트장</small></span><ArrowUpRight size={17}/></button><button type="button" onClick={() => notify()}><ExternalLink size={21}/><span><strong>인수인계 드라이브</strong><small>문서 및 업무 파일 링크</small></span><ArrowUpRight size={17}/></button></div></section>
-  </>;
+export function Handover({openView,openWrite,notify}:{openView:()=>void;openWrite:()=>void;notify:Notify}){
+ const [menuOpen,setMenuOpen]=useState(false);
+ return <><PageHeading tag="HANDOVER" title="인수인계" description="운영진이 해마다 업무와 기록을 이어갈 수 있도록 마련한 공간입니다." />
+  <section className="container section-block">
+   <div className="section-heading handover-heading"><div><h2>인수인계 자료</h2><p>인수인계 자료를 작성하거나 확인할 수 있습니다.</p></div></div>
+   <div className="handover-items"><button type="button" onClick={()=>setMenuOpen(true)}><FileText size={21}/><span><strong>직책별 인수인계 노트</strong><small>직책별 · 운영진 공통 인수인계</small></span><ArrowUpRight size={17}/></button>
+    <button type="button" onClick={()=>notify()}><ExternalLink size={21}/><span><strong>인수인계 드라이브</strong><small>문서 및 업무 파일 링크</small></span><ArrowUpRight size={17}/></button>
+   </div>
+  </section>
+  {menuOpen&&<div className="handover-choice-backdrop" onMouseDown={event=>{if(event.target===event.currentTarget)setMenuOpen(false);}}>
+   <div role="dialog" aria-modal="true" aria-labelledby="handover-choice-title" className="handover-choice-dialog">
+    <div className="handover-choice-heading"><h2 id="handover-choice-title">직책별 인수인계 노트</h2><button type="button" aria-label="닫기" onClick={()=>setMenuOpen(false)}><X size={18}/></button></div>
+    <p>사용할 메뉴를 선택해 주세요.</p>
+    <div className="handover-choice-actions">
+     <button type="button" className="outline-action" onClick={()=>{setMenuOpen(false);openView();}}>인수인계 확인하기 <ArrowRight size={15}/></button>
+     <button type="button" className="button button-primary" onClick={()=>{setMenuOpen(false);openWrite();}}>인수인계 작성하기 <ArrowRight size={15}/></button>
+    </div>
+   </div>
+  </div>}
+ </>;
 }
 
 export function LoginDialog({ close, notify }: { close: () => void; notify: Notify }) {

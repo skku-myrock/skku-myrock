@@ -20,6 +20,9 @@ async function request<T>(path:string,body?:unknown):Promise<T>{
 }
 export const listSchedules=async()=> (await request<{schedules:ScheduleSummary[]}>('schedules')).schedules;
 export const createSchedule=async(input:ScheduleInput)=>request<{id:string}>('schedules',input);
+export type TeamMember={uid:string;name:string;studentId:string};
+export const searchTeamMembers=async(q:string)=> (await request<{members:TeamMember[]}>('schedule-team/search?q='+encodeURIComponent(q))).members;
+export const createTeamSchedule=async(input:ScheduleInput,teamMemberUids:string[])=>request<{id:string}>('schedules',{...input,teamMemberUids});
 export const getSchedule=async(id:string)=>request<ScheduleDetailData>('schedules/'+encodeURIComponent(id));
 export const saveAvailability=async(id:string,availability:string,expectedUpdateTime:string)=>
  request<{updateTime:string;availability:string;hasResponded:boolean}>('schedules/'+encodeURIComponent(id)+'/availability',{availability,expectedUpdateTime});
