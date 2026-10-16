@@ -141,13 +141,6 @@ export default function ScheduleRoom({id,onBack,registerLeaveGuard}:{
  const people=data?.people??[];
  const active=people.filter(p=>chosen.includes(p.uid));
  const ownUid=data?.viewerUid??'';
- function countAt(key:string){
-  return active.filter(p=>{
-   if(p.uid===ownUid)return selected.has(key);
-   if(!schedule||!p.availability)return false;
-   try{return decodeBits(p.availability,dates,schedule.startHour,schedule.endHour).has(key);}catch{return false;}
-  }).length;
- }
  const decodedOthers=useMemo(()=>{
   const map=new Map<string,Set<string>>();
   if(!schedule||!data)return map;

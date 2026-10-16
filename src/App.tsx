@@ -13,7 +13,6 @@ import {purgeAllOtherMembers} from './memberAdmin';
 import {ScheduleLanding} from './SchedulePages';
 import ScheduleRoom from './ScheduleRoom';
 import ScheduleCreation from './ScheduleCreation';
-import type {ScheduleInput} from './scheduleGrid';
 import {DonationHistory,ExpenseHistory,FinanceLanding} from './FinancePages';
 import ExpenseManagement from './ExpenseManagement';
 import DonationManagement from './DonationManagement';

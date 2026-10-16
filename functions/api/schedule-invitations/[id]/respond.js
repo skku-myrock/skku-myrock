@@ -17,7 +17,11 @@ export async function onRequestPost({request,env,params}){
   const schedule=docData(scheduleDocValue);
   if(schedule.status!=='active')reject('종료된 시간표입니다.',409);
   const now=new Date().toISOString();
-  const writes=[toWrite(url,{...invitation,status:body.action==='accept'?'accepted':'declined',updatedAt:now},{updateTime:current.updateTime})];
+  const writes=[toWrite(url,{
+    scheduleId:invitation.scheduleId,recipientUid:invitation.recipientUid,
+    inviterUid:invitation.inviterUid,createdAt:invitation.createdAt,
+    status:body.action==='accept'?'accepted':'declined',updatedAt:now,
+  },{updateTime:current.updateTime})];
   if(body.action==='accept'){
    if(schedule.participantUids.includes(caller.uid))reject('이미 참여 중인 시간표입니다.',409);
    if(schedule.participantUids.length>=40)reject('시간표 참여 인원이 가득 찼습니다.',409);

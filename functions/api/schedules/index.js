@@ -23,14 +23,11 @@ export async function onRequestPost({request,env}){
    slotMinutes:'30',createdBy:caller.uid,participantUids:[caller.uid],status:'active',createdAt};
   await commit(env,[
    toWrite(scheduleDoc(id),schedule,{exists:false}),
-   {...toWrite(participantDoc(id,caller.uid),{
-    availability:emptyBits(input),hasResponded:false,updatedAt:createdAt,
-   },{exists:false}),
-    update:{name:participantDoc(id,caller.uid),fields:{
+   {update:{name:participantDoc(id,caller.uid),fields:{
       availability:{bytesValue:emptyBits(input)},
       hasResponded:{booleanValue:false},
       updatedAt:{timestampValue:createdAt},
-    }}},
+    }},currentDocument:{exists:false}},
   ]);
   return success({id},201);
  }catch(error){return failure(error);}

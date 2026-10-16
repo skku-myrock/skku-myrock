@@ -1,5 +1,5 @@
 import {failure,parseBody,reject,secureOrigin,success} from '../../../_lib/shared.js';
-import {lookupAccount} from '../../../_lib/google.js';
+import {lookupAccount,getFirestoreDocument} from '../../../_lib/google.js';
 import {callerProfile,commit,docData,getSchedule,getDocument,invitationDoc,requireOwner,requireStudentId,THROTTLES,toWrite} from '../../../_lib/schedules.js';
 
 const GENERIC='초대 요청을 접수했습니다.';
@@ -12,13 +12,13 @@ export async function onRequestPost({request,env,params}){
   if(schedule.status!=='active')reject('종료된 시간표에는 초대할 수 없습니다.',409);
   const studentId=requireStudentId(await parseBody(request));
   // Count every attempt, including unknown IDs, so enumeration never bypasses throttling.
-  const throttleId=params.id+'_'+caller.uid;
+  const throttleId=caller.uid;
   const throttleUrl=THROTTLES+'/'+encodeURIComponent(throttleId);
   const throttle=await getDocument(env,throttleUrl);
   const now=Date.now(),old=throttle?.fields??{},start=Number(old.windowStart?.integerValue??0);
   const sameWindow=now-start<3600000&&now>=start;
   const count=sameWindow?Number(old.count?.integerValue??0):0;
-  if(count>=20)reject('초대 요청은 시간표당 한 시간에 최대 20번까지 가능합니다.',429);
+  if(count>=20)reject('초대 요청은 한 시간에 최대 20번까지 가능합니다.',429);
   await commit(env,[{update:{name:throttleUrl,fields:{
     windowStart:{integerValue:String(sameWindow?start:now)},
     count:{integerValue:String(count+1)},
@@ -26,6 +26,8 @@ export async function onRequestPost({request,env,params}){
   const account=await lookupAccount(env,studentId+'@members.skku-myrock.firebaseapp.com');
   if(!account?.localId||account.localId===caller.uid)return success({message:GENERIC});
   const uid=account.localId;
+  const registered=await getFirestoreDocument(env,uid);
+  if(!registered)return success({message:GENERIC});
   if(schedule.participantUids?.includes(uid))return success({message:GENERIC});
   const id=params.id+'_'+uid,url=invitationDoc(id);
   const existing=await getDocument(env,url);
