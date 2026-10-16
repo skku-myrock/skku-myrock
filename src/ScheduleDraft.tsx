@@ -70,7 +70,7 @@ export default function ScheduleDraft({initial,onBack}:{initial:unknown;onBack:(
     if(date===undefined||time===undefined)return;
     event.preventDefault();
     const baseline=availabilityByPerson,key=blockKey(date,time);
-    const activate=availableCount(key)===0;
+    const activate=mode==='all'?availableCount(key)===0:availableCount(key)<selectedNames.length;
     stroke.current={pointerId:event.pointerId,start:{day,slot},baseline,members:[...selectedNames],activate,lastKey:key};
     setAvailabilityByPerson(paintArea(baseline,selectedNames,{day,slot},{day,slot},activate));
     event.currentTarget.setPointerCapture(event.pointerId);
@@ -104,7 +104,7 @@ export default function ScheduleDraft({initial,onBack}:{initial:unknown;onBack:(
     if(date===undefined||time===undefined)return;
     const key=blockKey(date,time);
     if(!selectedNames.length)return;
-    const activate=availableCount(key)===0;
+    const activate=mode==='all'?availableCount(key)===0:availableCount(key)<selectedNames.length;
     setAvailabilityByPerson(previous=>paintArea(
       previous,selectedNames,{day,slot},{day,slot},activate));
   }
