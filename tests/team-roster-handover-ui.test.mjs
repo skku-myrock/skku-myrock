@@ -44,10 +44,14 @@ test('handover archive is an explicitly labeled sample person list',async()=>{
   "generation:'28기',positions:'공연부장, 기타파트장',name:'배은성'",
  ])assert.ok(view.includes(sample),sample);
  assert.match(view,/아래 목록과 열람 내용은 화면 구성 예시입니다/);
- assert.match(view,/실제 작성된 기록이 아닌 예시 내용입니다/);
+ assert.doesNotMatch(view,/실제 작성된 기록이 아닌 예시 내용입니다/);
  assert.match(view,/onClick=\{\(\)=>setSelectedIndex\(index\)\}/);
  assert.match(view,/selected&&<div className="handover-preview-backdrop"/);
  assert.match(view,/role="dialog" aria-modal="true" aria-labelledby="handover-preview-title"/);
+ assert.match(view,/\{\[selected\.generation,selected\.positions\.split\(','\)\.map\(position=>position\.trim\(\)\)\.join\(' · '\),selected\.name\]\.join\(' '\)\}/);
+ assert.doesNotMatch(view,/\{selected\.name\}의 인수인계/);
+ assert.doesNotMatch(view,/\{selected\.generation\} · \{selected\.positions\}/);
+ assert.doesNotMatch(view,/aria-describedby="handover-preview-description"/);
  assert.match(view,/selected\.notes\.map\(note=><section/);
  assert.match(view,/event\.key==='Escape'/);
  assert.doesNotMatch(view,/className="outline-action" disabled title="상세 열람은 추후 지원 예정입니다/);
@@ -60,8 +64,11 @@ test('writer generation subtitle drops fractional .5 and is visually near headin
  assert.match(view,/generationLabel=generationMatch\?generationMatch\[1\]\+'기':generation\.trim\(\)/);
  assert.equal('27.5기'.match(/^(\d+)(?:\.\d+)?기?$/)?.[1]+'기','27기');
  assert.equal('28기'.match(/^(\d+)(?:\.\d+)?기?$/)?.[1]+'기','28기');
- assert.match(view,/<div className="handover-writer-heading"><PageHeading tag="HANDOVER EDITOR"/);
- assert.match(css,/\.handover-writer-heading \.page-heading>p\{font-size:clamp\(24px,3vw,31px\)/);
+ assert.match(view,/<div className="page-heading container handover-writer-heading">/);
+ assert.match(view,/<p className="handover-writer-subtitle">\{writerSubtitle\}<\/p>/);
+ assert.match(view,/<p className="handover-writer-guidance">앞으로 모여락을 이끌어갈 후배 운영진들을 위해 선배 운영진 여러분의 경험을 공유해주세요\.<\/p>/);
+ assert.match(css,/\.handover-writer-heading>\.handover-writer-subtitle\{font-size:28px;[^}]*color:#4b675f/);
+ assert.match(css,/\.handover-writer-heading>\.handover-writer-guidance\{font-size:13px;/);
 });
 
 test('each illustrated writer opens their own notes without page navigation',async()=>{
