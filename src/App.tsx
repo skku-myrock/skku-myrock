@@ -10,7 +10,8 @@ import {ArrowRight,ChevronDown,Trash2,CircleHelp,LockKeyhole,Mail,Menu,X,UserRou
 import logo from './logo-transparent.png';
 import MemberManager from './MemberManager';
 import EquipmentManager from './EquipmentManager';
-import {demoEquipment} from './equipmentDemo';
+import {equipmentAction,getEquipment,manageEquipment} from './equipmentApi';
+import type {EquipmentAction,EquipmentManageAction} from './equipmentApi';
 import type {EquipmentItem} from './equipmentDemo';
 import {purgeAllOtherMembers} from './memberAdmin';
 import {ScheduleLanding} from './SchedulePages';
@@ -266,7 +267,48 @@ function App() {
     }finally{setGalleryResetting(false);}
   }
   const isDeveloperSuperadmin=Boolean(user && profile?.superadmin && hasSystemClaim);
-  const [equipmentItems,setEquipmentItems]=useState<EquipmentItem[]>(demoEquipment);
+  const [equipmentItems,setEquipmentItems]=useState<EquipmentItem[]>([]);
+  const [equipmentLoading,setEquipmentLoading]=useState(true);
+  const [equipmentError,setEquipmentError]=useState('');
+  const [equipmentBusyId,setEquipmentBusyId]=useState<string|null>(null);
+  const loadEquipment=useCallback(async(manage:boolean,showLoading=false)=>{
+    if(showLoading)setEquipmentLoading(true);
+    try{
+      const result=await getEquipment(manage);
+      setEquipmentItems(result.items);
+      setEquipmentError('');
+    }catch(error){
+      setEquipmentItems([]);
+      setEquipmentError(error instanceof Error?error.message:'장비를 불러오지 못했습니다.');
+    }finally{if(showLoading)setEquipmentLoading(false);}
+  },[]);
+  useEffect(()=>{
+    if((page!=='equipment'&&page!=='equipment-manage')||authPending)return;
+    if(page==='equipment-manage'&&!user)return;
+    const manage=page==='equipment-manage';
+    void loadEquipment(manage,true);
+    const timer=window.setInterval(()=>{void loadEquipment(manage);},15000);
+    return()=>window.clearInterval(timer);
+  },[page,authPending,user?.uid,loadEquipment]);
+  async function handleEquipmentAction(id:string,action:EquipmentAction){
+    if(equipmentBusyId)return;
+    if(action==='return'&&!window.confirm('이 장비를 반납하고 운영진에게 확인을 요청하시겠습니까?'))return;
+    setEquipmentBusyId(id);
+    try{
+      await equipmentAction(id,action);
+      await loadEquipment(false,true);
+      notify(action==='apply'?'대여 신청을 접수했습니다.':action==='cancel'?'대여 신청을 취소했습니다.':'반납 확인을 요청했습니다.');
+    }catch(error){notify(error instanceof Error?error.message:'장비 요청에 실패했습니다.');await loadEquipment(false,true);}
+    finally{setEquipmentBusyId(null);}
+  }
+  async function handleEquipmentManage(action:EquipmentManageAction,input:{id?:string;name?:string;product?:string}){
+    if(equipmentBusyId)throw new Error('이전 장비 요청을 처리하는 중입니다.');
+    setEquipmentBusyId(input.id??'equipment-new');
+    try{
+      await manageEquipment(action,input);
+      await loadEquipment(true,true);
+    }finally{setEquipmentBusyId(null);}
+  }
   const currentLevel=managementLevel(profile,hasSystemClaim);
   const canManage=currentLevel!==null;
   const canManageDonations=currentLevel==='staff'||currentLevel==='president';
@@ -297,8 +339,8 @@ function App() {
       ? <ScheduleRoom key={activeScheduleId} id={activeScheduleId} onBack={() => navigate('schedule')} registerLeaveGuard={registerEditorLeaveGuard}/>
       : <section className="container section-block"><p>시간표를 확인하려면 로그인해 주세요.</p><button type="button" className="button button-primary" onClick={showLogin}>로그인</button></section>,
     'gallery': <Gallery key={galleryRevision} canRegister={Boolean(user && !authPending && currentLevel)}/>,
-    'equipment': <Equipment notify={notify} items={equipmentItems} canManage={Boolean(user&&!authPending&&currentLevel)} onManage={()=>navigate('equipment-manage')}/>,
-    'equipment-manage': authPending?<section className="container section-block"><p>권한 확인 중입니다.</p></section>:user&&currentLevel?<EquipmentManager items={equipmentItems} setItems={setEquipmentItems} onBack={()=>navigate('equipment')}/>:<section className="container section-block"><EmptyState icon={<LockKeyhole size={26}/>} title="접근 권한이 없습니다" description="장비 관리는 파트장 이상만 이용할 수 있습니다."/></section>,
+    'equipment': <Equipment items={equipmentItems} canManage={Boolean(user&&!authPending&&currentLevel)} onManage={()=>navigate('equipment-manage')} loggedIn={Boolean(user&&profile&&!authPending)} onLogin={showLogin} loading={equipmentLoading} error={equipmentError} busyId={equipmentBusyId} onRefresh={()=>void loadEquipment(false,true)} onAction={(id,action)=>void handleEquipmentAction(id,action)}/>,
+    'equipment-manage': authPending?<section className="container section-block"><p>권한 확인 중입니다.</p></section>:user&&currentLevel?<EquipmentManager items={equipmentItems} busy={equipmentBusyId!==null} loading={equipmentLoading} error={equipmentError} onRefresh={()=>void loadEquipment(true,true)} onMutate={handleEquipmentManage} onBack={()=>navigate('equipment')}/>:<section className="container section-block"><EmptyState icon={<LockKeyhole size={26}/>} title="접근 권한이 없습니다" description="장비 관리는 파트장 이상만 이용할 수 있습니다."/></section>,
     'finance': <FinanceLanding onDonations={() => navigate('donations')} onExpenses={() => navigate('expenses')} canEditAccount={Boolean(user&&!authPending&&currentLevel==='president')} loggedIn={Boolean(user&&profile&&!authPending)} authPending={authPending} onLogin={showLogin}/>,
     'donations': <DonationHistory key={financeRevision} onBack={() => navigate('finance')} loggedIn={Boolean(user)} authPending={authPending} onLogin={showLogin} canManageDonations={Boolean(!authPending&&user&&canManageDonations)} onManage={()=>navigate('donation-manage')}/>,
     'donation-manage': (authPending?<section className="container section-block"><EmptyState title="권한 확인 중" description="로그인 상태 확인 중입니다."/></section>:user&&canManageDonations?<DonationManagement onBack={()=>navigate('donations')}/>:<section className="container section-block"><EmptyState icon={<LockKeyhole size={26}/>} title="접근 권한이 없습니다" description="후원 내역 관리는 실무단 이상만 가능합니다."/></section>),
