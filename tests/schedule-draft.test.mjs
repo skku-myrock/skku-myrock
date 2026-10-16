@@ -59,7 +59,7 @@ test('draft view keeps 70px date width and 20px 30-minute slots, with accessible
  assert.match(draft,/width:64\+dates\.length\*70/);
  assert.match(draft,/height:slots\.length\*20/);
  assert.match(draft,/getScheduleSlots\(/);
- assert.match(draft,/rectangleTimeSelection\(active\.baseline,dates,slots,active\.start,\{day,slot\},active\.activate\)/);
+ assert.match(draft,/paintArea\(active\.baseline,active\.members,active\.start,\{day,slot\},active\.activate\)/);
  assert.match(draft,/aria-pressed=\{isSelected\}/);
  assert.match(draft,/role="dialog" aria-modal="true"/);
  assert.match(draft,/id="schedule-invite-id"/);
