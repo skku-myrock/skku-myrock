@@ -1,6 +1,6 @@
 import {useEffect,useMemo,useRef,useState} from 'react';
 import type {PointerEvent as ReactPointerEvent,FormEvent} from 'react';
-import {ArrowLeft,Check,Plus,Search,Trash2,Users,X} from 'lucide-react';
+import {ArrowLeft,Check,Search,Trash2,Users,X} from 'lucide-react';
 import {getScheduleSlots} from './SchedulePages';
 import {blockKey,draftFromRoute,INITIAL_DRAFT_PARTICIPANTS,mockFindInvitee,rectangleTimeSelection} from './scheduleDraftModel';
 
@@ -113,13 +113,6 @@ export default function ScheduleDraft({initial,onBack}:{initial:unknown;onBack:(
     setSearched(true);
     setSearchResult(mockFindInvitee(studentId));
   }
-  function addMember(){
-    if(!searchResult||people.includes(searchResult))return;
-    setPeople(current=>[...current,searchResult]);
-    setSelectedNames(current=>[...current,searchResult]);
-    setAvailabilityByPerson(current=>({...current,[searchResult]:new Set<string>()}));
-    setStudentId('');setSearched(false);setSearchResult(null);
-  }
   function removeMember(name:string){
     if(!window.confirm(name+'을 명단에서 제외하시겠습니까?'))return;
     setPeople(current=>current.filter(person=>person!==name));
@@ -229,7 +222,7 @@ export default function ScheduleDraft({initial,onBack}:{initial:unknown;onBack:(
       <div className="schedule-roster-dialog" role="dialog" aria-modal="true"
         aria-labelledby="schedule-roster-title">
         <div className="schedule-roster-dialog-header">
-          <div><h2 id="schedule-roster-title">명단 수정</h2><p>임시 시간표에 초대할 부원을 추가하거나 명단에서 제외할 수 있습니다.</p></div>
+          <div><h2 id="schedule-roster-title">명단 수정</h2><p>학번으로 초대 대상을 확인할 수 있습니다. 이름은 본인이 초대를 수락한 뒤에만 표시됩니다.</p></div>
           <button type="button" aria-label="명단 수정 창 닫기" onClick={()=>setRosterOpen(false)}><X size={21}/></button>
         </div>
         <h3>현재 명단 ({people.length})</h3>
@@ -252,11 +245,11 @@ export default function ScheduleDraft({initial,onBack}:{initial:unknown;onBack:(
           </div>
         </form>
         {searched&&(searchResult?<div className="schedule-roster-found">
-          <span><Check size={17} aria-hidden="true"/><strong>{searchResult}</strong><small>{studentId.trim()}</small></span>
-          <button type="button" className="button button-primary" disabled={people.includes(searchResult)}
-            onClick={addMember}><Plus size={15} aria-hidden="true"/>{people.includes(searchResult)?'추가됨':'명단에 추가'}</button>
+          <span><Check size={17} aria-hidden="true"/><strong>{searchResult}</strong></span>
+          <button type="button" className="button button-primary" disabled
+            title="실제 초대 및 초대 수락 기능은 추후 구현됩니다.">초대하기</button>
         </div>:<p className="schedule-roster-no-result" role="status">검색 결과가 없습니다.</p>)}
-        <div className="schedule-roster-footer"><span>실제 회원 조회나 초대 알림은 전송하지 않습니다.</span>
+        <div className="schedule-roster-footer"><span>예시 검색만 지원합니다. 실제 초대 요청이나 초대 수락 기능은 아직 구현되지 않았습니다.</span>
           <button type="button" className="outline-action" onClick={()=>setRosterOpen(false)}>닫기</button>
         </div>
       </div>

@@ -40,8 +40,8 @@ test('all draft cells start white and mouse/keyboard selection uses 30-minute re
 
 test('member list and student-ID search are local demonstration only',()=>{
  assert.deepEqual([...model.INITIAL_DRAFT_PARTICIPANTS],['갑길동','을길동','병길동','정길동']);
- assert.equal(model.mockFindInvitee('2027000001'),'무길동');
- assert.equal(model.mockFindInvitee(' 2027000001 '),'무길동');
+ assert.equal(model.mockFindInvitee('2027000001'),'2027000001');
+ assert.equal(model.mockFindInvitee(' 2027000001 '),'2027000001');
  assert.equal(model.mockFindInvitee('2027000002'),null);
  assert.equal(model.mockFindInvitee(''),null);
 });
@@ -65,7 +65,10 @@ test('draft view keeps 70px date width and 20px 30-minute slots, with accessible
  assert.match(draft,/id="schedule-invite-id"/);
  assert.match(draft,/검색 결과가 없습니다/);
  assert.match(draft,/mockFindInvitee\(studentId\)/);
- assert.match(draft,/people\.includes\(searchResult\)/);
+ assert.match(draft,/<strong>\{searchResult\}<\/strong><\/span>/);
+ assert.match(draft,/>초대하기<\/button>/);
+ assert.doesNotMatch(draft,/addMember\(|명단에 추가|people\.includes\(searchResult\)|무길동/);
+ assert.doesNotMatch(src,/무길동|DEMO_INVITATION\.name/);
  assert.match(css,/\.schedule-draft-block\.is-selected\{background:color-mix\(in srgb,var\(--accent\) 58%,white\)/);
  assert.match(landing,/\{canCreateTeam && <button/);
  assert.doesNotMatch(landing,/<em>날짜·시간 설정 화면 열기<\/em>|<em>운영진 전용 · 기능 준비 중<\/em>/);
