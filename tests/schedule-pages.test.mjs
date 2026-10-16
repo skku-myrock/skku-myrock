@@ -188,3 +188,20 @@ test('schedule routing, titles, browser history and back button remain intact', 
   assert.match(source, /onClick=\{onBack\}/);
   assert.match(source, /30분이며, 시간은 1시간 간격/);
 });
+
+test('the time axis and its header stay anchored during horizontal date scrolling', () => {
+  const corner = styles.match(/\.schedule-date-corner\s*\{([^}]*)\}/)?.[1] ?? '';
+  const axis = styles.match(/\.schedule-time-axis\s*\{([^}]*)\}/)?.[1] ?? '';
+  assert.match(corner, /position:\s*sticky;/);
+  assert.match(corner, /left:\s*0;/);
+  assert.match(corner, /z-index:\s*3;/);
+  assert.match(corner, /background:\s*#f7faf8;/);
+  assert.match(axis, /position:\s*sticky;/);
+  assert.match(axis, /left:\s*0;/);
+  assert.match(axis, /z-index:\s*2;/);
+  assert.match(axis, /background:\s*#fff;/);
+  // Date cells remain horizontally scrollable; no change to the 64px hour column.
+  assert.match(styles, /\.schedule-timetable-scroll\s*\{[^}]*overflow-x:\s*auto;/s);
+  assert.match(source, /const columns = `64px repeat\(\$\{dates\.length\}, 70px\)`;/);
+  assert.match(source, /className="schedule-time-axis"/);
+});
