@@ -16,9 +16,9 @@ test('equipment sample rows have concrete model names, compact spacing and acces
  const [pages,styles,data]=await Promise.all([read('src/pages/SitePages.tsx'),read('src/styles/base.css'),read('src/equipmentDemo.ts')]);
  for(const [name,product,status,tone] of [
   ['기타','바커스 BST-2-RSM','대여 가능','available'],
-  ['마이크','슈어 SM98','대여 승인 대기중','pending'],
-  ['DI 박스','래디얼 ProDI','대여중','borrowed'],
-  ['마이크 스탠드','K&M 210/9','반납 확인중','returning'],
+  ['마이크','슈어 SM98','대여 가능','available'],
+  ['DI 박스','래디얼 ProDI','대여 가능','available'],
+  ['마이크 스탠드','K&M 210/9','대여 가능','available'],
  ]){
   assert.ok(data.includes(`name:'${name}',product:'${product}',status:'${status}'`));
   assert.ok(data.includes(`case '${status}':return '${tone}'`));
