@@ -71,7 +71,8 @@ test('schedule creation route, responsive editor and intentionally inactive save
  assert.match(nav,/page:'schedule-create',path:'\/schedule\/create'/);
  assert.ok(nav.indexOf("page:'schedule-create'")<nav.indexOf("page:'schedule-detail'"));
  assert.match(app,/onCreate=\{\(\) => navigate\('schedule-create'\)\}/);
- assert.match(app,/'schedule-create': <ScheduleCreation onBack=\{\(\) => navigate\('schedule'\)\}/);
+ assert.match(app,/'schedule-create': <ScheduleCreation onBack=/);
+ assert.match(app,/onPreview=\\{\\(draft:ScheduleDraftInput\\)=>routerNavigate/);
  assert.match(component,/id="schedule-create-title"/);
  assert.match(component,/onPointerDown=\{startBrush\}/);
  assert.match(component,/onPointerMove=\{moveBrush\}/);
@@ -95,7 +96,8 @@ test('schedule creation route, responsive editor and intentionally inactive save
  assert.match(component,/후보 시간대 선택/);
  assert.match(component,/<select id="schedule-start-hour"/);
  assert.match(component,/<select id="schedule-end-hour"/);
- assert.match(component,/disabled>시간표 생성 \(준비 중\)<\/button>/);
+ assert.match(component,/onClick=\\{\\(\\)=>onPreview/);
+ assert.match(component,/disabled=\\{!title\\.trim\\(\\)\\|\\|dates\\.size===0\\}/);
  assert.doesNotMatch(component,/fetch\(|addDoc\(|setDoc\(|onSubmit=/);
  assert.match(style,/\.schedule-create-columns\{display:grid;grid-template-columns:minmax\(0,1\.08fr\) minmax\(0,\.92fr\)/);
  assert.match(style,/@media\(max-width:740px\)/);
