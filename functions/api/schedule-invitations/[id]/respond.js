@@ -19,6 +19,7 @@ export async function onRequestPost({request,env,params}){
   const now=new Date().toISOString();
   const writes=[toWrite(url,{
     scheduleId:invitation.scheduleId,recipientUid:invitation.recipientUid,
+    ...(invitation.studentId?{studentId:invitation.studentId}:{}),
     inviterUid:invitation.inviterUid,createdAt:invitation.createdAt,
     status:body.action==='accept'?'accepted':'declined',updatedAt:now,
   },{updateTime:current.updateTime})];

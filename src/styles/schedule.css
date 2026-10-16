@@ -493,3 +493,13 @@
 .schedule-draft-save-row{align-items:center;gap:12px}
 .schedule-invitations-empty{margin:26px 0 10px;text-align:center;color:var(--muted);font-size:13px;padding:26px 8px}
 .schedule-roster-search-form .button-primary{color:#fff;background:var(--accent-dark);border-color:var(--accent-dark)}
+
+/* Student-ID-only pending invites: same status for registered and unknown IDs. */
+.schedule-roster-pending{margin-top:25px}
+.schedule-roster-pending h3{margin:0 0 12px}
+.schedule-roster-pending-list{display:flex;flex-direction:column;gap:7px;max-height:170px;overflow-y:auto}
+.schedule-roster-pending-item{display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid var(--border);padding:9px 12px;min-height:39px}
+.schedule-roster-pending-item span{font-size:12px;color:var(--ink);font-weight:400}
+.schedule-roster-pending-item button{display:flex;align-items:center;gap:4px;border:0;background:transparent;color:#a45959;font-size:11px}
+.schedule-roster-pending-item button:disabled{opacity:.5}
+.schedule-roster-pending-help{margin:10px 0 0;font-size:11px;color:var(--muted);line-height:1.7;word-break:keep-all}

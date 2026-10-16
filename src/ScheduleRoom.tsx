@@ -2,7 +2,8 @@ import {useEffect,useMemo,useRef,useState} from 'react';
 import type {PointerEvent as ReactPointerEvent} from 'react';
 import {ArrowLeft,Check,Trash2,Users,X} from 'lucide-react';
 import {decodeBits,encodeBits,rectangleTimeSelection,blockKey} from './scheduleGrid';
-import {getSchedule,inviteMember,removeScheduleMember,saveAvailability} from './scheduleApi';
+import {cancelScheduleInvitation,getSchedule,inviteMember,listPendingScheduleInvitations,removeScheduleMember,saveAvailability} from './scheduleApi';
+import type {PendingScheduleInvitation} from './scheduleApi';
 import type {ScheduleDetailData} from './scheduleApi';
 
 type Cell={day:number;slot:number};
@@ -26,6 +27,8 @@ export default function ScheduleRoom({id,onBack,registerLeaveGuard}:{
  const [mode,setMode]=useState<'all'|'everyone'>('all');
  const [saving,setSaving]=useState(false),[rosterOpen,setRosterOpen]=useState(false);
  const [studentId,setStudentId]=useState(''),[inviteBusy,setInviteBusy]=useState(false);
+ const [pendingInvites,setPendingInvites]=useState<PendingScheduleInvitation[]>([]);
+ const [pendingBusy,setPendingBusy]=useState(false);
  const [notice,setNotice]=useState(''),[selectedCell,setSelectedCell]=useState<Cell|null>(null);
  const stroke=useRef<Stroke|null>(null);
  async function refresh(){
@@ -57,6 +60,16 @@ export default function ScheduleRoom({id,onBack,registerLeaveGuard}:{
   window.addEventListener('beforeunload',onBeforeUnload);
   return()=>window.removeEventListener('beforeunload',onBeforeUnload);
  },[dirty]);
+ async function loadPending(){
+  setPendingBusy(true);
+  try{setPendingInvites(await listPendingScheduleInvitations(id));}
+  catch(e){setError(e instanceof Error?e.message:'초대 대기 명단을 불러오지 못했습니다.');}
+  finally{setPendingBusy(false);}
+ }
+ useEffect(()=>{
+  if(!rosterOpen||data?.schedule.createdBy!==data.viewerUid)return;
+  void loadPending();
+ },[rosterOpen,id,data?.schedule.createdBy,data?.viewerUid]);
  useEffect(()=>{
   if(!rosterOpen)return;
   const old=document.body.style.overflow;document.body.style.overflow='hidden';
@@ -122,7 +135,19 @@ export default function ScheduleRoom({id,onBack,registerLeaveGuard}:{
   try{
    const result=await inviteMember(id,studentId);
    setNotice(result.message);setStudentId('');
+   await loadPending();
   }catch(e){setError(e instanceof Error?e.message:'초대 요청에 실패했습니다.');}
+  finally{setInviteBusy(false);}
+ }
+ async function cancelInvite(item:PendingScheduleInvitation){
+  if(inviteBusy)return;
+  if(!window.confirm(item.studentId+' 학번의 초대 요청을 취소하시겠습니까?'))return;
+  setInviteBusy(true);setError('');
+  try{
+   await cancelScheduleInvitation(id,item.id);
+   await loadPending();
+   setNotice('초대 요청을 취소했습니다.');
+  }catch(e){setError(e instanceof Error?e.message:'초대 취소에 실패했습니다.');}
   finally{setInviteBusy(false);}
  }
  async function remove(uid:string,name:string){
@@ -238,6 +263,20 @@ export default function ScheduleRoom({id,onBack,registerLeaveGuard}:{
       placeholder="학번을 입력하세요"/>
       <button type="submit" className="button button-primary" disabled={inviteBusy||!/^[0-9]{10}$/.test(studentId)}>초대하기</button></div>
     </form>
+    <section className="schedule-roster-pending" aria-label="초대 대기 명단">
+     <h3>초대 대기 명단 ({pendingInvites.length})</h3>
+     {pendingBusy?<p className="schedule-roster-pending-help">초대 목록을 불러오는 중입니다.</p>:
+      pendingInvites.length===0?<p className="schedule-roster-pending-help">초대 대기 중인 학번이 없습니다.</p>:
+      <div className="schedule-roster-pending-list">
+       {pendingInvites.map(item=><div className="schedule-roster-pending-item" key={item.id}>
+        <span>{item.studentId}</span>
+        <button type="button" disabled={inviteBusy} onClick={()=>void cancelInvite(item)}>
+         <X size={14} aria-hidden="true"/> 취소
+        </button>
+       </div>)}
+      </div>}
+     <p className="schedule-roster-pending-help">학번의 회원 가입 여부는 표시하지 않습니다. 미가입 학번에는 실제 초대가 전달되지 않습니다.</p>
+    </section>
     <div className="schedule-roster-footer"><span>상대방이 초대를 수락한 뒤에만 명단에 표시됩니다.</span>
      <button type="button" className="outline-action" onClick={()=>setRosterOpen(false)}>닫기</button>
     </div>
