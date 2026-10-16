@@ -457,3 +457,10 @@
 .schedule-roster-footer button{font-size:12px}
 @media(max-width:740px){.schedule-draft-page .schedule-detail-heading{flex-wrap:wrap}.schedule-roster-dialog{padding:23px 17px}}
 @media(max-width:420px){.schedule-roster-search-form>div{gap:6px}.schedule-roster-found{align-items:stretch;flex-direction:column}.schedule-roster-found button{align-self:flex-end}}
+
+/* The local draft follows the original example's group/person filter UI. */
+.schedule-draft-page .schedule-filter-options button.selected{background:var(--accent-dark);border-color:var(--accent-dark);color:#fff}
+.schedule-draft-page .schedule-filter-options button:not(.selected){color:var(--accent-dark);border-color:var(--accent)}
+.schedule-draft-page .schedule-person-option input{accent-color:var(--accent-dark)}
+.schedule-draft-people-panel .schedule-people-heading{margin-top:0}
+.schedule-draft-people-panel .schedule-draft-hover{margin:15px 0 0}
