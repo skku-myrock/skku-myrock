@@ -1,21 +1,41 @@
 import {useMemo,useRef,useState} from 'react';
 import type {PointerEvent as ReactPointerEvent} from 'react';
-import {ArrowLeft,CalendarDays,ChevronDown,Clock3} from 'lucide-react';
+import {ArrowLeft,CalendarDays,ChevronDown,Clock3,Plus,Search,Trash2,X,Users} from 'lucide-react';
 import {brushCalendarDays,futureCalendarMonths,candidateHourLabel,isoLocalToday} from './scheduleCreationModel';
 import type {CandidateCell} from './scheduleCreationModel';
-import {createSchedule} from './scheduleApi';
+import {createSchedule,createTeamSchedule,searchTeamMembers} from './scheduleApi';
+import type {TeamMember} from './scheduleApi';
 import type {ScheduleInput} from './scheduleGrid';
 
 const weekdays=['일','월','화','수','목','금','토'] as const;
 type BrushState={pointerId:number;start:CandidateCell;baseline:Set<string>;activate:boolean;lastIso:string};
 
-export default function ScheduleCreation({onBack,onCreated}:{onBack:()=>void;onCreated:(id:string)=>void}){
+export default function ScheduleCreation({onBack,onCreated,teamMode=false}:{onBack:()=>void;onCreated:(id:string)=>void;teamMode?:boolean}){
+  const [teamMembers,setTeamMembers]=useState<TeamMember[]>([]);
+  const [memberDialog,setMemberDialog]=useState(false);
+  const [memberQuery,setMemberQuery]=useState('');
+  const [memberResults,setMemberResults]=useState<TeamMember[]>([]);
+  const [searching,setSearching]=useState(false);
+  const [memberError,setMemberError]=useState('');
+  async function searchMembers(){
+    if(!memberQuery.trim())return;
+    setSearching(true);setMemberError('');
+    try{setMemberResults(await searchTeamMembers(memberQuery.trim()));}
+    catch(error){setMemberError(error instanceof Error?error.message:'부원 검색에 실패했습니다.');}
+    finally{setSearching(false);}
+  }
+  function addMember(member:TeamMember){
+    setTeamMembers(previous=>previous.some(item=>item.uid===member.uid)?previous:[...previous,member]);
+  }
   const [creating,setCreating]=useState(false);
   const [error,setError]=useState('');
   async function submit(input:ScheduleInput){
     if(creating)return;
     setCreating(true);setError('');
-    try{const result=await createSchedule(input);onCreated(result.id);}
+    try{
+      const result=teamMode?await createTeamSchedule(input,teamMembers.map(item=>item.uid)):await createSchedule(input);
+      onCreated(result.id);
+    }
     catch(e){setError(e instanceof Error?e.message:'시간표 생성에 실패했습니다.');}
     finally{setCreating(false);}
   }
@@ -157,13 +177,36 @@ export default function ScheduleCreation({onBack,onCreated}:{onBack:()=>void;onC
           </p>
         </section>
       </div>
+      {teamMode&&<section className="schedule-team-section" aria-labelledby="schedule-team-heading">
+        <div className="schedule-team-heading">
+          <div><h2 id="schedule-team-heading">구성팀 명단</h2><p>함께 시간표를 사용할 부원을 직접 추가합니다. 초대 수락은 필요하지 않습니다.</p></div>
+          <button type="button" className="button button-secondary" disabled={!title.trim()||dates.size===0||creating} onClick={()=>setMemberDialog(true)}><Plus size={15}/> 인원 추가</button>
+        </div>
+        {teamMembers.length===0?<p className="schedule-team-empty">추가된 구성팀 인원이 없습니다.</p>:
+         <ul className="schedule-team-members">{teamMembers.map(member=><li key={member.uid}><Users size={14}/><span>{member.name} ({member.studentId})</span><button type="button" aria-label={member.name+' 제외'} disabled={creating} onClick={()=>setTeamMembers(previous=>previous.filter(item=>item.uid!==member.uid))}><Trash2 size={15}/> 삭제</button></li>)}</ul>}
+      </section>}
       <div className="schedule-create-footer">
         {(!title.trim()||dates.size===0)&&<p>제목과 후보 날짜를 선택해 주세요.</p>}
+        {teamMode&&teamMembers.length===0&&<p>구성팀 인원을 한 명 이상 추가해 주세요.</p>}
         <button type="button" className="button button-primary"
-          disabled={!title.trim()||dates.size===0||creating}
+          disabled={!title.trim()||dates.size===0||creating||(teamMode&&teamMembers.length===0)}
           onClick={()=>void submit({title:title.trim(),dates:[...dates].sort(),startHour,endHour})}>{creating?'생성 중…':'시간표 생성'}</button>
         {error&&<p role="alert" className="schedule-side-warning">{error}</p>}
       </div>
+      {teamMode&&memberDialog&&<div className="schedule-team-dialog-backdrop" onMouseDown={event=>{if(event.target===event.currentTarget)setMemberDialog(false);}}>
+        <section className="schedule-team-dialog" role="dialog" aria-modal="true" aria-label="구성팀 인원 추가">
+          <div className="schedule-team-dialog-title"><div><h2>구성팀 인원 추가</h2><p>학번 또는 이름으로 검색하고 명단에 추가하세요.</p></div><button type="button" aria-label="닫기" onClick={()=>setMemberDialog(false)}><X size={19}/></button></div>
+          <form onSubmit={event=>{event.preventDefault();void searchMembers();}} className="schedule-team-search">
+            <input autoFocus value={memberQuery} onChange={event=>setMemberQuery(event.target.value)} placeholder="이름 또는 학번 검색" maxLength={40} aria-label="이름 또는 학번" />
+            <button type="submit" className="button button-primary" disabled={searching||!memberQuery.trim()}><Search size={15}/>{searching?'검색 중…':'검색'}</button>
+          </form>
+          {memberError&&<p role="alert" className="schedule-side-warning">{memberError}</p>}
+          <div className="schedule-team-results">{memberResults.length===0?<p>검색 결과가 없습니다. 검색어를 입력하고 검색을 눌러주세요.</p>:
+           memberResults.map(member=><div className="schedule-team-result" key={member.uid}><span><strong>{member.name}</strong> ({member.studentId})</span>
+            <button type="button" className="outline-action" disabled={teamMembers.some(entry=>entry.uid===member.uid)} onClick={()=>addMember(member)}>{teamMembers.some(entry=>entry.uid===member.uid)?'추가됨':'추가하기'}</button></div>)}</div>
+          <div className="schedule-team-dialog-foot"><span>추가된 인원 {teamMembers.length}명</span><button type="button" className="button button-primary" onClick={()=>setMemberDialog(false)}>완료</button></div>
+        </section>
+      </div>}
     </section>
   </>;
 }
