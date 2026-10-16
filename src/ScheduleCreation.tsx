@@ -1,6 +1,6 @@
 import {useMemo,useRef,useState} from 'react';
 import type {PointerEvent as ReactPointerEvent} from 'react';
-import {ArrowLeft,CalendarDays,Clock3} from 'lucide-react';
+import {ArrowLeft,CalendarDays,ChevronDown,Clock3} from 'lucide-react';
 import {brushCalendarDays,futureCalendarMonths,candidateHourLabel,isoLocalToday} from './scheduleCreationModel';
 import type {CandidateCell} from './scheduleCreationModel';
 
@@ -9,7 +9,7 @@ type BrushState={pointerId:number;start:CandidateCell;baseline:Set<string>;activ
 
 export default function ScheduleCreation({onBack}:{onBack:()=>void}){
   const [today]=useState(()=>isoLocalToday());
-  const [visibleMonthCount,setVisibleMonthCount]=useState(2);
+  const [visibleMonthCount,setVisibleMonthCount]=useState(1);
   const [title,setTitle]=useState('');
   const [dates,setDates]=useState<Set<string>>(()=>new Set());
   const [startHour,setStartHour]=useState(9);
@@ -18,11 +18,6 @@ export default function ScheduleCreation({onBack}:{onBack:()=>void}){
 
   const months=useMemo(()=>futureCalendarMonths(today,visibleMonthCount),[today,visibleMonthCount]);
   const weeks=useMemo(()=>months.flatMap(month=>month.weeks),[months]);
-  function revealNextMonth(event:React.UIEvent<HTMLDivElement>){
-    const node=event.currentTarget;
-    if(node.scrollHeight-node.scrollTop-node.clientHeight<140)
-      setVisibleMonthCount(count=>count+1);
-  }
   function startBrush(event:ReactPointerEvent<HTMLDivElement>){
     if(event.button!==0&&event.pointerType==='mouse')return;
     const target=(event.target as HTMLElement).closest<HTMLButtonElement>('[data-candidate-date]');
@@ -56,7 +51,7 @@ export default function ScheduleCreation({onBack}:{onBack:()=>void}){
   function cancelBrush(event:ReactPointerEvent<HTMLDivElement>){
     const active=brush.current;
     if(!active||active.pointerId!==event.pointerId)return;
-    // A vertical touch swipe scrolls the month list instead of leaving an accidental selection.
+    // Let a vertical touch swipe scroll the page without leaving an accidental selection.
     setDates(new Set(active.baseline));
     endBrush(event);
   }
@@ -93,10 +88,7 @@ export default function ScheduleCreation({onBack}:{onBack:()=>void}){
             <span className="schedule-create-panel-icon"><CalendarDays size={20} aria-hidden="true"/></span>
             <div><h2 id="candidate-date-title">후보 날짜 선택</h2><p>날짜를 누르거나 드래그하여 여러 날짜를 선택하세요.</p></div>
           </div>
-          <p className="schedule-calendar-scroll-guide">미래 날짜는 아래로 스크롤하면 다음 달까지 계속 볼 수 있습니다.</p>
-          <div className="schedule-calendar-scroll" role="region" tabIndex={0}
-            aria-label="후보 날짜 달력, 아래로 스크롤하여 다음 달 보기"
-            onScroll={revealNextMonth}
+          <div className="schedule-calendar-months"
             onPointerDown={startBrush} onPointerMove={moveBrush}
             onPointerUp={endBrush} onPointerCancel={cancelBrush}
             onLostPointerCapture={()=>{brush.current=null;}}>
@@ -125,6 +117,12 @@ export default function ScheduleCreation({onBack}:{onBack:()=>void}){
               </div>
             </div>)}
           </div>
+          <button type="button" className="schedule-calendar-expand"
+            aria-label="다음 달 달력 추가"
+            onClick={()=>{brush.current=null;setVisibleMonthCount(count=>count+1);}}>
+            <ChevronDown size={27} strokeWidth={2.4} aria-hidden="true"/>
+            <span>다음 달 보기</span>
+          </button>
           <p className="schedule-create-selection-summary" role="status">
             {candidateCount?`선택한 날짜 ${candidateCount}일 · ${displayDates[0]}부터`:'선택한 날짜가 없습니다.'}
           </p>

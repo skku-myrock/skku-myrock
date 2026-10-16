@@ -360,11 +360,9 @@
 .schedule-create-panel-heading h2{margin:0 0 7px;font-size:18px;letter-spacing:-.035em;color:var(--ink)}
 .schedule-create-panel-heading p{margin:0;color:#87998d;font-size:11px;line-height:1.8;word-break:keep-all}
 
-.schedule-calendar-scroll-guide{font-size:11px;line-height:1.6;color:#789186;margin:-10px 0 13px}
-.schedule-calendar-scroll{max-height:465px;overflow-y:auto;overscroll-behavior-y:contain;scrollbar-color:#c7d9ce transparent;scrollbar-width:thin;padding-right:5px}
-.schedule-calendar-scroll:focus-visible{outline:2px solid #97bca8;outline-offset:3px}
+.schedule-calendar-months{width:100%;overflow:visible}
 .schedule-calendar-month+.schedule-calendar-month{margin-top:22px;padding-top:18px;border-top:1px solid #e4ece7}
-.schedule-calendar-top{display:flex;align-items:center;padding:0 1px 12px;border-bottom:2px solid #334954}
+.schedule-calendar-top{display:flex;align-items:center;padding:0 1px 12px;border-bottom:2px solid var(--accent-dark)}
 .schedule-calendar-top strong{font-size:19px;letter-spacing:-.035em;color:#183040}
 .schedule-calendar-weekdays{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));align-items:center;margin:6px 0 2px}
 .schedule-calendar-weekdays span{display:flex;justify-content:center;align-items:center;height:36px;color:#2a3c46;font-size:13px;font-weight:700}
@@ -372,14 +370,17 @@
 .schedule-calendar-weekdays .is-saturday{color:#357bef}
 .schedule-calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));grid-auto-rows:51px;align-items:center;justify-items:center;user-select:none;touch-action:pan-y;cursor:crosshair}
 .schedule-calendar-day{display:flex;align-items:center;justify-content:center;width:38px;height:38px;min-width:0;padding:0;border:0;border-radius:50%;background:transparent;color:#173042;font-size:14px;font-variant-numeric:tabular-nums;cursor:crosshair;transition:background .1s,color .1s}
-.schedule-calendar-day:hover{background:#edf7f0}
-.schedule-calendar-day:focus-visible{outline:2px solid #267a50;outline-offset:2px}
-.schedule-calendar-day.is-today:not(.is-selected){box-shadow:inset 0 0 0 1.5px #8fbba1;font-weight:800}
-.schedule-calendar-day.is-selected{background:#b9edd0;color:#16583b;font-weight:800}
-.schedule-calendar-day.is-selected:hover{background:#a4e5c0}
+.schedule-calendar-day:hover{background:color-mix(in srgb,var(--accent) 16%,white)}
+.schedule-calendar-day:focus-visible{outline:2px solid var(--accent-dark);outline-offset:2px}
+.schedule-calendar-day.is-today:not(.is-selected){box-shadow:inset 0 0 0 1.5px var(--accent-dark);font-weight:800}
+.schedule-calendar-day.is-selected{background:color-mix(in srgb,var(--accent) 34%,white);color:var(--accent-dark);font-weight:800}
+.schedule-calendar-day.is-selected:hover{background:color-mix(in srgb,var(--accent) 48%,white)}
 .schedule-calendar-day.is-sunday:not(.is-selected){color:#ef6066}
 .schedule-calendar-day.is-saturday:not(.is-selected){color:#3983df}
 .schedule-calendar-empty{display:block;width:38px;height:38px;pointer-events:none}
+.schedule-calendar-expand{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;width:100%;margin-top:12px;padding:9px 0 3px;border:0;background:transparent;color:var(--accent-dark);cursor:pointer}
+.schedule-calendar-expand:hover{color:var(--accent)}
+.schedule-calendar-expand span{font-size:11px;color:var(--muted)}
 .schedule-create-selection-summary{min-height:16px;margin:17px 0 0;color:#668274;font-size:11px;text-align:center}
 .schedule-create-time-fields{display:grid;grid-template-columns:42px minmax(0,1fr);align-items:center;gap:15px 10px}
 .schedule-create-time-fields label{color:#203744;font-size:13px;font-weight:700}
@@ -406,7 +407,6 @@
   .schedule-create-title label{font-size:16px}
   .schedule-calendar-day{width:35px;height:35px;font-size:13px}
   .schedule-calendar-grid{grid-auto-rows:46px}
-  .schedule-calendar-scroll{max-height:395px}
   .schedule-calendar-top strong{font-size:17px}
   .schedule-create-footer{flex-direction:column;align-items:stretch}
   .schedule-create-footer button{width:100%}
