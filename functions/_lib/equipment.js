@@ -35,7 +35,7 @@ export function normalize(item){
   name:typeof item.name==='string'?item.name:'',
   product:typeof item.product==='string'?item.product:'',
   queue:Array.isArray(item.queue)?item.queue:[],
-  borrower:item.borrower&&typeof item.borrower==='object'?item.borrower:null,
+  borrower:item.borrower&&typeof item.borrower==='object'&&typeof item.borrower.uid==='string'?item.borrower:null,
   returnRequestedAt:typeof item.returnRequestedAt==='string'?item.returnRequestedAt:'',
   archived:item.archived===true,
  };
