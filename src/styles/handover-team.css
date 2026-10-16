@@ -84,3 +84,5 @@
 .handover-archive-search input::placeholder{color:#95a39b}
 .handover-archive-toolbar>.outline-action{white-space:nowrap}
 @media(max-width:620px){.handover-archive-toolbar{gap:8px}.handover-archive-search{min-height:40px}.handover-archive-toolbar>.outline-action{padding:10px}}
+
+.handover-preview-notes>.handover-archive-notice,.handover-preview-notes>.form-error{margin-top:18px}
