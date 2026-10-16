@@ -1,7 +1,8 @@
-import {useEffect,useState} from 'react';
-import {ArrowLeft,Save,X} from 'lucide-react';
+import {useEffect,useMemo,useState} from 'react';
+import {ArrowLeft,Save,Search,X} from 'lucide-react';
 import {PageHeading} from './pages/SitePages';
-import {getHandoverNote,getHandoverPositions,saveHandoverNote} from './handoverNotesApi';
+import {getHandoverNote,getHandoverPositions,saveHandoverNote,getHandoverArchive} from './handoverNotesApi';
+import type {HandoverArchiveEntry} from './handoverNotesApi';
 
 type Kind='role'|'common';
 function NoteEditor({kind,position,title,description}:{
@@ -76,7 +77,6 @@ export default function HandoverNotesEditor({onBack}:{onBack:()=>void}){
   </div>
   <section className="container section-block handover-editor-page">
    <button type="button" className="schedule-back-button" onClick={onBack}><ArrowLeft size={16}/> 인수인계로 돌아가기</button>
-   <p className="handover-editor-intro">현직 운영진과 OB 운영진 모두 작성된 인수인계를 확인할 수 있습니다.</p>
    {error&&<p className="form-error" role="alert">{error}</p>}
    {!ready?<p role="status">작성 권한을 확인하는 중입니다.</p>:!error&&<>
     {positions.length===0&&<p className="handover-editor-help">등록된 직책이 없습니다. 운영진에게 직책 정보를 확인해 주세요.</p>}
@@ -90,62 +90,103 @@ export default function HandoverNotesEditor({onBack}:{onBack:()=>void}){
  </>;
 }
 
-// Illustrative entries only: these are not actual Firestore handover documents.
-const exampleArchive=[
- {generation:'27기',positions:'보컬파트장',name:'나재원',notes:[
-  {title:'직책별 인수인계 · 보컬파트장',content:'정기 합주 전에는 곡별 보컬 파트와 키를 정리하고, 마이크와 모니터 장비의 상태를 확인해주세요. 합주에서 결정된 변경 사항은 파트원들에게 공유해주세요.'},
-  {title:'운영진 공통 인수인계',content:'운영 회의에서 정해진 공연 일정과 담당자를 문서로 남겨주세요. 후임 운영진이 진행 상황을 이어받을 수 있도록 준비 사항도 함께 정리해주세요.'},
- ]},
- {generation:'28기',positions:'회장, 보컬파트장',name:'김서연',notes:[
-  {title:'직책별 인수인계 · 회장',content:'학기 초 운영진 회의 일정을 정하고, 부서별 업무 분장을 기록해주세요. 중요한 대외 협의 사항은 회의록과 함께 정리해주세요.'},
-  {title:'직책별 인수인계 · 보컬파트장',content:'공연마다 보컬 파트 인원과 곡별 동선을 점검해주세요. 리허설 일정과 필요한 장비도 파트원들에게 미리 안내해주세요.'},
-  {title:'운영진 공통 인수인계',content:'행사 준비 일정과 예산, 진행 담당자를 한 문서에서 관리해주세요. 행사가 끝난 뒤 개선할 점도 기록해두면 좋습니다.'},
- ]},
- {generation:'28기',positions:'공연부장, 기타파트장',name:'배은성',notes:[
-  {title:'직책별 인수인계 · 공연부장',content:'공연장 대관 일정과 음향·조명 요청 사항을 확인하고, 리허설 시간표를 구성원에게 공유해주세요.'},
-  {title:'직책별 인수인계 · 기타파트장',content:'기타 앰프와 케이블 상태를 점검하고, 파트별 합주 일정과 필요한 장비를 미리 조율해주세요.'},
-  {title:'운영진 공통 인수인계',content:'공연이 끝나면 장비 반환과 정산 기록을 마무리하고, 다음 기수가 참고할 자료를 한곳에 정리해주세요.'},
- ]},
-];
-
+function archiveGeneration(generation:string){
+ const match=generation.trim().match(/^(\d+)(?:\.\d+)?기?$/);
+ return match?match[1]+'기':generation.trim();
+}
 export function HandoverNotesView({onBack}:{onBack:()=>void}){
- const [selectedIndex,setSelectedIndex]=useState<number|null>(null);
- const selected=selectedIndex===null?null:exampleArchive[selectedIndex];
+ const [entries,setEntries]=useState<HandoverArchiveEntry[]>([]);
+ const [query,setQuery]=useState('');
+ const [loading,setLoading]=useState(true);
+ const [error,setError]=useState('');
+ const [selected,setSelected]=useState<HandoverArchiveEntry|null>(null);
+ const [notes,setNotes]=useState<{title:string;content:string}[]>([]);
+ const [noteLoading,setNoteLoading]=useState(false);
+ const [noteError,setNoteError]=useState('');
+ const [reloadIndex,setReloadIndex]=useState(0);
  useEffect(()=>{
-  if(selectedIndex===null)return;
+  let active=true;
+  setLoading(true);setError('');
+  void getHandoverArchive().then(result=>{
+   if(active)setEntries(result);
+  }).catch(cause=>{
+   if(active){setEntries([]);setError(cause instanceof Error?cause.message:'인수인계 목록을 불러오지 못했습니다.');}
+  }).finally(()=>{if(active)setLoading(false);});
+  return()=>{active=false;};
+ },[reloadIndex]);
+ const filtered=useMemo(()=>{
+  const search=query.trim().toLocaleLowerCase('ko').replace(/\s+/g,'');
+  if(!search)return entries;
+  return entries.filter(entry=>{
+   const fields=[entry.generation,archiveGeneration(entry.generation),entry.name,...entry.positions];
+   return fields.some(field=>field.toLocaleLowerCase('ko').replace(/\s+/g,'').includes(search));
+  });
+ },[entries,query]);
+ useEffect(()=>{
+  if(!selected){setNotes([]);setNoteError('');return;}
+  let active=true;
+  setNoteLoading(true);setNoteError('');setNotes([]);
+  void Promise.all(selected.notes.map(async note=>{
+   const result=await getHandoverNote(note.kind,note.position,selected.uid);
+   return {
+    title:note.kind==='role'?'직책별 인수인계 · '+note.position:'운영진 공통 인수인계',
+    content:result.content,
+   };
+  })).then(result=>{
+   if(active)setNotes(result.filter(note=>note.content.trim()));
+  }).catch(cause=>{
+   if(active)setNoteError(cause instanceof Error?cause.message:'인수인계 내용을 불러오지 못했습니다.');
+  }).finally(()=>{if(active)setNoteLoading(false);});
+  return()=>{active=false;};
+ },[selected]);
+ useEffect(()=>{
+  if(!selected)return;
   const onKeyDown=(event:KeyboardEvent)=>{
-   if(event.key==='Escape')setSelectedIndex(null);
+   if(event.key==='Escape')setSelected(null);
   };
   window.addEventListener('keydown',onKeyDown);
   return()=>window.removeEventListener('keydown',onKeyDown);
- },[selectedIndex]);
+ },[selected]);
  return <>
-  <PageHeading tag="HANDOVER ARCHIVE" title="인수인계 확인하기" description="현직 운영진과 OB 운영진 모두 인수인계를 확인할 수 있습니다."/>
+  <PageHeading tag="HANDOVER ARCHIVE" title="인수인계 확인하기" description="선배 운영진이 남긴 인수인계 내용을 찾아볼 수 있습니다."/>
   <section className="container section-block handover-editor-page">
    <button type="button" className="schedule-back-button" onClick={onBack}><ArrowLeft size={16}/> 인수인계로 돌아가기</button>
-   <p className="handover-archive-notice">아래 목록과 열람 내용은 화면 구성 예시입니다. 실제 작성자별 인수인계 조회는 추후 연결됩니다.</p>
-   <div className="handover-archive-list" aria-label="인수인계 목록 예시">
-    {exampleArchive.map((entry,index)=><div className="handover-archive-row" key={index}>
-     <span className="handover-archive-generation">{entry.generation}</span>
-     <span className="handover-archive-positions">{entry.positions}</span>
-     <strong className="handover-archive-name">{entry.name}</strong>
-     <button type="button" className="outline-action" onClick={()=>setSelectedIndex(index)} aria-label={entry.name+' 인수인계 확인하기'}>확인하기</button>
-    </div>)}
+   <div className="handover-archive-toolbar">
+    <label className="handover-archive-search"><Search size={17}/>
+     <input type="search" placeholder="기수, 이름 또는 직책 검색" aria-label="인수인계 검색" value={query} onChange={event=>setQuery(event.target.value)}/>
+    </label>
+    <button type="button" className="outline-action" disabled={loading} onClick={()=>setReloadIndex(index=>index+1)}>새로고침</button>
    </div>
+   {error&&<p className="form-error" role="alert">{error}</p>}
+   {loading?<p className="handover-archive-notice" role="status">인수인계 목록을 불러오는 중입니다.</p>:
+    filtered.length===0?<p className="handover-archive-notice">{query.trim()?'검색 결과가 없습니다.':'저장된 인수인계가 없습니다.'}</p>:
+    <div className="handover-archive-list" aria-label="저장된 인수인계 목록">
+     {filtered.map(entry=><div className="handover-archive-row" key={entry.uid}>
+      <span className="handover-archive-generation">{archiveGeneration(entry.generation)}</span>
+      <span className="handover-archive-positions">{entry.positions.join(', ')}</span>
+      <strong className="handover-archive-name">{entry.name}</strong>
+      <button type="button" className="outline-action" onClick={()=>setSelected(entry)} aria-label={entry.name+' 인수인계 확인하기'}>확인하기</button>
+     </div>)}
+    </div>}
   </section>
-  {selected&&<div className="handover-preview-backdrop" onMouseDown={event=>{if(event.target===event.currentTarget)setSelectedIndex(null);}}>
+  {selected&&<div className="handover-preview-backdrop" onMouseDown={event=>{if(event.target===event.currentTarget)setSelected(null);}}>
    <section className="handover-preview-dialog" role="dialog" aria-modal="true" aria-labelledby="handover-preview-title">
     <div className="handover-preview-header">
      <div>
       <span className="eyebrow">HANDOVER NOTE</span>
-      <h2 id="handover-preview-title">{[selected.generation,selected.positions.split(',').map(position=>position.trim()).join(' · '),selected.name].join(' ')}</h2>
+      <h2 id="handover-preview-title">{[archiveGeneration(selected.generation),selected.positions.join(' · '),selected.name].filter(Boolean).join(' ')}</h2>
      </div>
-     <button type="button" className="handover-preview-close" autoFocus aria-label="닫기" onClick={()=>setSelectedIndex(null)}><X size={20}/></button>
+     <button type="button" className="handover-preview-close" autoFocus aria-label="닫기" onClick={()=>setSelected(null)}><X size={20}/></button>
     </div>
-    <div className="handover-preview-notes">{selected.notes.map(note=><section className="handover-preview-note" key={note.title}>
-     <h3>{note.title}</h3><p>{note.content}</p>
-    </section>)}</div>
-    <div className="handover-preview-footer"><button type="button" className="button button-secondary" onClick={()=>setSelectedIndex(null)}>닫기</button></div>
+    <div className="handover-preview-notes">
+     {noteLoading?<p className="handover-archive-notice" role="status">인수인계 내용을 불러오는 중입니다.</p>:
+      noteError?<p className="form-error" role="alert">{noteError}</p>:
+      notes.length===0?<p className="handover-archive-notice">현재 확인할 수 있는 인수인계 내용이 없습니다.</p>:
+      notes.map(note=><section className="handover-preview-note" key={note.title}>
+       <h3>{note.title}</h3><p>{note.content}</p>
+      </section>)}
+    </div>
+    <div className="handover-preview-footer"><button type="button" className="button button-secondary" onClick={()=>setSelected(null)}>닫기</button></div>
    </section>
   </div>}
  </>;

@@ -1,5 +1,5 @@
 import {FIRESTORE_ROOT,docFields,reject,validateUid} from './shared.js';
-import {getFirestoreDocument,verifyFirebaseToken} from './google.js';
+import {getFirestoreDocument,googleRequest,verifyFirebaseToken} from './google.js';
 import {commit,getDocument,toWrite} from './schedules.js';
 
 // Notes belong to their author, not to the current holder of a position.
@@ -71,4 +71,86 @@ export async function saveNote(env,name,content,expectedUpdateTime,caller,kind,p
  },current.doc?{updateTime:current.doc.updateTime}:{exists:false})]);
  const saved=await readNote(env,name,{kind,position,authorUid:caller.uid});
  return {updateTime:saved.updateTime};
+}
+
+
+// Build the archive from persisted notes only. Do not return private body text
+// with list responses: a separate authenticated read is required per document.
+function generationValue(generation){
+ const match=String(generation??'').trim().match(/^(\d+(?:\.\d+)?)(?:기)?$/);
+ return match?Number(match[1]):-Infinity;
+}
+function legacyRoleFromId(id){
+ if(!id.startsWith('role_'))return '';
+ try{
+  const encoded=id.slice(5).replaceAll('-','+').replaceAll('_','/');
+  const decoded=Uint8Array.from(atob(encoded),letter=>letter.charCodeAt(0));
+  return new TextDecoder().decode(decoded);
+ }catch{return '';}
+}
+async function listAllNoteDocuments(env){
+ const documents=[];
+ let token='';
+ for(let page=0;page<100;page++){
+  const url=new URL(NOTES);
+  url.searchParams.set('pageSize','100');
+  for(const field of ['content','kind','position','authorUid','updatedBy','authorName','generation','positions','updatedAt'])
+   url.searchParams.append('mask.fieldPaths',field);
+  if(token)url.searchParams.set('pageToken',token);
+  const response=await googleRequest(env,url.toString());
+  if(response.status===404)return documents;
+  if(!response.ok)throw Error('인수인계 목록 조회 실패 '+response.status);
+  documents.push(...(response.data.documents??[]));
+  token=response.data.nextPageToken??'';
+  if(!token)return documents;
+ }
+ throw Error('인수인계 목록이 너무 많습니다. 관리자에게 문의해 주세요.');
+}
+export async function listHandoverArchive(env){
+ const documents=await listAllNoteDocuments(env);
+ const authors=new Map();
+ for(const document of documents){
+  const data=docFields(document);
+  if(typeof data.content!=='string'||!data.content.trim())continue;
+  const id=document.name?.split('/').pop()??'';
+  const legacy=id==='common'||(id.startsWith('role_')&&!data.authorUid);
+  const kind=data.kind==='role'||data.kind==='common'?data.kind:legacy?(id==='common'?'common':'role'):null;
+  const position=kind==='role'?(typeof data.position==='string'&&data.position.trim()?data.position.trim():legacyRoleFromId(id)):'';
+  const authorUid=typeof data.authorUid==='string'?data.authorUid:data.updatedBy;
+  if(!kind||!authorUid||!(/^[A-Za-z0-9_-]{10,128}$/.test(authorUid))||(kind==='role'&&!position))continue;
+  const timestamp=typeof data.updatedAt==='string'?data.updatedAt:'';
+  let author=authors.get(authorUid);
+  if(!author){
+   author={uid:authorUid,name:'',generation:'',positions:new Set(),notes:new Map(),metadataTime:''};
+   authors.set(authorUid,author);
+  }
+  const generation=typeof data.generation==='string'?data.generation:'';
+  if(data.authorName&&(!author.name||timestamp>=author.metadataTime))author.name=String(data.authorName);
+  if(generation&&(generationValue(generation)>generationValue(author.generation)||!author.generation))author.generation=generation;
+  if(timestamp>=author.metadataTime)author.metadataTime=timestamp;
+  const savedPositions=Array.isArray(data.positions)?data.positions.filter(p=>typeof p==='string'&&p.trim()):[];
+  for(const saved of savedPositions)author.positions.add(saved);
+  if(kind==='role')author.positions.add(position);
+  const key=kind+'|'+position;
+  const old=author.notes.get(key);
+  if(!old||old.legacy&&!legacy)
+   author.notes.set(key,{kind,position,legacy});
+ }
+ // Old global-by-role documents do not contain author metadata. Resolve only
+ // those authors from their Firestore profiles without exposing user directory data.
+ await Promise.all([...authors.values()].filter(a=>!a.name||!a.generation).map(async a=>{
+  const profile=await getFirestoreDocument(env,a.uid);
+  if(!profile)return;
+  const fields=docFields(profile);
+  if(!a.name)a.name=String(fields.name??'');
+  if(!a.generation)a.generation=String(fields.generation??'');
+ }));
+ return [...authors.values()].map(author=>({
+  uid:author.uid,name:author.name||'이름 미확인',
+  generation:author.generation,positions:[...author.positions],
+  notes:[...author.notes.values()].map(({kind,position})=>({kind,position}))
+    .sort((a,b)=>a.kind===b.kind?a.position.localeCompare(b.position,'ko'):a.kind==='role'?-1:1),
+ })).sort((a,b)=>
+  generationValue(b.generation)-generationValue(a.generation)
+  ||a.name.localeCompare(b.name,'ko')||a.uid.localeCompare(b.uid));
 }

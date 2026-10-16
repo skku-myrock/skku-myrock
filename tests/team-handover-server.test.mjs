@@ -5,6 +5,7 @@ import {toFields,docFields} from '../functions/_lib/shared.js';
 import {onRequestPost as createSchedule} from '../functions/api/schedules/index.js';
 import {onRequestGet as searchTeam} from '../functions/api/schedule-team/search.js';
 import {onRequestGet as readHandover,onRequestPost as saveHandover} from '../functions/api/handover-notes/index.js';
+import {onRequestGet as listHandover} from '../functions/api/handover-notes/archive.js';
 
 const root='https://firestore.googleapis.com/v1/projects/skku-myrock/databases/(default)/documents';
 const host='https://myrock.test';
@@ -58,6 +59,11 @@ function setup(){
    }
    for(const w of body.writes)if(w.update)put(root+'/'+w.update.name.slice(prefix.length),w.update.fields);
    return json({writeResults:[]});
+  }
+  if(method==='GET'&&raw.startsWith(root+'/handoverNotes?')){
+   const url=new URL(raw),offset=Number(url.searchParams.get('pageToken')??0);
+   const documents=[...docs.values()].filter(doc=>doc.name.startsWith(root+'/handoverNotes/')&&!doc.name.slice((root+'/handoverNotes/').length).includes('/'));
+   return json({documents:documents.slice(offset,offset+2),...(offset+2<documents.length?{nextPageToken:String(offset+2)}:{})});
   }
   if(method==='GET'){
    const doc=docs.get(raw);
@@ -203,5 +209,57 @@ test('legacy notes migrate non-destructively for their original author',async()=
   })).status,200);
   assert.equal((await call(readHandover,'lead',query)).data.content,'이어 작성한 내용');
   assert.ok(mock.docs.has(root+'/handoverNotes/role_'+b64),'legacy content is not destroyed');
+ }finally{mock.restore();}
+});
+
+
+test('archive groups actual saved notes by writer, skips empty text and sorts by numerical generation',async()=>{
+ const mock=setup();
+ try{
+  assert.deepEqual((await call(listHandover,'lead','handover-notes/archive')).data.entries,[]);
+  assert.equal((await call(listHandover,'other','handover-notes/archive')).status,403);
+  const records=[
+   {id:'test_role_a',uid:persons.lead.uid,kind:'role',position:'보컬파트장',who:'나재원',generation:'27.5기',content:'보컬 안내',positions:['보컬파트장']},
+   {id:'test_common_a',uid:persons.lead.uid,kind:'common',position:'',who:'나재원',generation:'27.5기',content:'운영 회의',positions:['보컬파트장']},
+   {id:'test_role_b',uid:persons.staff.uid,kind:'role',position:'보컬파트장',who:'박지민',generation:'28기',content:'후임 업무',positions:['회장','보컬파트장']},
+   {id:'test_common_blank',uid:persons.different.uid,kind:'common',position:'',who:'이민수',generation:'30기',content:'  ',positions:['공연부장']},
+   {id:'test_role_c',uid:persons.different.uid,kind:'role',position:'공연부장',who:'이민수',generation:'9기',content:'공연 준비',positions:['공연부장']},
+  ];
+  for(const row of records){
+   const name=root+'/handoverNotes/'+row.id;
+   mock.docs.set(name,{name,updateTime:'2026-10-17T00:00:00.000Z',fields:toFields({
+    kind:row.kind,position:row.position,authorUid:row.uid,authorName:row.who,
+    generation:row.generation,content:row.content,positions:row.positions,updatedAt:'2026-10-17T00:00:00.000Z',
+   })});
+  }
+  const listed=await call(listHandover,'ob','handover-notes/archive');
+  assert.equal(listed.status,200,JSON.stringify(listed));
+  const entries=listed.data.entries;
+  assert.deepEqual(entries.map(entry=>entry.name),['박지민','나재원','이민수']);
+  assert.deepEqual(entries.map(entry=>entry.generation),['28기','27.5기','9기']);
+  assert.deepEqual(entries[1].notes,[{kind:'role',position:'보컬파트장'},{kind:'common',position:''}]);
+  assert.ok(entries[0].positions.includes('보컬파트장'));
+  assert.ok(entries.every(entry=>!('content'in entry)&&entry.notes.every(note=>!('content'in note))));
+ }finally{mock.restore();}
+});
+
+test('previous shared notes enter the archive once and are superseded by the author-specific note',async()=>{
+ const mock=setup();
+ try{
+  const legacyId='role_'+Buffer.from('기타 파트장').toString('base64url');
+  const name=root+'/handoverNotes/'+legacyId;
+  mock.docs.set(name,{name,updateTime:'2026-10-16T01:00:00Z',fields:toFields({content:'예전 노트',updatedBy:persons.lead.uid})});
+  let result=await call(listHandover,'staff','handover-notes/archive');
+  assert.equal(result.status,200,JSON.stringify(result));
+  assert.equal(result.data.entries.length,1);
+  assert.equal(result.data.entries[0].name,'나재원');
+  assert.deepEqual(result.data.entries[0].notes,[{kind:'role',position:'기타 파트장'}]);
+  const saved=await call(saveHandover,'lead','handover-notes',{kind:'role',position:'기타 파트장',content:'새로운 노트',expectedUpdateTime:''});
+  assert.equal(saved.status,200,JSON.stringify(saved));
+  result=await call(listHandover,'staff','handover-notes/archive');
+  assert.equal(result.data.entries.length,1);
+  assert.equal(result.data.entries[0].notes.length,1);
+  const read=await call(readHandover,'ob','handover-notes?kind=role&position='+encodeURIComponent('기타 파트장')+'&authorUid='+persons.lead.uid);
+  assert.equal(read.data.content,'새로운 노트');
  }finally{mock.restore();}
 });
