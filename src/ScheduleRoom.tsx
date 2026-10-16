@@ -183,7 +183,7 @@ export default function ScheduleRoom({id,onBack,registerLeaveGuard}:{
   }catch(e){setError(e instanceof Error?e.message:'시간표에서 나가지 못했습니다.');}
   finally{setLeaving(false);}
  }
- const people=[...(data?.people??[])].sort((a,b)=>a.uid===data?.schedule.createdBy?-1:b.uid===data?.schedule.createdBy?1:0);
+ const people=[...(data?.people??[])].sort((a,b)=>a.uid===data?.viewerUid?-1:b.uid===data?.viewerUid?1:0);
  const active=people.filter(p=>chosen.includes(p.uid));
  const ownUid=data?.viewerUid??'';
  const decodedOthers=useMemo(()=>{
