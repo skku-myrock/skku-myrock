@@ -130,3 +130,13 @@ test('the draft timetable reuses the sticky time axis and pinned corner', async 
  assert.match(draft, /width:64\+dates\.length\*70/);
  assert.match(draft, /height:slots\.length\*20/);
 });
+
+test('empty and selected 30-minute draft slots keep both horizontal and vertical grid lines',async()=>{
+ const [css,source]=await Promise.all([read('src/styles/schedule.css'),read('src/ScheduleDraft.tsx')]);
+ assert.match(css,/\.schedule-time-slot\s*\{[^}]*border-top:\s*1px solid #cfded3;[^}]*border-right:\s*1px solid #cfded3;/s);
+ assert.match(css,/\.schedule-time-slot\.starts-hour\s*\{[^}]*border-top-color:\s*#b3c9ba;/s);
+ assert.match(css,/\.schedule-time-slot:last-child\s*\{[^}]*border-bottom:\s*1px solid #cfded3;/s);
+ assert.match(source,/schedule-time-slot schedule-draft-block/);
+ assert.match(css,/\.schedule-draft-block\{background:#fff\}/);
+ assert.doesNotMatch(css,/\.schedule-draft-block[^}]*border:/);
+});
