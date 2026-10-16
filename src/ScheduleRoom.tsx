@@ -275,7 +275,7 @@ export default function ScheduleRoom({id,onBack,registerLeaveGuard}:{
      <button type="button" aria-label="명단 수정 창 닫기" onClick={()=>setRosterOpen(false)} disabled={inviteBusy}><X size={21}/></button>
     </div>
     <h3>현재 명단 ({people.length})</h3>
-    <div className="schedule-roster-list">{people.map(p=><div key={p.uid}><span><Users size={15}/>{p.name}{p.uid===ownUid?' (나)':''}</span>
+    <div className="schedule-roster-list">{people.map(p=><div key={p.uid}><span><Users size={15}/>{p.name}</span>
      {p.uid!==ownUid&&<button type="button" disabled={inviteBusy} onClick={()=>void remove(p.uid,p.name)}><Trash2 size={15}/> 제외</button>}
     </div>)}</div>
     <form className="schedule-roster-search-form" onSubmit={e=>{e.preventDefault();void invite();}}>
