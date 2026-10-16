@@ -12,7 +12,7 @@ test('equipment status dot and text use the same centered flex row',async()=>{
 
 test('profile explains that staff should handle member information changes',async()=>{
  const pages=await read('src/pages/SitePages.tsx');
- assert.match(pages,/<h2>회원 정보<\/h2><\/div>\s*<p className="profile-help">정보 수정이 필요할 경우 운영진에게 연락 바랍니다\.<\/p>/);
+ assert.match(pages,/<div><dt>권한<\/dt><dd>\{profileRoleLabel\(profile\)\}<\/dd><\/div><\/dl>\s*<p className="profile-help">정보 수정이 필요할 경우 운영진에게 연락 바랍니다\.<\/p>/);
 });
 
 test('privileged and OB members have visually disabled but warning-accessible delete controls',async()=>{
