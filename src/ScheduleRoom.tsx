@@ -67,7 +67,7 @@ export default function ScheduleRoom({id,onBack,registerLeaveGuard}:{
   finally{setPendingBusy(false);}
  }
  useEffect(()=>{
-  if(!rosterOpen||data?.schedule.createdBy!==data.viewerUid)return;
+  if(!rosterOpen||!data||data.schedule.createdBy!==data.viewerUid)return;
   void loadPending();
  },[rosterOpen,id,data?.schedule.createdBy,data?.viewerUid]);
  useEffect(()=>{
