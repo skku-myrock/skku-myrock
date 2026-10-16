@@ -4,6 +4,7 @@ export type ScheduleSummary={id:string;title:string;dates:string[];startHour:num
 export type ScheduleMember={uid:string;name:string;availability:string|null;hasResponded:boolean;updateTime?:string};
 export type ScheduleDetailData={schedule:{id:string;title:string;dates:string[];startHour:number;endHour:number;createdBy:string;status:string};people:ScheduleMember[];viewerUid:string};
 export type Invitation={id:string;scheduleId:string;title:string;inviterName:string;createdAt:string};
+export type PendingScheduleInvitation={id:string;studentId:string;createdAt:string};
 async function request<T>(path:string,body?:unknown):Promise<T>{
  const user=auth.currentUser;
  if(!user)throw new Error('로그인이 필요합니다.');
@@ -24,6 +25,10 @@ export const saveAvailability=async(id:string,availability:string,expectedUpdate
  request<{updateTime:string;availability:string;hasResponded:boolean}>('schedules/'+encodeURIComponent(id)+'/availability',{availability,expectedUpdateTime});
 export const inviteMember=async(id:string,studentId:string)=>
  request<{message:string}>('schedules/'+encodeURIComponent(id)+'/invite',{studentId});
+export const listPendingScheduleInvitations=async(id:string)=>
+ (await request<{invitations:PendingScheduleInvitation[]}>('schedules/'+encodeURIComponent(id)+'/invitations')).invitations;
+export const cancelScheduleInvitation=async(id:string,invitationId:string)=>
+ request<{success:boolean}>('schedules/'+encodeURIComponent(id)+'/cancel-invite',{invitationId});
 export const removeScheduleMember=async(id:string,uid:string)=>
  request<{success:boolean}>('schedules/'+encodeURIComponent(id)+'/members/'+encodeURIComponent(uid),{action:'remove'});
 export const listInvitations=async()=> (await request<{invitations:Invitation[]}>('schedule-invitations')).invitations;

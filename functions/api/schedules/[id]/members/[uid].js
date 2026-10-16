@@ -1,5 +1,5 @@
 import {failure,parseBody,reject,secureOrigin,success} from '../../../../_lib/shared.js';
-import {callerProfile,commit,docData,getDocument,getSchedule,participantDoc,requireOwner,scheduleDoc,toWrite,invitationDoc} from '../../../../_lib/schedules.js';
+import {callerProfile,commit,docData,getDocument,getSchedule,participantDoc,requireOwner,scheduleDoc,toWrite,invitationDoc,queryBy} from '../../../../_lib/schedules.js';
 export async function onRequestPost({request,env,params}){
  try{
   secureOrigin(request);
@@ -11,7 +11,9 @@ export async function onRequestPost({request,env,params}){
   if(!schedule.participantUids.includes(params.uid))reject('참여자가 아닙니다.',404);
   const participation=await getDocument(env,participantDoc(params.id,params.uid));
   if(!participation)reject('참여 정보를 찾을 수 없습니다.',404);
-  const relatedInvitation=await getDocument(env,invitationDoc(params.id+'_'+params.uid));
+  const relatedInvitations=(await queryBy(env,'scheduleInvitations','scheduleId','EQUAL',params.id))
+    .filter(doc=>doc.fields?.recipientUid?.stringValue===params.uid&&
+      ['accepted','pending'].includes(doc.fields?.status?.stringValue));
   const writes=[
    toWrite(scheduleDoc(params.id),{
     title:schedule.title,dates:schedule.dates,startHour:schedule.startHour,
@@ -21,11 +23,15 @@ export async function onRequestPost({request,env,params}){
    },{updateTime:scheduleDocument.updateTime}),
    {delete:participantDoc(params.id,params.uid),currentDocument:{updateTime:participation.updateTime}},
   ];
-  if(relatedInvitation)writes.push(toWrite(invitationDoc(params.id+'_'+params.uid),{
-    scheduleId:params.id,recipientUid:params.uid,inviterUid:relatedInvitation.fields?.inviterUid?.stringValue??caller.uid,
-    createdAt:relatedInvitation.fields?.createdAt?.stringValue??new Date().toISOString(),
-    updatedAt:new Date().toISOString(),status:'removed',
-  },{updateTime:relatedInvitation.updateTime}));
+  for(const relatedInvitation of relatedInvitations){
+   writes.push(toWrite(relatedInvitation.name,{
+     scheduleId:params.id,recipientUid:params.uid,
+     ...(relatedInvitation.fields?.studentId?.stringValue?{studentId:relatedInvitation.fields.studentId.stringValue}:{}),
+     inviterUid:relatedInvitation.fields?.inviterUid?.stringValue??caller.uid,
+     createdAt:relatedInvitation.fields?.createdAt?.stringValue??new Date().toISOString(),
+     updatedAt:new Date().toISOString(),status:'removed',
+   },{updateTime:relatedInvitation.updateTime}));
+  }
   await commit(env,writes);
   return success({success:true});
  }catch(error){return failure(error);}
