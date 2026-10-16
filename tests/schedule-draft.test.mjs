@@ -65,7 +65,11 @@ test('draft view keeps 70px date width and 20px 30-minute slots, with accessible
  assert.match(draft,/id="schedule-invite-id"/);
  assert.match(draft,/검색 결과가 없습니다/);
  assert.match(draft,/mockFindInvitee\(studentId\)/);
- assert.match(draft,/<strong>\{searchResult\}<\/strong><\/span>/);
+ assert.match(draft,/<span>\{searchResult\}<\/span><\/span>/);
+ assert.doesNotMatch(draft,/<strong>\{searchResult\}<\/strong>/);
+ assert.match(draft,/onClick=\{\(\)=>setInviteNotice\('초대했습니다'\)\}/);
+ assert.match(draft,/className="toast schedule-invite-toast"/);
+ assert.match(draft,/role="status" aria-live="polite"/);
  assert.match(draft,/>초대하기<\/button>/);
  assert.doesNotMatch(draft,/addMember\(|명단에 추가|people\.includes\(searchResult\)|무길동/);
  assert.doesNotMatch(src,/무길동|DEMO_INVITATION\.name/);
@@ -100,4 +104,16 @@ test('roster removal requires explicit confirmation and updates filter selection
  assert.match(draft,/setPeople\(current=>current\.filter\(person=>person!==name\)\)/);
  assert.match(draft,/setSelectedNames\(current=>current\.filter\(person=>person!==name\)\)/);
  assert.match(draft,/delete next\[name\]/);
+});
+
+test('roster search and invite actions align using a shared grid column rather than text padding',async()=>{
+ const styles=await read('src/styles/schedule.css');
+ const draft=await read('src/ScheduleDraft.tsx');
+ assert.match(styles,/\.schedule-roster-dialog\{--schedule-roster-action-width:72px;/);
+ assert.match(styles,/\.schedule-roster-search-form>div\{display:grid;grid-template-columns:minmax\(0,1fr\) var\(--schedule-roster-action-width\);gap:9px\}/);
+ assert.match(styles,/\.schedule-roster-found\{display:grid;grid-template-columns:minmax\(0,1fr\) var\(--schedule-roster-action-width\);align-items:center;gap:9px;[^}]*padding:8px/);
+ assert.match(styles,/\.schedule-roster-found button\{[^}]*justify-self:end;width:calc\(var\(--schedule-roster-action-width\) - 9px\)/);
+ assert.match(styles,/\.schedule-invite-toast\{z-index:100\}/);
+ assert.match(draft,/setInviteNotice\('초대했습니다'\)/);
+ assert.doesNotMatch(draft,/addMember\(|fetch\(|setDoc\(|updateDoc\(/);
 });
