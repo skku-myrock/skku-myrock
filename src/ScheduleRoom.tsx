@@ -1,8 +1,8 @@
 import {useEffect,useMemo,useRef,useState} from 'react';
 import type {PointerEvent as ReactPointerEvent} from 'react';
-import {ArrowLeft,Check,Trash2,Users,X} from 'lucide-react';
+import {ArrowLeft,Check,LogOut,Trash2,Users,X} from 'lucide-react';
 import {decodeBits,encodeBits,rectangleTimeSelection,blockKey} from './scheduleGrid';
-import {cancelScheduleInvitation,getSchedule,inviteMember,listPendingScheduleInvitations,removeScheduleMember,saveAvailability} from './scheduleApi';
+import {cancelScheduleInvitation,getSchedule,inviteMember,leaveSchedule,listPendingScheduleInvitations,removeScheduleMember,saveAvailability} from './scheduleApi';
 import type {PendingScheduleInvitation} from './scheduleApi';
 import type {ScheduleDetailData} from './scheduleApi';
 
@@ -29,6 +29,7 @@ export default function ScheduleRoom({id,onBack,registerLeaveGuard}:{
  const [studentId,setStudentId]=useState(''),[inviteBusy,setInviteBusy]=useState(false);
  const [pendingInvites,setPendingInvites]=useState<PendingScheduleInvitation[]>([]);
  const [pendingBusy,setPendingBusy]=useState(false);
+ const [leaving,setLeaving]=useState(false);
  const [inviteFeedback,setInviteFeedback]=useState('');
  const [notice,setNotice]=useState(''),[selectedCell,setSelectedCell]=useState<Cell|null>(null);
  const stroke=useRef<Stroke|null>(null);
@@ -136,17 +137,17 @@ export default function ScheduleRoom({id,onBack,registerLeaveGuard}:{
   try{
    const result=await inviteMember(id,studentId);
    if(result.status==='not_found'){
-    setInviteFeedback('존재하지 않는 학번입니다.');
+    setNotice('존재하지 않는 학번입니다.');
    }else{
     setNotice(result.message);setStudentId('');
    }
-   await loadPending();
+   if(result.status!=='not_found')await loadPending();
   }catch(e){setError(e instanceof Error?e.message:'초대 요청에 실패했습니다.');}
   finally{setInviteBusy(false);}
  }
  async function cancelInvite(item:PendingScheduleInvitation){
   if(inviteBusy)return;
-  if(!window.confirm(item.studentId+(item.status==='not_found'?' 학번의 요청 내역을 삭제하시겠습니까?':' 학번의 초대 요청을 취소하시겠습니까?')))return;
+  if(!window.confirm(item.studentId+' 학번의 초대 요청을 취소하시겠습니까?'))return;
   setInviteBusy(true);setError('');
   try{
    await cancelScheduleInvitation(id,item.id);
@@ -168,7 +169,21 @@ export default function ScheduleRoom({id,onBack,registerLeaveGuard}:{
   }catch(e){setError(e instanceof Error?e.message:'제외에 실패했습니다.');}
   finally{setInviteBusy(false);}
  }
- const people=data?.people??[];
+ async function leave(){
+  if(!data||leaving)return;
+  const owner=data.schedule.createdBy===data.viewerUid;
+  if(owner&&data.people.length>1){setNotice('다른 참여자가 있는 시간표는 방장이 나갈 수 없습니다.');return;}
+  const message=owner?'마지막 참여자로 나가면 시간표와 관련 데이터가 완전히 삭제됩니다. 나가시겠습니까?':'이 시간표에서 나가시겠습니까?';
+  if(!window.confirm(message))return;
+  setLeaving(true);setError('');
+  try{
+   await leaveSchedule(id);
+   registerLeaveGuard(null);
+   onBack();
+  }catch(e){setError(e instanceof Error?e.message:'시간표에서 나가지 못했습니다.');}
+  finally{setLeaving(false);}
+ }
+ const people=[...(data?.people??[])].sort((a,b)=>a.uid===data?.schedule.createdBy?-1:b.uid===data?.schedule.createdBy?1:0);
  const active=people.filter(p=>chosen.includes(p.uid));
  const ownUid=data?.viewerUid??'';
  const decodedOthers=useMemo(()=>{
@@ -188,8 +203,10 @@ export default function ScheduleRoom({id,onBack,registerLeaveGuard}:{
    <button type="button" className="schedule-back-button" onClick={onBack}><ArrowLeft size={16}/> 내가 참여한 시간표 목록</button>
    {loading?<p>시간표를 불러오는 중입니다.</p>:!schedule?<p role="alert">{error||'시간표를 찾을 수 없습니다.'}</p>:<>
     <div className="schedule-detail-heading"><div><h2>시간 조율 현황</h2></div>
-     {schedule.createdBy===ownUid&&<button type="button" className="outline-action schedule-roster-edit-trigger"
+     <div className="schedule-heading-actions">{schedule.createdBy===ownUid&&<button type="button" className="outline-action schedule-roster-edit-trigger"
       onClick={()=>setRosterOpen(true)}><Users size={16}/> 명단 수정</button>}
+      <button type="button" className="outline-action schedule-roster-edit-trigger" disabled={leaving}
+       onClick={()=>void leave()}><LogOut size={16}/>{leaving?'나가는 중…':'나가기'}</button></div>
     </div>
     <div className="schedule-detail-layout">
      <div className="schedule-timetable-panel">
@@ -236,7 +253,7 @@ export default function ScheduleRoom({id,onBack,registerLeaveGuard}:{
        <input type="checkbox" checked={chosen.includes(p.uid)}
         onChange={()=>setChosen(current=>current.includes(p.uid)?current.filter(id=>id!==p.uid):[...current,p.uid])}/>
        <span className="schedule-person-icon"><Users size={14}/></span>
-       <span>{p.name}{p.uid===ownUid?' (나)':''}</span>
+       <span>{p.name}</span>
       </label>)}</div>
       {selectedCell&&<p className="schedule-draft-hover">{shortDate(dates[selectedCell.day])} · {formatTime(slots[selectedCell.slot])}–{formatTime(slots[selectedCell.slot]+30)}</p>}
       {active.length===0&&<p className="schedule-side-warning">표시할 사람을 한 명 이상 선택해 주세요.</p>}
@@ -274,17 +291,15 @@ export default function ScheduleRoom({id,onBack,registerLeaveGuard}:{
      {pendingBusy?<p className="schedule-roster-pending-help">초대 목록을 불러오는 중입니다.</p>:
       pendingInvites.length===0?<p className="schedule-roster-pending-help">초대 요청 내역이 없습니다.</p>:
       <div className="schedule-roster-pending-list">
-       {pendingInvites.map(item=><div className="schedule-roster-pending-item" key={item.id}>
+       {pendingInvites.filter(item=>item.status==='pending').map(item=><div className="schedule-roster-pending-item" key={item.id}>
         <span>{item.studentId}</span>
-        {item.status==='not_found'&&<span className="schedule-roster-invalid-id">존재하지 않는 학번입니다.</span>}
         <button type="button" disabled={inviteBusy} onClick={()=>void cancelInvite(item)}>
-         <X size={14} aria-hidden="true"/> {item.status==='not_found'?'삭제':'취소'}
+         <X size={14} aria-hidden="true"/> 취소
         </button>
        </div>)}
       </div>}
-     <p className="schedule-roster-pending-help">존재하지 않는 학번에는 초대가 전달되지 않으며, 나중에 가입하더라도 자동으로 전달되지 않습니다.</p>
     </section>
-    <div className="schedule-roster-footer"><span>상대방이 초대를 수락한 뒤에만 명단에 표시됩니다.</span>
+    <div className="schedule-roster-footer">
      <button type="button" className="outline-action" onClick={()=>setRosterOpen(false)}>닫기</button>
     </div>
    </div>
