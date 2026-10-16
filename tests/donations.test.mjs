@@ -221,7 +221,10 @@ test('private profile checks, role matrix, database writes and superadmin financ
       method:body?'POST':'GET',headers:{...(body?{'content-type':'application/json'}:{}),
         ...(as?{authorization:'Bearer '+token[as]}:{})},body:body?JSON.stringify(body):undefined
     });
-    const bank=await accountGet({request:financeRequest(null,'account'),env});
+    const anonymousAccount=await accountGet({request:financeRequest(null,'account'),env});
+    assert.equal(anonymousAccount.status,401);
+    assert.ok(!JSON.stringify(await anonymousAccount.json()).includes(DEFAULT_ACCOUNT.number));
+    const bank=await accountGet({request:financeRequest('member','account'),env});
     assert.equal(bank.status,200);
     assert.deepEqual((await bank.json()).account,DEFAULT_ACCOUNT);
     assert.equal((await accountManageGet({request:financeRequest('staff','account-manage'),env})).status,403);

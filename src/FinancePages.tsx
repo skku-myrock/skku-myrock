@@ -3,7 +3,7 @@ import type { FormEvent } from 'react';
 import { getOwnDonations, getPublicDonations } from './donationApi';
 import { displayAmount, displayDate, sumDonationAmounts } from './donationData';
 import type { OwnDonation, PublicDonation } from './donationData';
-import { DEFAULT_ACCOUNT,formatTransactionDate,formatWon,readDonationAccount,readAccountForManagement,saveDonationAccount,readExpenses } from './financeTransactions';
+import { formatTransactionDate,formatWon,readDonationAccount,readAccountForManagement,saveDonationAccount,readExpenses } from './financeTransactions';
 import type { DonationAccount, FinanceTransactionInput } from './financeTransactions';
 import { ArrowLeft, ArrowRight, ArrowUpRight, ClipboardList, HeartHandshake, LockKeyhole, Wallet } from 'lucide-react';
 
@@ -23,20 +23,25 @@ function FinanceSectionTitle({ title, description }: { title: string; descriptio
   </div>;
 }
 
-export function FinanceLanding({ onDonations, onExpenses, canEditAccount }: { onDonations: Nav; onExpenses: Nav; canEditAccount:boolean }) {
-  const [account,setAccount]=useState<DonationAccount>(DEFAULT_ACCOUNT);
+export function FinanceLanding({ onDonations, onExpenses, canEditAccount, loggedIn, authPending, onLogin }: { onDonations: Nav; onExpenses: Nav; canEditAccount:boolean; loggedIn:boolean; authPending:boolean; onLogin:Nav }) {
+  const [account,setAccount]=useState<DonationAccount|null>(null);
   const [editing,setEditing]=useState<DonationAccount|null>(null);
   const [version,setVersion]=useState<string|null>(null);
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState('');
   const [accountMessage,setAccountMessage]=useState('');
-  const accountChanged=Boolean(editing&&(editing.bank.trim()!==account.bank||editing.number.trim()!==account.number||editing.holder.trim()!==account.holder));
+  const accountChanged=Boolean(editing&&account&&(editing.bank.trim()!==account.bank||editing.number.trim()!==account.number||editing.holder.trim()!==account.holder));
   useEffect(()=>{
     let active=true;
+    setAccount(null);
+    setEditing(null);
+    setVersion(null);
+    setError('');
+    if(!loggedIn||authPending)return()=>{active=false;};
     void readDonationAccount().then(data=>{if(active)setAccount(data.account);})
       .catch(reason=>{if(active)setError(reason instanceof Error?reason.message:'계좌 조회에 실패했습니다.');});
     return()=>{active=false;};
-  },[]);
+  },[loggedIn,authPending]);
   async function beginEdit(){
     if(busy)return;
     setBusy(true);setError('');setAccountMessage('');
@@ -77,14 +82,21 @@ export function FinanceLanding({ onDonations, onExpenses, canEditAccount }: { on
 
     <section className="container section-block finance-donation-account" data-async-busy={busy ? "true" : undefined}>
       <div className="finance-account-heading"><FinanceSectionTitle title="후원 계좌 안내" description="후원을 원하시는 분을 위한 계좌 안내입니다." />
-        {canEditAccount&&!editing&&<button type="button" className="admin-only-action" disabled={busy} onClick={()=>void beginEdit()}>정보 수정</button>}
+        {loggedIn&&!authPending&&canEditAccount&&!editing&&account&&<button type="button" className="admin-only-action" disabled={busy} onClick={()=>void beginEdit()}>정보 수정</button>}
       </div>
       {error&&<p className="form-error" role="alert">{error}</p>}
       <div className="finance-bank-card">
         <div className="finance-bank-card-header">
           <span className="finance-bank-eyebrow">DONATION ACCOUNT</span>
         </div>
-        {editing?<form className="finance-account-form" onSubmit={event=>void persistAccount(event)}>
+        {authPending||!loggedIn?<div className="finance-account-locked" role="status">
+          <LockKeyhole size={21} aria-hidden="true"/>
+          <div>
+            <strong>{authPending?'로그인 상태를 확인하고 있습니다.':'후원 계좌 정보는 비공개입니다.'}</strong>
+            <p>후원 계좌는 로그인 후 확인할 수 있습니다.</p>
+          </div>
+          {!authPending&&<button type="button" className="button button-primary" onClick={onLogin}>로그인 <ArrowRight size={15}/></button>}
+        </div>:editing?<form className="finance-account-form" onSubmit={event=>void persistAccount(event)}>
           <div className="finance-bank-fields">
             <label><span>은행</span><input required maxLength={35} value={editing.bank} onChange={e=>setEditing(p=>p?{...p,bank:e.target.value}:null)}/></label>
             <label><span>계좌번호</span><input required pattern="[0-9-]{7,35}" value={editing.number} onChange={e=>setEditing(p=>p?{...p,number:e.target.value}:null)}/></label>
@@ -94,12 +106,13 @@ export function FinanceLanding({ onDonations, onExpenses, canEditAccount }: { on
             <button type="submit" className="button button-primary" disabled={busy||!accountChanged} aria-disabled={busy||!accountChanged}>저장</button>
             <button type="button" className="outline-action" disabled={busy} onClick={()=>setEditing(null)}>취소</button>
           </div>
-        </form>:<div className="finance-bank-fields">
+        </form>:account?<div className="finance-bank-fields">
           <div><span>은행</span><strong>{account.bank}</strong></div>
           <div><span>계좌번호</span><strong>{account.number}</strong></div>
           <div><span>예금주</span><strong>{account.holder}</strong></div>
-        </div>}
+        </div>:<p className="finance-account-loading" role="status">{error?'후원 계좌 정보를 불러오지 못했습니다.':'후원 계좌 정보를 불러오는 중입니다.'}</p>}
       </div>
+      <p className="finance-support-eligibility">회칙에 따라 <strong>회원인 동아리 부원 및 OB만 후원할 수 있습니다.</strong></p>
       <div className="finance-privacy-note">
         <LockKeyhole size={19} aria-hidden="true" />
         <div>

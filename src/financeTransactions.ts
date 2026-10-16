@@ -5,7 +5,6 @@ export type DonationAccount={bank:string;number:string;holder:string};
 export type AccountVersion=DonationAccount&{updateTime:string|null};
 export type FinanceTransactionInput={dateTime:string;type:'입금'|'출금';amount:string;balance:string;description:string};
 export type FinanceTransaction=FinanceTransactionInput&{id:string;updateTime:string};
-export const DEFAULT_ACCOUNT:DonationAccount={bank:'농협',number:'302-0000-0000-31',holder:'나재원'};
 export const EMPTY_TRANSACTION:FinanceTransactionInput={dateTime:'',type:'출금',amount:'',balance:'',description:''};
 export const TRANSACTION_COLUMNS=['거래일시','거래구분','거래금액','거래 후 잔액','거래내용'] as const;
 
@@ -21,7 +20,7 @@ async function request<T>(path:string,body?:unknown,protectedCall=false):Promise
   if(!res.ok)throw Error(typeof data.error==='string'?data.error:'회비 거래 정보를 처리하지 못했습니다.');
   return data as T;
 }
-export const readDonationAccount=()=>request<{account:DonationAccount}>('account');
+export const readDonationAccount=()=>request<{account:DonationAccount}>('account',undefined,true);
 export const readAccountForManagement=()=>request<{account:AccountVersion}>('account-manage',undefined,true);
 export const saveDonationAccount=(account:DonationAccount,expectedUpdateTime:string|null)=>
   request<{account:AccountVersion}>('account',{account,expectedUpdateTime},true);
