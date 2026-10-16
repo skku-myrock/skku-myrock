@@ -168,7 +168,7 @@ export function News({ canWrite, onWrite, openNotice, notices, loading, error, h
         {loading&&<p role="status">공지사항을 불러오는 중입니다.</p>}
         {!loading&&filtered.length===0&&<EmptyState title="공지사항이 없습니다" description="등록된 공지사항이 없습니다." />}
       </div>
-      <div className="list-bottom"><span>불러온 공지사항 {filtered.length}건</span>{hasMore&&<button type="button" className="outline-action" disabled={moreLoading} onClick={onLoadMore}>{moreLoading?"더 불러오는 중...":"공지사항 더 보기"}</button>}</div>
+      {hasMore&&<div className="list-bottom notice-list-bottom"><button type="button" className="outline-action" disabled={moreLoading} onClick={onLoadMore}>{moreLoading?"더 불러오는 중...":"공지사항 더 보기"}</button></div>}
     </section>
   </>;
 }
@@ -312,11 +312,11 @@ export function Profile({ user, profile, pending, error, notify, onSaved }: {use
   return <><PageHeading tag="MY PROFILE" title="내 정보" description="등록된 회원 정보를 확인하고, 세션과 비밀번호를 변경할 수 있습니다."/>
     <section className="container section-block profile-layout" data-async-busy={saving ? "true" : undefined}>
       <div className="profile-panel"><div className="profile-title"><UserRound size={20}/><h2>회원 정보</h2></div>
-        <p className="profile-help">정보 수정이 필요할 경우 운영진에게 연락 바랍니다.</p>
         <dl className="profile-data"><div><dt>이름</dt><dd>{profile.name}</dd></div><div><dt>학번</dt><dd>{profile.studentId}</dd></div><div><dt>기수</dt><dd>{profile.generation}기</dd></div><div><dt>직책</dt><dd>{profile.positions.length?profile.positions.join(', '):'없음'}</dd></div><div><dt>권한</dt><dd>{profileRoleLabel(profile)}</dd></div></dl>
+        <p className="profile-help">정보 수정이 필요할 경우 운영진에게 연락 바랍니다.</p>
       </div>
       <div className="profile-panel"><div className="profile-title"><Users size={20}/><h2>나의 세션</h2></div>
-        <p className="profile-help">참여하는 세션을 모두 선택할 수 있습니다. 이 정보만 본인이 직접 수정할 수 있습니다.</p>
+        <p className="profile-help">본인의 세션을 선택해주세요. 세션은 중복으로 선택할 수 있습니다.</p>
         <div className="session-options">{sessions.map(item=><label className={selected.includes(item as Session)?'chosen':''} key={item}><input type="checkbox" checked={selected.includes(item as Session)} onChange={()=>toggle(item as Session)}/><span>{item}</span><Check size={17}/></label>)}</div>
         <button className="button button-primary profile-save" type="button" onClick={save} disabled={saving||selected.length===0||selected.join('|')===profile.sessions.join('|')}>{saving?'저장 중...':'세션 저장'} <ArrowRight size={15}/></button>
       </div>
