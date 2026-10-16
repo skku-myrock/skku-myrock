@@ -68,7 +68,12 @@ export default function HandoverNotesEditor({onBack}:{onBack:()=>void}){
  const generationLabel=generationMatch?generationMatch[1]+'기':generation.trim();
  const writerSubtitle=ready&&name?[generationLabel,positions.join(' · '),name].filter(Boolean).join(' '):'작성자 정보를 불러오는 중입니다.';
  return <>
-  <div className="handover-writer-heading"><PageHeading tag="HANDOVER EDITOR" title="인수인계 작성하기" description={writerSubtitle}/></div>
+  <div className="page-heading container handover-writer-heading">
+   <span className="eyebrow">HANDOVER EDITOR</span>
+   <h1>인수인계 작성하기</h1>
+   <p className="handover-writer-subtitle">{writerSubtitle}</p>
+   <p className="handover-writer-guidance">앞으로 모여락을 이끌어갈 후배 운영진들을 위해 선배 운영진 여러분의 경험을 공유해주세요.</p>
+  </div>
   <section className="container section-block handover-editor-page">
    <button type="button" className="schedule-back-button" onClick={onBack}><ArrowLeft size={16}/> 인수인계로 돌아가기</button>
    <p className="handover-editor-intro">현직 운영진과 OB 운영진 모두 작성된 인수인계를 확인할 수 있습니다.</p>
@@ -129,16 +134,14 @@ export function HandoverNotesView({onBack}:{onBack:()=>void}){
    </div>
   </section>
   {selected&&<div className="handover-preview-backdrop" onMouseDown={event=>{if(event.target===event.currentTarget)setSelectedIndex(null);}}>
-   <section className="handover-preview-dialog" role="dialog" aria-modal="true" aria-labelledby="handover-preview-title" aria-describedby="handover-preview-description">
+   <section className="handover-preview-dialog" role="dialog" aria-modal="true" aria-labelledby="handover-preview-title">
     <div className="handover-preview-header">
      <div>
-      <span className="eyebrow">HANDOVER PREVIEW</span>
-      <h2 id="handover-preview-title">{selected.name}의 인수인계</h2>
-      <p>{selected.generation} · {selected.positions}</p>
+      <span className="eyebrow">HANDOVER NOTE</span>
+      <h2 id="handover-preview-title">{[selected.generation,selected.positions.split(',').map(position=>position.trim()).join(' · '),selected.name].join(' ')}</h2>
      </div>
      <button type="button" className="handover-preview-close" autoFocus aria-label="닫기" onClick={()=>setSelectedIndex(null)}><X size={20}/></button>
     </div>
-    <p id="handover-preview-description" className="handover-preview-hint">실제 작성된 기록이 아닌 예시 내용입니다.</p>
     <div className="handover-preview-notes">{selected.notes.map(note=><section className="handover-preview-note" key={note.title}>
      <h3>{note.title}</h3><p>{note.content}</p>
     </section>)}</div>
