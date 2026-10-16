@@ -50,14 +50,6 @@ export function ScheduleLanding({canCreateTeam,loggedIn,authPending,onLogin,onCr
   <div className="page-heading container"><span className="eyebrow">WHEN2MEET</span>
    <h1>합주 시간 조율</h1><p>새 시간표를 만들거나, 내가 참여한 합주 시간표를 확인하세요.</p>
   </div>
-  <aside className="container schedule-usage-guide" aria-label="시간표 사용 안내">
-   <div className="schedule-usage-heading"><strong>시간표 사용 안내</strong></div>
-   <ol className="schedule-usage-list">
-    <li><span aria-hidden="true">01</span><p>학번으로 다른 부원에게 초대를 보내고, 수락하면 함께 시간을 조율할 수 있습니다.</p></li>
-    <li><span aria-hidden="true">02</span><p>30분 단위로 가능한 시간을 선택하고 저장하기를 눌러 반영합니다.</p></li>
-    <li><span aria-hidden="true">03</span><p>합주 시간 확정 및 구성팀 시간표는 추후 연결할 예정입니다.</p></li>
-   </ol>
-  </aside>
   <section className="container section-block schedule-landing">
    <div className="schedule-action-grid">
     <button type="button" className="schedule-create-card" onClick={loggedIn?onCreate:onLogin}>
