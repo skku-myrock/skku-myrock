@@ -180,7 +180,7 @@ export default function ScheduleCreation({onBack,onCreated,teamMode=false}:{onBa
       </div>
       {teamMode&&<section className="schedule-team-section" aria-labelledby="schedule-team-heading">
         <div className="schedule-team-heading">
-          <div><h2 id="schedule-team-heading">구성팀 명단</h2><p>함께 시간표를 사용할 부원을 직접 추가합니다. 초대 수락은 필요하지 않습니다.</p></div>
+          <div><h2 id="schedule-team-heading">구성팀 명단</h2><p>함께 시간표를 사용할 부원을 직접 추가합니다.</p></div>
         </div>
         {teamMembers.length===0?<p className="schedule-team-empty">추가된 구성팀 인원이 없습니다.</p>:
          <ul className="schedule-team-members">{teamMembers.map(member=><li key={member.uid}><Users size={14}/><span>{member.name} ({member.studentId})</span><button type="button" aria-label={member.name+' 제외'} disabled={creating} onClick={()=>setTeamMembers(previous=>previous.filter(item=>item.uid!==member.uid))}><Trash2 size={15}/> 삭제</button></li>)}</ul>}
@@ -189,7 +189,7 @@ export default function ScheduleCreation({onBack,onCreated,teamMode=false}:{onBa
         {(!title.trim()||dates.size===0)&&<p>제목과 후보 날짜를 선택해 주세요.</p>}
         {teamMode&&teamMembers.length===0&&<p>구성팀 인원을 한 명 이상 추가해 주세요.</p>}
         <div className="schedule-create-actions">
-          {teamMode&&<button type="button" className="button button-secondary" disabled={!title.trim()||dates.size===0||creating} onClick={()=>setMemberDialog(true)}><Plus size={15}/> 인원 추가</button>}
+          {teamMode&&<button type="button" className="button button-secondary" disabled={creating} onClick={()=>setMemberDialog(true)}><Plus size={15}/> 인원 추가</button>}
           <button type="button" className="button button-primary"
             disabled={!title.trim()||dates.size===0||creating||(teamMode&&teamMembers.length===0)}
             onClick={()=>void submit({title:title.trim(),dates:[...dates].sort(),startHour,endHour})}>{creating?'생성 중…':'시간표 생성'}</button>
