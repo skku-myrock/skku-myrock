@@ -190,7 +190,7 @@ test('schedule routing, titles, browser history and back button remain intact', 
 });
 
 test('the time axis and its header stay anchored during horizontal date scrolling', () => {
-  const corner = styles.match(/\.schedule-date-corner\s*\{([^}]*)\}/)?.[1] ?? '';
+  const corner = [...styles.matchAll(/\.schedule-date-corner\s*\{([^}]*)\}/g)].at(-1)?.[1] ?? '';
   const axis = styles.match(/\.schedule-time-axis\s*\{([^}]*)\}/)?.[1] ?? '';
   assert.match(corner, /position:\s*sticky;/);
   assert.match(corner, /left:\s*0;/);
