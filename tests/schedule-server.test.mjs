@@ -101,7 +101,11 @@ function setupMock(){
   }
   throw Error('Unexpected firestore request '+method+' '+raw);
  };
- return {documents,stats};
+ function registerStudent(studentId,uid,name){
+  auth[studentId+'@members.skku-myrock.firebaseapp.com']=uid;
+  createDoc(root+'/users/'+uid,toFields({name,studentId,role:'member'}));
+ }
+ return {documents,stats,registerStudent};
 }
 async function call(handler,uid,method,path,body,params={}){
  const request=new Request(base+path,{
@@ -114,7 +118,7 @@ async function call(handler,uid,method,path,body,params={}){
 
 test('full Firestore invitation, consent and explicit bitset save lifecycle uses only mocked services',async()=>{
  const realFetch=globalThis.fetch;
- const {documents,stats}=setupMock();
+ const {documents,stats,registerStudent}=setupMock();
  try{
   const scheduleInput={title:'실제 합주',dates:['2026-10-19','2026-10-20'],startHour:9,endHour:11};
   const created=await call(create,alice,'POST','/api/schedules',scheduleInput);
@@ -130,10 +134,23 @@ test('full Firestore invitation, consent and explicit bitset save lifecycle uses
   const nonexistent=await call(invite,alice,'POST','/api/schedules/'+id+'/invite',{studentId:'2026999999'},{id});
   const invited=await call(invite,alice,'POST','/api/schedules/'+id+'/invite',{studentId:'2026300002'},{id});
   assert.equal(invited.status,200,JSON.stringify(invited));
-  assert.deepEqual(invited.data,nonexistent.data);
+  assert.equal(nonexistent.status,200);
+  assert.equal(nonexistent.data.message,'존재하지 않는 학번입니다.');
+  assert.equal(nonexistent.data.status,'not_found');
+  assert.equal(invited.data.status,'pending');
   const pending=(await call(ownerInvitations,alice,'GET','/api/schedules/'+id+'/invitations',undefined,{id})).data.invitations;
   assert.deepEqual(pending.map(item=>item.studentId).sort(),['2026300002','2026999999']);
   assert.ok(pending.every(item=>!('name'in item)&&!('recipientUid'in item)));
+  assert.deepEqual(pending.map(item=>[item.studentId,item.status]).sort((a,b)=>a[0].localeCompare(b[0])),[
+   ['2026300002','pending'],['2026999999','not_found'],
+  ]);
+  // Later registration does not turn a failed attempt into a deliverable invitation.
+  const laterUid='later1234567890';
+  registerStudent('2026999999',laterUid,'후가입');
+  assert.equal((await call(inbox,laterUid,'GET','/api/schedule-invitations')).data.invitations.length,0);
+  const manualRetry=await call(invite,alice,'POST','/api/schedules/'+id+'/invite',{studentId:'2026999999'},{id});
+  assert.equal(manualRetry.data.status,'pending');
+  assert.equal((await call(inbox,laterUid,'GET','/api/schedule-invitations')).data.invitations.length,1);
   assert.equal((await call(ownerInvitations,bob,'GET','/api/schedules/'+id+'/invitations',undefined,{id})).status,403);
   const aliceBefore=(await call(detail,alice,'GET','/api/schedules/'+id,undefined,{id})).data;
   assert.equal(aliceBefore.people.length,1,'inviting must not reveal or add recipient');
@@ -187,11 +204,16 @@ test('pending invitation cancellation removes access before acceptance without r
   const id=result.data.id;
   const known=await call(invite,alice,'POST','/api/schedules/'+id+'/invite',{studentId:'2026300002'},{id});
   const unknown=await call(invite,alice,'POST','/api/schedules/'+id+'/invite',{studentId:'2026999999'},{id});
-  assert.equal(known.status,200);assert.deepEqual(known.data,unknown.data);
+  assert.equal(known.status,200);assert.equal(known.data.status,'pending');
+  assert.equal(unknown.status,200);assert.equal(unknown.data.status,'not_found');
+  assert.equal(unknown.data.message,'존재하지 않는 학번입니다.');
   const p=await call(ownerInvitations,alice,'GET','/api/schedules/'+id+'/invitations',undefined,{id});
   assert.equal(p.status,200,JSON.stringify(p));
   assert.deepEqual(p.data.invitations.map(x=>x.studentId).sort(),['2026300002','2026999999']);
   assert.ok(p.data.invitations.every(x=>!Object.hasOwn(x,'recipientUid')&&!Object.hasOwn(x,'name')));
+  assert.deepEqual(p.data.invitations.map(x=>[x.studentId,x.status]).sort((a,b)=>a[0].localeCompare(b[0])),[
+   ['2026300002','pending'],['2026999999','not_found'],
+  ]);
   assert.equal((await call(ownerInvitations,eve,'GET','/api/schedules/'+id+'/invitations',undefined,{id})).status,403);
   const knownId=p.data.invitations.find(x=>x.studentId==='2026300002').id;
   const unknownId=p.data.invitations.find(x=>x.studentId==='2026999999').id;
