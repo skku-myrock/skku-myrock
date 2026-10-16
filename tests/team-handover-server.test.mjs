@@ -38,9 +38,10 @@ function setup(){
  const json=(body,status=200)=>new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json'}});
  const prefix='projects/skku-myrock/databases/(default)/documents/';
  globalThis.fetch=async(url,init={})=>{
-  const raw=String(url),method=init.method??'GET',body=init.body?JSON.parse(init.body):null;
+  const raw=String(url),method=init.method??'GET';
   if(raw.includes('/service_accounts/v1/jwk/'))return json({keys:[jwk]});
   if(raw.startsWith('https://oauth2.googleapis.com/token'))return json({access_token:'dummy',expires_in:3600});
+  const body=init.body?JSON.parse(init.body):null;
   if(raw===root+':runQuery'&&method==='POST'){
    const filter=body.structuredQuery.where.compositeFilter.filters[0].fieldFilter,field=filter.field.fieldPath;
    const prefixText=filter.value.stringValue;
