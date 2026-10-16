@@ -147,9 +147,7 @@ export default function ScheduleDraft({initial,onBack}:{initial:unknown;onBack:(
       </button>
       <div className="schedule-detail-heading">
         <div>
-          <span className="schedule-detail-label">임시 시간표 · 저장되지 않음</span>
           <h2>시간 조율 현황</h2>
-          <p>{dates.length}개 후보 날짜 · {formatTime(draft.startHour*60)}–{formatTime(draft.endHour*60)} · {people.length}명 초대 명단</p>
         </div>
         <button type="button" className="outline-action schedule-roster-edit-trigger" onClick={()=>{setInviteNotice('');setRosterOpen(true);}}>
           <Users size={16} aria-hidden="true"/> 명단 수정
@@ -195,7 +193,7 @@ export default function ScheduleDraft({initial,onBack}:{initial:unknown;onBack:(
               </div>
             </div>
           </div>
-          <p className="schedule-detail-footnote">한 칸은 30분입니다. 체크한 명단의 임시 가능 시간만 표시하며, 선택한 내용은 서버에 저장되지 않습니다.</p>
+          <p className="schedule-detail-footnote">한 칸은 30분입니다.</p>
         </div>
         <aside className="schedule-people-panel schedule-draft-people-panel" aria-label="시간표 필터 및 현재 명단">
           <span className="schedule-side-eyebrow">시간표 표시</span>
@@ -219,9 +217,12 @@ export default function ScheduleDraft({initial,onBack}:{initial:unknown;onBack:(
             {people.length===0&&<p className="schedule-draft-empty-roster">아직 명단에 사람이 없습니다.</p>}
           </div>
           {selectedCell&&<p className="schedule-draft-hover">{shortDate(dates[selectedCell.day])} · {formatTime(slots[selectedCell.slot])}–{formatTime(slots[selectedCell.slot]+30)}</p>}
-          <p className="schedule-side-help">체크한 사람들의 임시 가능 시간만 표시합니다. 30분 칸을 칠하면 체크한 사람들에게 적용되며, 실제 부원 정보나 서버에는 저장되지 않습니다.</p>
           {selectedNames.length===0&&<p className="schedule-side-warning">표시할 사람을 한 명 이상 선택해 주세요.</p>}
         </aside>
+      </div>
+      <div className="schedule-draft-save-row">
+        <button type="button" className="button button-primary" disabled
+          title="시간표 저장 기능은 추후 구현될 예정입니다.">저장하기</button>
       </div>
     </section>
     {rosterOpen&&<div className="schedule-roster-backdrop" role="presentation"
