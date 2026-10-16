@@ -59,3 +59,21 @@
 .handover-archive-row .outline-action{min-height:34px;justify-content:center}
 .handover-archive-row .outline-action:disabled{opacity:.55;cursor:not-allowed}
 @media(max-width:620px){.handover-archive-row{grid-template-columns:65px minmax(0,1fr);gap:10px;padding:16px 9px}.handover-archive-name{grid-column:1}.handover-archive-row .outline-action{grid-column:2;justify-self:end;width:100px}}
+
+/* Writer identity is a heading-like subtitle, not ordinary help text. */
+.handover-writer-heading .page-heading>p{font-size:clamp(24px,3vw,31px);font-weight:650;letter-spacing:-.045em;line-height:1.4;color:var(--ink);overflow-wrap:anywhere}
+.handover-preview-backdrop{position:fixed;inset:0;z-index:140;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(15,26,21,.58)}
+.handover-preview-dialog{width:min(700px,100%);max-height:calc(100vh - 40px);overflow-y:auto;overscroll-behavior:contain;background:#fff;padding:28px 30px;box-shadow:0 20px 70px rgba(0,0,0,.22)}
+.handover-preview-header{display:flex;align-items:flex-start;justify-content:space-between;gap:24px}
+.handover-preview-header .eyebrow{display:block;margin-bottom:11px}
+.handover-preview-header h2{font-size:25px;letter-spacing:-.05em;margin:0 0 9px;line-height:1.35}
+.handover-preview-header p{margin:0;font-size:13px;color:var(--muted);line-height:1.65}
+.handover-preview-close{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border:0;background:transparent;color:var(--muted);flex-shrink:0}
+.handover-preview-close:hover{background:#f1f5f3;color:var(--ink)}
+.handover-preview-hint{margin:18px 0 8px;padding:11px 13px;background:#f5f8f6;color:#67786c;font-size:12px;line-height:1.7}
+.handover-preview-notes{display:flex;flex-direction:column}
+.handover-preview-note{padding:23px 0;border-bottom:1px solid var(--border)}
+.handover-preview-note h3{margin:0 0 12px;font-size:16px;letter-spacing:-.035em}
+.handover-preview-note p{margin:0;font-size:13px;line-height:1.9;color:#576660;white-space:pre-wrap;overflow-wrap:anywhere}
+.handover-preview-footer{display:flex;justify-content:flex-end;padding-top:20px}
+@media(max-width:620px){.handover-writer-heading .page-heading>p{font-size:24px}.handover-preview-backdrop{padding:12px}.handover-preview-dialog{padding:22px 18px;max-height:calc(100vh - 24px)}.handover-preview-header h2{font-size:21px}.handover-preview-note{padding:18px 0}}
