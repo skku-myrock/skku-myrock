@@ -122,7 +122,7 @@ test('existing management-role gating and unimplemented creation buttons are pre
   assert.match(app, /canCreateTeam=\{Boolean\(user && !authPending && currentLevel\)\}/);
   assert.match(app, /const currentLevel=managementLevel\(profile,hasSystemClaim\)/);
   assert.match(app, /profile\.role === 'part_leader' \|\| profile\.role === 'staff' \|\| profile\.role === 'president'/);
-  assert.match(app, /onCreate=\{\(\) => notify\('시간표 만들기 기능은 추후 연결할 예정입니다\.'\)\}/);
+  assert.match(app, /onCreate=\{\(\) => navigate\('schedule-create'\)\}/);
   assert.match(app, /onCreateTeam=\{\(\) => notify\('구성팀 시간표 만들기 기능은 추후 연결할 예정입니다\.'\)\}/);
 });
 

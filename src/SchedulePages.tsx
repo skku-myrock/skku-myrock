@@ -85,7 +85,7 @@ export function ScheduleLanding({
           <span className="schedule-action-text">
             <strong>시간표 만들기</strong>
             <small>함께 합주할 사람들과 가능한 시간을 조율해 보세요.</small>
-            <em>기능 준비 중</em>
+            <em>날짜·시간 설정 화면 열기</em>
           </span>
           <ArrowUpRight size={19} aria-hidden="true" />
         </button>
