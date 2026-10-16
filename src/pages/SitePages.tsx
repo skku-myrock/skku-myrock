@@ -19,6 +19,7 @@ import NoticeImageCarousel from '../NoticeImageCarousel';
 import type {Navigate,Notify} from '../app/siteNavigation';
 import {equipmentStatusTone} from '../equipmentDemo';
 import type {EquipmentItem} from '../equipmentDemo';
+import type {EquipmentAction} from '../equipmentApi';
 
 const profileRoleLabel = (profile: MemberProfile): string =>
   profile.role === 'president' ? '회장단'
@@ -219,24 +220,44 @@ export function Gallery({ canRegister }: { canRegister: boolean }) {
   </>;
 }
 
-export function Equipment({notify,items,canManage,onManage}:{
- notify:Notify;items:EquipmentItem[];canManage:boolean;onManage:()=>void;
+export function Equipment({items,canManage,onManage,loggedIn,onLogin,loading,error,busyId,onRefresh,onAction}:{
+ items:EquipmentItem[];canManage:boolean;onManage:()=>void;
+ loggedIn:boolean;onLogin:()=>void;loading:boolean;error:string;busyId:string|null;onRefresh:()=>void;
+ onAction:(id:string,action:EquipmentAction)=>void;
 }){
  return <><PageHeading tag="EQUIPMENT" title="장비 대여" description="동아리 장비 목록을 보고 대여를 신청하는 공간입니다." />
   <section className="container section-block">
    <div className="toolbar toolbar-bottom"><div><h2 className="plain-h2">장비 목록</h2></div>
     <div className="toolbar-actions">{canManage&&<button type="button" className="button button-secondary" onClick={onManage}>장비 관리 <ArrowRight size={15}/></button>}
-     <button type="button" className="button button-secondary" onClick={()=>notify()}><ClipboardList size={16}/> 내 대여 내역</button>
+     <button type="button" className="button button-secondary" onClick={()=>document.getElementById('equipment-my-requests')?.scrollIntoView({behavior:'smooth'})}><ClipboardList size={16}/> 내 대여 내역</button>
+     <button type="button" className="outline-action" onClick={onRefresh} disabled={loading||busyId!==null}>새로고침</button>
     </div>
    </div>
+   {error&&<p className="form-error" role="alert">{error}</p>}
+   {loading&&<p role="status">장비 목록을 불러오는 중입니다.</p>}
    <div className="equipment-list">{items.map(g=><div className="equipment-row" key={g.id}>
     <Placeholder label="장비 사진" />
     <div className="equipment-info"><h3>{g.name}</h3><p>{g.product}</p>
      <span className={"equipment-status equipment-status-"+equipmentStatusTone(g.status)}>{g.status}</span>
+     {g.myPosition!==null&&<small className="equipment-own-position">내 신청 대기 순번: {g.myPosition}순위</small>}
     </div>
-    <button type="button" className="outline-action" onClick={()=>notify()}>대여 신청 <ArrowRight size={15}/></button>
+    {g.isBorrower?g.status==='반납 확인중'?
+     <button type="button" className="outline-action" disabled>반납 확인중</button>:
+     <button type="button" className="outline-action" disabled={loading||busyId!==null} onClick={()=>onAction(g.id,'return')}>반납하기 <ArrowRight size={15}/></button>
+     :g.myPosition!==null?
+      <button type="button" className="outline-action" disabled={loading||busyId!==null} onClick={()=>onAction(g.id,'cancel')}>신청 취소</button>
+     :g.status==='대여중'||g.status==='반납 확인중'?
+      <button type="button" className="outline-action" disabled>{g.status}</button>
+     :<button type="button" className="outline-action" disabled={loading||busyId!==null} onClick={()=>loggedIn?onAction(g.id,'apply'):onLogin()}>대여 신청 <ArrowRight size={15}/></button>}
    </div>)}</div>
-   {items.length===0&&<p className="equipment-manage-empty">등록된 장비가 없습니다.</p>}
+   {!loading&&items.length===0&&<p className="equipment-manage-empty">등록된 장비가 없습니다.</p>}
+   <section id="equipment-my-requests" className="equipment-my-requests">
+    <h2 className="plain-h2">내 대여 내역</h2>
+    {!loggedIn?<p>대여 신청과 내역 조회는 로그인 후 이용할 수 있습니다.</p>:
+     items.filter(item=>item.myPosition!==null||item.isBorrower).length===0?<p>대여 신청 또는 대여 중인 장비가 없습니다.</p>:
+     <div>{items.filter(item=>item.myPosition!==null||item.isBorrower).map(item=>
+      <p key={item.id}>{item.name} · {item.isBorrower?item.status:'승인 대기 '+item.myPosition+'순위'}</p>)}</div>}
+   </section>
    <div className="process-note"><strong>대여 절차</strong><div>{['대여 신청','운영진 승인','장비 반납','반납 확인'].map((step,i)=><span key={step}>{i+1}. {step}</span>)}</div></div>
   </section>
  </>;
