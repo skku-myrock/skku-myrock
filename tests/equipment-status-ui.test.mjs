@@ -19,8 +19,10 @@ test('equipment sample rows have concrete model names, compact spacing and acces
   ['마이크','슈어 SM98','대여 승인 대기중','pending'],
   ['DI 박스','래디얼 ProDI','대여중','borrowed'],
   ['마이크 스탠드','K&M 210/9','반납 확인중','returning'],
- ])assert.ok(data.includes(`name:'${name}',product:'${product}',status:'${status}'`));
- assert.ok(data.includes(`case '${status}':return '${tone}'`));
+ ]){
+  assert.ok(data.includes(`name:'${name}',product:'${product}',status:'${status}'`));
+  assert.ok(data.includes(`case '${status}':return '${tone}'`));
+ }
  assert.match(pages,/className=\{"equipment-status equipment-status-"\+equipmentStatusTone\(g\.status\)\}>\{g\.status\}<\/span>/);
  assert.doesNotMatch(data,/제품명 미등록/);
  assert.match(styles,/\.equipment-info h3\{font-size:15px;margin:0 0 5px\}/);
