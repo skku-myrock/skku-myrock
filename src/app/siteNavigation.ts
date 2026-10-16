@@ -1,8 +1,8 @@
 import {matchPath} from 'react-router-dom';
 
 export type Page = 'home' | 'about' | 'about-manage' | 'news' | 'notice-detail' | 'notice-compose' | 'notice-edit'
- | 'schedule' | 'schedule-create' | 'schedule-detail' | 'gallery' | 'equipment' | 'equipment-manage' | 'finance' | 'donations'
- | 'donation-manage' | 'expenses' | 'expense-manage' | 'handover' | 'members' | 'profile';
+ | 'schedule' | 'schedule-create' | 'schedule-team-create' | 'schedule-detail' | 'gallery' | 'equipment' | 'equipment-manage' | 'finance' | 'donations'
+ | 'donation-manage' | 'expenses' | 'expense-manage' | 'handover' | 'handover-view' | 'handover-write' | 'members' | 'profile';
 export type Navigate = (page:Page)=>void;
 export type Notify = (message?:string)=>void;
 export type NavItem = {id:Page;label:string};
@@ -26,6 +26,7 @@ export const routeDefinitions:{page:Page;path:string}[]=[
  {page:'notice-detail',path:'/news/:id'},
  {page:'schedule',path:'/schedule'},
  {page:'schedule-create',path:'/schedule/create'},
+ {page:'schedule-team-create',path:'/schedule/create/team'},
  {page:'schedule-detail',path:'/schedule/:id'},
  {page:'gallery',path:'/gallery'},
  {page:'equipment',path:'/equipment'},
@@ -36,6 +37,8 @@ export const routeDefinitions:{page:Page;path:string}[]=[
  {page:'expenses',path:'/finance/expenses'},
  {page:'expense-manage',path:'/finance/expenses/manage'},
  {page:'handover',path:'/handover'},
+ {page:'handover-view',path:'/handover/view'},
+ {page:'handover-write',path:'/handover/write'},
  {page:'members',path:'/members'},
  {page:'profile',path:'/profile'},
 ];
