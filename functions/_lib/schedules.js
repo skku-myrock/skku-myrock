@@ -4,6 +4,17 @@ import {getFirestoreDocument,googleRequest,verifyFirebaseToken} from './google.j
 export const SCHEDULES=FIRESTORE_ROOT+'/schedules';
 export const INVITATIONS=FIRESTORE_ROOT+'/scheduleInvitations';
 export const THROTTLES=FIRESTORE_ROOT+'/scheduleInviteThrottles';
+// Firestore REST endpoints use full HTTPS URLs, but commit Write.update.name
+// and Write.delete require resource names ("projects/..."), not URLs.
+const FIRESTORE_API_BASE='https://firestore.googleapis.com/v1/';
+const DOCUMENT_RESOURCE=FIRESTORE_ROOT.slice(FIRESTORE_API_BASE.length)+'/';
+export function firestoreResourceName(name){
+ const resource=typeof name==='string'&&name.startsWith(FIRESTORE_API_BASE)
+  ?name.slice(FIRESTORE_API_BASE.length):name;
+ if(typeof resource!=='string'||!resource.startsWith(DOCUMENT_RESOURCE)||
+  resource.length===DOCUMENT_RESOURCE.length)throw new Error('Firestore 문서 리소스 경로가 올바르지 않습니다.');
+ return resource;
+}
 const ID_PATTERN=/^[A-Za-z0-9_-]{8,128}$/;
 export const scheduleId=value=>{if(typeof value!=='string'||!ID_PATTERN.test(value))reject('시간표 ID가 올바르지 않습니다.');return value;};
 export const inviteId=value=>{if(typeof value!=='string'||!ID_PATTERN.test(value))reject('초대 ID가 올바르지 않습니다.');return value;};
@@ -63,7 +74,14 @@ export function validBits(value,schedule){
 export const docData=doc=>({...docFields(doc),id:doc.name.split('/').pop(),updateTime:doc.updateTime??''});
 export function fields(object){return toFields(object);}
 export async function commit(env,writes){
- const result=await googleRequest(env,FIRESTORE_ROOT+':commit',{method:'POST',body:{writes}});
+ // Normalize all writes, including manually constructed bytesValue documents
+ // and deletes, before calling the Google API.
+ const normalized=writes.map(write=>({
+  ...write,
+  ...(write.update?{update:{...write.update,name:firestoreResourceName(write.update.name)}}:{}),
+  ...(write.delete?{delete:firestoreResourceName(write.delete)}:{}),
+ }));
+ const result=await googleRequest(env,FIRESTORE_ROOT+':commit',{method:'POST',body:{writes:normalized}});
  if(!result.ok)err(result,'Firestore atomic commit');
  return result.data;
 }
@@ -75,6 +93,6 @@ export async function queryBy(env,collection,field,op,value,limit=100){
  return (Array.isArray(result.data)?result.data:[]).map(item=>item.document).filter(Boolean);
 }
 export const toWrite=(name,object,precondition)=>({
- update:{name,fields:fields(object)},...(precondition?{currentDocument:precondition}:{})
+ update:{name:firestoreResourceName(name),fields:fields(object)},...(precondition?{currentDocument:precondition}:{})
 });
 export function requireStudentId(body){return validateStudentId(body?.studentId);}

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import ts from 'typescript';
-import {validateScheduleInput,emptyBits,validBits} from '../functions/_lib/schedules.js';
+import {validateScheduleInput,emptyBits,validBits,firestoreResourceName,toWrite} from '../functions/_lib/schedules.js';
 const read=path=>readFile(new URL('../'+path,import.meta.url),'utf8');
 const source=await read('src/scheduleGrid.ts');
 const javascript=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText;
@@ -94,4 +94,14 @@ test('backend requests verify identities and separate consent from participant c
  assert.match(remove,/requireOwner\(schedule,caller\.uid\)/);
  assert.match(helpers,/verifyFirebaseToken\(request\)/);
  assert.match(helpers,/getFirestoreDocument\(env,claims\.sub\)/);
+});
+
+test('Firestore commit document names use resource paths rather than REST endpoint URLs',()=>{
+ const url='https://firestore.googleapis.com/v1/projects/skku-myrock/databases/(default)/documents/schedules/test-id';
+ const path='projects/skku-myrock/databases/(default)/documents/schedules/test-id';
+ assert.equal(firestoreResourceName(url),path);
+ assert.equal(firestoreResourceName(path),path);
+ assert.equal(toWrite(url,{title:'합주'}).update.name,path);
+ assert.throws(()=>firestoreResourceName('https://example.com/documents/schedules/test-id'));
+ assert.throws(()=>firestoreResourceName('projects/unrelated/databases/(default)/documents/schedules/test-id'));
 });
