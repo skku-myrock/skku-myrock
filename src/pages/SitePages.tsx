@@ -332,7 +332,7 @@ export function Profile({ user, profile, pending, error, notify, onSaved }: {use
   }
   return <><PageHeading tag="MY PROFILE" title="내 정보" description="등록된 회원 정보를 확인하고, 세션과 비밀번호를 변경할 수 있습니다."/>
     <section className="container section-block profile-layout" data-async-busy={saving ? "true" : undefined}>
-      <div className="profile-panel"><div className="profile-title"><UserRound size={20}/><h2>회원 정보</h2></div>
+      <div className="profile-panel profile-details-panel"><div className="profile-title"><UserRound size={20}/><h2>회원 정보</h2></div>
         <dl className="profile-data"><div><dt>이름</dt><dd>{profile.name}</dd></div><div><dt>학번</dt><dd>{profile.studentId}</dd></div><div><dt>기수</dt><dd>{profile.generation}기</dd></div><div><dt>직책</dt><dd>{profile.positions.length?profile.positions.join(', '):'없음'}</dd></div><div><dt>권한</dt><dd>{profileRoleLabel(profile)}</dd></div></dl>
         <p className="profile-help">정보 수정이 필요할 경우 운영진에게 연락 바랍니다.</p>
       </div>
