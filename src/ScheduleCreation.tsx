@@ -112,7 +112,7 @@ export default function ScheduleCreation({onBack}:{onBack:()=>void}){
               onClick={event=>{if(event.detail===0&&!cell.past)toggleKeyboard(cell);}}>
               {cell.day===1&&cell.iso.slice(0,7)!==month?<small>{cell.month}월</small>:null}
               {cell.day}
-            </button>)))}
+            </button>))}
           </div>
           <button type="button" className="schedule-calendar-expand" aria-expanded={expanded}
             aria-label={expanded?'달력 접기':'달력 더 보기'} onClick={()=>{brush.current=null;setExpanded(value=>!value);}}>
