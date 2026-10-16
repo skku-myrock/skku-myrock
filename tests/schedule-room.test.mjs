@@ -65,7 +65,7 @@ test('only the viewer can paint their own selection and group filtering is read-
 });
 test('backend requests verify identities and separate consent from participant creation',async()=>{
  const [
-  create,get,save,invite,inbox,respond,remove,helpers
+  create,get,save,invite,inbox,respond,remove,helpers,ownerInvites,cancelInvites
  ]=await Promise.all([
   read('functions/api/schedules/index.js'),
   read('functions/api/schedules/[id]/index.js'),
@@ -75,6 +75,8 @@ test('backend requests verify identities and separate consent from participant c
   read('functions/api/schedule-invitations/[id]/respond.js'),
   read('functions/api/schedules/[id]/members/[uid].js'),
   read('functions/_lib/schedules.js'),
+  read('functions/api/schedules/[id]/invitations.js'),
+  read('functions/api/schedules/[id]/cancel-invite.js'),
  ]);
  for(const file of [create,get,save,invite,inbox,respond,remove])
   assert.match(file,/callerProfile\(request,env\)/);
@@ -83,7 +85,13 @@ test('backend requests verify identities and separate consent from participant c
  assert.match(save,/currentDocument\.updateTime/);
  assert.match(save,/url\.searchParams\.set\('currentDocument\.updateTime',current\.updateTime\)/);
  assert.match(invite,/const GENERIC='초대 요청을 접수했습니다\.'/);
- assert.match(invite,/getFirestoreDocument\(env,uid\)/);
+ assert.match(invite,/getFirestoreDocument\(env,candidateUid\)/);
+ assert.match(invite,/status:'pending'/);
+ assert.match(ownerInvites,/requireOwner\(schedule,caller\.uid\)/);
+ assert.match(ownerInvites,/invitation\.studentId/);
+ assert.match(cancelInvites,/requireOwner\(schedule,caller\.uid\)/);
+ assert.match(cancelInvites,/invitation\.status!=='pending'/);
+ assert.match(cancelInvites,/status:'cancelled'/);
  assert.match(invite,/count>=20/);
  assert.match(invite,/requireOwner\(schedule,caller\.uid\)/);
  assert.match(inbox,/recipientUid','EQUAL',caller\.uid/);
@@ -104,4 +112,19 @@ test('Firestore commit document names use resource paths rather than REST endpoi
  assert.equal(toWrite(url,{title:'합주'}).update.name,path);
  assert.throws(()=>firestoreResourceName('https://example.com/documents/schedules/test-id'));
  assert.throws(()=>firestoreResourceName('projects/unrelated/databases/(default)/documents/schedules/test-id'));
+});
+
+test('roster owner can see and cancel student-ID-only pending invitations',async()=>{
+ const [view,api,css]=await Promise.all([
+  read('src/ScheduleRoom.tsx'),read('src/scheduleApi.ts'),read('src/styles/schedule.css')
+ ]);
+ assert.match(view,/초대 대기 명단 \(\{pendingInvites\.length\}\)/);
+ assert.match(view,/item\.studentId/);
+ assert.match(view,/await cancelScheduleInvitation\(id,item\.id\)/);
+ assert.match(view,/await listPendingScheduleInvitations\(id\)/);
+ assert.match(view,/await loadPending\(\)/);
+ assert.match(view,/학번의 회원 가입 여부는 표시하지 않습니다/);
+ assert.match(api,/export type PendingScheduleInvitation/);
+ assert.match(api,/export const cancelScheduleInvitation/);
+ assert.match(css,/\.schedule-roster-pending-list\{/);
 });
