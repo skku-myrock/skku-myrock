@@ -72,3 +72,29 @@ test('draft view keeps 70px date width and 20px 30-minute slots, with accessible
  assert.match(app,/canCreateTeam=\{Boolean\(user && !authPending && currentLevel\)\}/);
  assert.doesNotMatch(draft,/fetch\(|addDoc\(|setDoc\(|updateDoc\(/);
 });
+
+test('draft participant filters match the original all/everyone options and no block-count display',async()=>{
+ const draft=await read('src/ScheduleDraft.tsx');
+ const css=await read('src/styles/schedule.css');
+ assert.match(draft,/const \[mode,setMode\]=useState<ViewMode>\('all'\)/);
+ assert.match(draft,/const \[selectedNames,setSelectedNames\]=useState<string\[\]>/);
+ assert.match(draft,/aria-pressed=\{mode==='all'\}/);
+ assert.match(draft,/aria-pressed=\{mode==='everyone'\}/);
+ assert.match(draft,/모임 전체<\/button>/);
+ assert.match(draft,/모두 되는 시간<\/button>/);
+ assert.match(draft,/checked=\{selectedNames\.includes\(name\)\}/);
+ assert.match(draft,/onChange=\{\(\)=>togglePerson\(name\)\}/);
+ assert.match(draft,/onClick=\{selectEveryone\}>모두 선택/);
+ assert.match(draft,/availableCount\(key\)/);
+ assert.match(draft,/mode==='all'\?available>0:available===total/);
+ assert.doesNotMatch(draft,/칸 선택|selected\.size|schedule-draft-selected-count/);
+ assert.match(css,/\.schedule-filter-options/);
+});
+test('roster removal requires explicit confirmation and updates filter selection',async()=>{
+ const draft=await read('src/ScheduleDraft.tsx');
+ assert.match(draft,/window\.confirm\(name\+'을 명단에서 제외하시겠습니까\?'\)/);
+ assert.match(draft,/if\(!window\.confirm[^\n]+\)return;/);
+ assert.match(draft,/setPeople\(current=>current\.filter\(person=>person!==name\)\)/);
+ assert.match(draft,/setSelectedNames\(current=>current\.filter\(person=>person!==name\)\)/);
+ assert.match(draft,/delete next\[name\]/);
+});
