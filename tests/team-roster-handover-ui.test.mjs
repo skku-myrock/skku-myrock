@@ -87,3 +87,11 @@ test('handover dialog loads real notes lazily and shows title/body divider',asyn
  assert.doesNotMatch(view,/실제 작성된 기록이 아닌 예시 내용입니다/);
  assert.doesNotMatch(view,/navigate\(|window\.location/);
 });
+
+test('handover drive button shows an explicit missing-link popup',async()=>{
+ const code=await read('src/pages/SitePages.tsx');
+ const app=await read('src/App.tsx');
+ assert.match(code,/onClick=\{\(\)=>notify\('연결된 링크가 없습니다'\)\}/);
+ assert.match(code,/인수인계 드라이브/);
+ assert.match(app,/\{toast&&<div className="toast" role="status">/);
+});
