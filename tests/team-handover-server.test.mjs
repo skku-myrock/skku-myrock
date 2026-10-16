@@ -246,20 +246,20 @@ test('archive groups actual saved notes by writer, skips empty text and sorts by
 test('previous shared notes enter the archive once and are superseded by the author-specific note',async()=>{
  const mock=setup();
  try{
-  const legacyId='role_'+Buffer.from('보컬파트장').toString('base64url');
+  const legacyId='role_'+Buffer.from('기타 파트장').toString('base64url');
   const name=root+'/handoverNotes/'+legacyId;
   mock.docs.set(name,{name,updateTime:'2026-10-16T01:00:00Z',fields:toFields({content:'예전 노트',updatedBy:persons.lead.uid})});
   let result=await call(listHandover,'staff','handover-notes/archive');
   assert.equal(result.status,200,JSON.stringify(result));
   assert.equal(result.data.entries.length,1);
   assert.equal(result.data.entries[0].name,'나재원');
-  assert.deepEqual(result.data.entries[0].notes,[{kind:'role',position:'보컬파트장'}]);
-  const saved=await call(saveHandover,'lead','handover-notes',{kind:'role',position:'보컬파트장',content:'새로운 노트',expectedUpdateTime:''});
+  assert.deepEqual(result.data.entries[0].notes,[{kind:'role',position:'기타 파트장'}]);
+  const saved=await call(saveHandover,'lead','handover-notes',{kind:'role',position:'기타 파트장',content:'새로운 노트',expectedUpdateTime:''});
   assert.equal(saved.status,200,JSON.stringify(saved));
   result=await call(listHandover,'staff','handover-notes/archive');
   assert.equal(result.data.entries.length,1);
   assert.equal(result.data.entries[0].notes.length,1);
-  const read=await call(readHandover,'ob','handover-notes?kind=role&position='+encodeURIComponent('보컬파트장')+'&authorUid='+persons.lead.uid);
+  const read=await call(readHandover,'ob','handover-notes?kind=role&position='+encodeURIComponent('기타 파트장')+'&authorUid='+persons.lead.uid);
   assert.equal(read.data.content,'새로운 노트');
  }finally{mock.restore();}
 });
