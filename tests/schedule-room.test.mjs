@@ -80,7 +80,8 @@ test('backend requests verify identities and separate consent from participant c
  ]);
  for(const file of [create,get,save,invite,inbox,respond,remove])
   assert.match(file,/callerProfile\(request,env\)/);
- assert.match(create,/participantUids:\[caller\.uid\]/);
+ assert.match(create,/participantUids:participants/);
+ assert.match(create,/participants=\[caller\.uid,\.\.\.uids\]/);
  assert.match(save,/validBits\(body\?\.availability,schedule\)/);
  assert.match(save,/currentDocument\.updateTime/);
  assert.match(save,/url\.searchParams\.set\('currentDocument\.updateTime',current\.updateTime\)/);
