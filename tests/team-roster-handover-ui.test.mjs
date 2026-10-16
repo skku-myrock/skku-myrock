@@ -83,6 +83,7 @@ test('handover dialog loads real notes lazily and shows title/body divider',asyn
  assert.match(view,/event\.key==='Escape'/);
  assert.match(view,/인수인계 내용을 불러오는 중입니다/);
  assert.match(css,/\.handover-preview-notes\{display:flex;flex-direction:column;margin-top:19px;border-top:1px solid var\(--border\)/);
+ assert.match(css,/\.handover-preview-notes>\.handover-archive-notice,\.handover-preview-notes>\.form-error\{margin-top:18px\}/);
  assert.doesNotMatch(view,/실제 작성된 기록이 아닌 예시 내용입니다/);
  assert.doesNotMatch(view,/navigate\(|window\.location/);
 });
