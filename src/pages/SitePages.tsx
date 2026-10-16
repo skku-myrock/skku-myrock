@@ -7,7 +7,7 @@ import {auth,db,accountEmail} from '../firebase';
 import type {MemberProfile,Session} from '../firebase';
 import {
   ArrowRight,ArrowUpRight,CalendarDays,Check,ChevronDown,CircleHelp,ClipboardList,
-  ExternalLink,FileText,Instagram,LockKeyhole,Plus,Search,Users,X,UserRound,
+  ExternalLink,FileText,Instagram,Plus,Search,Users,X,UserRound,
 } from 'lucide-react';
 import logo from '../logo-transparent.png';
 import PasswordChange from '../PasswordChange';
