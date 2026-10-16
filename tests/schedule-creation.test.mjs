@@ -73,6 +73,12 @@ test('creating a schedule persists directly instead of navigating to a draft',as
  assert.match(component,/await createSchedule\(input\)/);
  assert.match(component,/onCreated\(result\.id\)/);
  assert.match(component,/disabled=\{!title\.trim\(\)\|\|dates\.size===0\|\|creating\}/);
+ assert.match(component,/\(!title\.trim\(\)\|\|dates\.size===0\)&&<p>제목과 후보 날짜를 선택해 주세요\.<\/p>/);
+ assert.doesNotMatch(component,/시간표를 생성하면 본인만 참여자로 등록됩니다\./);
+ assert.doesNotMatch(component,/schedule-create-selection-summary|선택한 날짜.*일 ·|candidateCount|displayDates/);
+ assert.doesNotMatch(css,/\.schedule-create-selection-summary\{/);
+ assert.match(css,/\.schedule-create-footer button\{[^}]*margin-left:auto;opacity:1;cursor:pointer\}/);
+ assert.match(css,/\.schedule-create-footer button:disabled\{opacity:\.5;cursor:not-allowed\}/);
  assert.match(app,/onCreated=\{openSchedule\}/);
  assert.match(api,/export const createSchedule/);
  assert.match(css,/\.schedule-create-columns/);
