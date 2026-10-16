@@ -140,3 +140,16 @@ test('empty and selected 30-minute draft slots keep both horizontal and vertical
  assert.match(css,/\.schedule-draft-block\{background:#fff\}/);
  assert.doesNotMatch(css,/\.schedule-draft-block[^}]*border:/);
 });
+
+
+test('unsaved timetable hides redundant explanations and presents a non-persistent save control', async()=>{
+ const source=await read('src/ScheduleDraft.tsx');
+ const css=await read('src/styles/schedule.css');
+ assert.doesNotMatch(source,/임시 시간표 · 저장되지 않음/);
+ assert.doesNotMatch(source,/개 후보 날짜 ·/);
+ assert.doesNotMatch(source,/체크한 사람들의 임시 가능 시간만 표시합니다/);
+ assert.match(source,/<div className="schedule-draft-save-row">/);
+ assert.match(source,/<button type="button" className="button button-primary" disabled\s+title="시간표 저장 기능은 추후 구현될 예정입니다\.">저장하기<\/button>/);
+ assert.match(css,/\.schedule-draft-save-row\{display:flex;justify-content:flex-end;/);
+ assert.doesNotMatch(source,/onSave=|saveDraft\(|setDoc\(|addDoc\(|updateDoc\(/);
+});

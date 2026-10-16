@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, ArrowRight, ArrowUpRight, CalendarDays, Check, Plus, Users } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ArrowUpRight, CalendarDays, Check, Mail, Plus, Users, X } from 'lucide-react';
 
 export type DemoSchedule = {
   id: string;
@@ -46,6 +46,12 @@ export const scheduleExamples: readonly DemoSchedule[] = [
   },
 ];
 
+// Invitation items are fixed UI examples only; no user profile or invite service is queried.
+export const invitationExamples = [
+  { id: 'invite-a', inviter: '갑길동', scheduleTitle: '정기공연 A팀 합주' },
+  { id: 'invite-b', inviter: '을길동', scheduleTitle: '연합공연 합주' },
+] as const;
+
 export const findSchedule = (id: string): DemoSchedule | undefined =>
   scheduleExamples.find(schedule => schedule.id === id);
 
@@ -65,6 +71,22 @@ export function ScheduleLanding({
   onCreateTeam: () => void;
   onOpen: (id: string) => void;
 }) {
+  const [invitationsOpen, setInvitationsOpen] = useState(false);
+
+  useEffect(() => {
+    if (!invitationsOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setInvitationsOpen(false);
+    };
+    window.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [invitationsOpen]);
+
   return <>
     <ScheduleHeading title="합주 시간 조율" description="새 시간표를 만들거나, 내가 참여한 합주 시간표를 확인하세요." />
     <aside className="container schedule-usage-guide" aria-label="시간표 사용 안내">
@@ -105,7 +127,10 @@ export function ScheduleLanding({
           <h2>내가 참여한 시간표</h2>
           <p>현재는 화면 확인을 위한 예시 시간표 4개가 표시됩니다.</p>
         </div>
-        <span className="schedule-list-count">총 {scheduleExamples.length}개</span>
+        <button type="button" className="schedule-list-count schedule-invitation-trigger"
+          onClick={() => setInvitationsOpen(true)} aria-haspopup="dialog">
+          <Mail size={15} aria-hidden="true" /> 초대 {invitationExamples.length}건
+        </button>
       </div>
       <div className="schedule-list" role="list">
         {scheduleExamples.map(schedule => <div className="schedule-list-item" role="listitem" key={schedule.id}>
@@ -122,6 +147,38 @@ export function ScheduleLanding({
         </div>)}
       </div>
     </section>
+    {invitationsOpen && <div className="schedule-roster-backdrop" role="presentation"
+      onMouseDown={event => { if (event.target === event.currentTarget) setInvitationsOpen(false); }}>
+      <div className="schedule-roster-dialog schedule-invitations-dialog"
+        role="dialog" aria-modal="true" aria-labelledby="schedule-invitations-title">
+        <div className="schedule-roster-dialog-header">
+          <div>
+            <h2 id="schedule-invitations-title">받은 시간표 초대</h2>
+            <p>합주 시간표 초대 {invitationExamples.length}건을 확인할 수 있습니다.</p>
+          </div>
+          <button type="button" aria-label="받은 초대 창 닫기"
+            onClick={() => setInvitationsOpen(false)}><X size={21} aria-hidden="true" /></button>
+        </div>
+        <div className="schedule-invitations-list">
+          {invitationExamples.map(invitation => <article className="schedule-invitations-item" key={invitation.id}>
+            <div className="schedule-invitations-details">
+              <span>초대한 사람 · {invitation.inviter}</span>
+              <h3>{invitation.scheduleTitle}</h3>
+            </div>
+            <div className="schedule-invitations-actions">
+              <button type="button" className="button button-primary" disabled
+                title="초대 수락 기능은 추후 구현될 예정입니다.">수락</button>
+              <button type="button" className="outline-action" disabled
+                title="초대 거절 기능은 추후 구현될 예정입니다.">거절</button>
+            </div>
+          </article>)}
+        </div>
+        <p className="schedule-invitations-footnote">예시 초대 목록입니다. 실제 초대 수락·거절 기능은 아직 연결되지 않았습니다.</p>
+        <div className="schedule-invitations-footer">
+          <button type="button" className="outline-action" onClick={() => setInvitationsOpen(false)}>닫기</button>
+        </div>
+      </div>
+    </div>}
   </>;
 }
 

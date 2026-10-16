@@ -205,3 +205,26 @@ test('the time axis and its header stay anchored during horizontal date scrollin
   assert.match(source, /const columns = `64px repeat\(\$\{dates\.length\}, 70px\)`;/);
   assert.match(source, /className="schedule-time-axis"/);
 });
+
+
+test('schedule list invitation count opens a demo dialog with two mock invitations',()=>{
+ const landing=source.slice(source.indexOf('export function ScheduleLanding'),source.indexOf('const SLOT_MINUTES ='));
+ assert.match(source,/export const invitationExamples = \[/);
+ assert.match(source,/id: 'invite-a', inviter: '갑길동', scheduleTitle: '정기공연 A팀 합주'/);
+ assert.match(source,/id: 'invite-b', inviter: '을길동', scheduleTitle: '연합공연 합주'/);
+ assert.match(landing,/className="schedule-list-count schedule-invitation-trigger"/);
+ assert.match(landing,/초대 \{invitationExamples\.length\}건/);
+ assert.doesNotMatch(landing,/총 \{scheduleExamples\.length\}개/);
+ assert.match(landing,/onClick=\{\(\) => setInvitationsOpen\(true\)\} aria-haspopup="dialog"/);
+ assert.match(landing,/role="dialog" aria-modal="true" aria-labelledby="schedule-invitations-title"/);
+ assert.match(landing,/invitationExamples\.map\(invitation =>/);
+ assert.match(landing,/초대한 사람 · \{invitation\.inviter\}/);
+ assert.match(landing,/\{invitation\.scheduleTitle\}/);
+ assert.match(landing,/>수락<\/button>/);
+ assert.match(landing,/>거절<\/button>/);
+ assert.match(landing,/className="button button-primary" disabled/);
+ assert.match(landing,/className="outline-action" disabled/);
+ assert.match(landing,/event\.key === 'Escape'/);
+ assert.doesNotMatch(landing,/setDoc\(|addDoc\(|updateDoc\(|fetch\(/);
+ assert.match(styles,/\.schedule-invitations-item\{[^}]*border:1px solid var\(--border\)/);
+});

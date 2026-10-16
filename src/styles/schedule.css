@@ -483,3 +483,26 @@
 .schedule-draft-page .schedule-person-option input{accent-color:var(--accent-dark)}
 .schedule-draft-people-panel .schedule-people-heading{margin-top:0}
 .schedule-draft-people-panel .schedule-draft-hover{margin:15px 0 0}
+
+
+/* UI-only draft save control: persistence will be connected later. */
+.schedule-draft-save-row{display:flex;justify-content:flex-end;margin-top:22px}
+.schedule-draft-save-row .button{min-width:112px}
+.schedule-draft-save-row .button:disabled{opacity:.5}
+
+/* Received-invitation mock, reusing the roster overlay's backdrop and dialog. */
+.schedule-invitation-trigger{display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;font-weight:700}
+.schedule-invitation-trigger:hover,.schedule-invitation-trigger:focus-visible{border-color:var(--accent-dark);background:#e4f6f4}
+.schedule-invitations-dialog{width:min(100%,520px)}
+.schedule-invitations-list{display:flex;flex-direction:column;gap:12px;margin-top:22px}
+.schedule-invitations-item{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:15px;padding:18px 16px;border:1px solid var(--border);background:#f8fbf9}
+.schedule-invitations-details{flex:1;min-width:160px}
+.schedule-invitations-details>span{display:block;color:var(--accent-dark);font-size:11px;line-height:1.6}
+.schedule-invitations-details h3{margin:5px 0 0;color:var(--ink);font-size:15px;line-height:1.6;word-break:keep-all}
+.schedule-invitations-actions{display:flex;gap:8px;align-items:center}
+.schedule-invitations-actions .button,.schedule-invitations-actions .outline-action{min-height:35px;padding:7px 12px;font-size:11px;justify-content:center}
+.schedule-invitations-actions button:disabled{opacity:.5}
+.schedule-invitations-footnote{margin:16px 0 0;color:var(--muted);font-size:11px;line-height:1.7;word-break:keep-all}
+.schedule-invitations-footer{display:flex;justify-content:flex-end;margin-top:22px;border-top:1px solid var(--border);padding-top:15px}
+.schedule-invitations-footer button{font-size:12px}
+@media(max-width:420px){.schedule-invitations-item{align-items:stretch}.schedule-invitations-actions{justify-content:flex-end}}
