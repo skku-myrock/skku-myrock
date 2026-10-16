@@ -1,0 +1,37 @@
+.equipment-manage-page{margin-top:28px}
+.equipment-manage-page>.schedule-back-button{margin-bottom:24px}
+.equipment-demo-notice{display:flex;align-items:flex-start;gap:13px;padding:18px 20px;border:1px solid #d5e5df;background:#f6faf8;color:#596a65;font-size:12px;line-height:1.75}
+.equipment-demo-notice strong{color:#23756b;white-space:nowrap}
+.equipment-demo-notice span{min-width:0}
+.equipment-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-top:24px}
+.equipment-stats>div{border:1px solid var(--border);background:#fff;min-width:0;min-height:113px;padding:20px;display:grid;grid-template-columns:24px 1fr;grid-template-rows:20px 1fr;align-items:center;gap:7px 8px}
+.equipment-stats svg{color:var(--accent-dark)}
+.equipment-stats span{font-size:12px;color:var(--muted)}
+.equipment-stats strong{grid-column:2;font-size:25px;line-height:1.25}
+.equipment-manage-section{margin-top:38px}
+.equipment-manage-heading{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:15px}
+.equipment-manage-heading h2{margin:0;font-size:19px;letter-spacing:-.04em}
+.equipment-manage-heading p{margin:6px 0 0;font-size:12px;color:var(--muted)}
+.equipment-manage-list{border-top:1px solid #899391}
+.equipment-manage-item{display:flex;align-items:center;justify-content:space-between;gap:20px;border-bottom:1px solid var(--border);padding:18px 8px}
+.equipment-manage-item-info{display:flex;flex-direction:column;align-items:flex-start;gap:5px;min-width:0;flex:1}
+.equipment-manage-item-info strong{font-size:14px}
+.equipment-manage-item-info>span{font-size:12px;color:var(--muted)}
+.equipment-manage-item-info>.equipment-status{display:inline-flex;align-items:center;gap:7px;line-height:16px;min-height:16px;font-size:11px;color:#84908d}
+.equipment-manage-item-actions{display:flex;flex-wrap:wrap;gap:8px}
+.equipment-manage-item-actions .outline-action{min-height:34px;padding:8px 12px}
+.equipment-manage-danger{color:#b74b48;border-color:#e6c9c6}
+.equipment-manage-danger:hover{color:#a33e3a;background:#fff5f3}
+.equipment-manage-empty{padding:25px 10px;color:var(--muted);font-size:12px}
+.equipment-manage-feedback{padding:10px 13px;background:#f2f8f5;color:#3f776b;font-size:12px;margin:0 0 14px}
+.equipment-manage-form{border:1px solid #d1e2dc;background:#f8fbfa;padding:22px;margin-bottom:19px}
+.equipment-manage-form-heading{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.equipment-manage-form-heading h3{font-size:16px;margin:0}
+.equipment-manage-form-heading button{border:0;background:transparent;color:var(--muted);padding:5px}
+.equipment-manage-fields{display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:15px}
+.equipment-manage-fields label{display:flex;flex-direction:column;gap:8px;font-size:12px;font-weight:600}
+.equipment-manage-fields input,.equipment-manage-fields select{width:100%;min-width:0;min-height:42px;background:white;border:1px solid #d5e0dc;padding:0 12px;color:var(--ink);font-size:12px}
+.equipment-manage-form-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:20px}
+.equipment-manage-page button:disabled{opacity:.48;cursor:not-allowed}
+@media(max-width:900px){.equipment-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.equipment-manage-fields{grid-template-columns:1fr 1fr}.equipment-manage-fields label:last-child{grid-column:1/-1}}
+@media(max-width:620px){.equipment-manage-page{margin-top:20px}.equipment-demo-notice{flex-direction:column;gap:4px;padding:15px}.equipment-stats{gap:10px;margin-top:18px}.equipment-stats>div{min-height:93px;padding:13px}.equipment-stats strong{font-size:22px}.equipment-manage-section{margin-top:30px}.equipment-manage-heading{align-items:flex-start;flex-wrap:wrap}.equipment-manage-heading h2{font-size:17px}.equipment-manage-fields{grid-template-columns:1fr}.equipment-manage-fields label:last-child{grid-column:auto}.equipment-manage-form{padding:17px}.equipment-manage-item{align-items:flex-start;flex-wrap:wrap;gap:13px}.equipment-manage-item-info{flex-basis:100%}.equipment-manage-item-actions{width:100%}.equipment-manage-item-actions .outline-action{flex:1;justify-content:center}}

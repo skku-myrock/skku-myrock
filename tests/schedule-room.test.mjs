@@ -135,7 +135,7 @@ test('roster owner can see and cancel student-ID-only pending invitations',async
 });
 
 test('leave controls, cleanup endpoint and equipment sample labels exist',async()=>{
- const [room,leave,api,equipment]=await Promise.all([read('src/ScheduleRoom.tsx'),read('functions/api/schedules/[id]/leave.js'),read('src/scheduleApi.ts'),read('src/pages/SitePages.tsx')]);
+ const [room,leave,api,equipment]=await Promise.all([read('src/ScheduleRoom.tsx'),read('functions/api/schedules/[id]/leave.js'),read('src/scheduleApi.ts'),read('src/equipmentDemo.ts')]);
  assert.match(room,/onClick=\{\(\)=>void leave\(\)\}/);
  assert.doesNotMatch(room,/\?\' \(나\)\'/);
  assert.match(leave,/schedule.participantUids.length!==1/);
