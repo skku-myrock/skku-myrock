@@ -253,7 +253,7 @@ export default function ScheduleRoom({id,onBack,registerLeaveGuard}:{
        <input type="checkbox" checked={chosen.includes(p.uid)}
         onChange={()=>setChosen(current=>current.includes(p.uid)?current.filter(id=>id!==p.uid):[...current,p.uid])}/>
        <span className="schedule-person-icon"><Users size={14}/></span>
-       <span>{p.name}</span>
+       <span>{p.name}{p.uid===schedule.createdBy?' (방장)':''}</span>
       </label>)}</div>
       {selectedCell&&<p className="schedule-draft-hover">{shortDate(dates[selectedCell.day])} · {formatTime(slots[selectedCell.slot])}–{formatTime(slots[selectedCell.slot]+30)}</p>}
       {active.length===0&&<p className="schedule-side-warning">표시할 사람을 한 명 이상 선택해 주세요.</p>}

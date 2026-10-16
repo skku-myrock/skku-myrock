@@ -16,10 +16,10 @@ const env={FIREBASE_SERVICE_ACCOUNT:JSON.stringify({
  private_key:privateKey.export({format:'pem',type:'pkcs8'}).toString(),
 })};
 const persons={
- lead:{uid:'teamLeadUid001',name:'나재원',studentId:'2025712558',role:'part_leader',positions:['기타 파트장']},
+ lead:{uid:'teamLeadUid001',name:'나재원',studentId:'2025712558',role:'part_leader',positions:['기타 파트장','회장'],generation:'27'},
  other:{uid:'teamOtherUid001',name:'김하늘',studentId:'2026300002',role:'member',positions:[]},
- staff:{uid:'teamStaffUid001',name:'박지민',studentId:'2026300003',role:'staff',positions:['기타 파트장']},
- different:{uid:'teamDiffUid001',name:'이민수',studentId:'2026300004',role:'staff',positions:['보컬 파트장']},
+ staff:{uid:'teamStaffUid001',name:'박지민',studentId:'2026300003',role:'staff',positions:['기타 파트장'],generation:'28'},
+ different:{uid:'teamDiffUid001',name:'이민수',studentId:'2026300004',role:'staff',positions:['보컬 파트장'],generation:'28'},
  ob:{uid:'teamOBUid00001',name:'OB',studentId:'2020300005',role:'member',positions:[],handoverAccess:true},
 };
 function token(person){
@@ -106,25 +106,102 @@ test('team timetable creates all requested participants atomically, rejecting no
   }
  }finally{mock.restore();}
 });
-test('role-only handover notes are scoped to current positions; common notes persist with optimistic concurrency',async()=>{
+test('every authorised operator may read another author’s past role notes, but only write their own current roles',async()=>{
  const mock=setup();
  try{
-  const noteKey='handover-notes?kind=role&position='+encodeURIComponent('기타 파트장');
-  const commonKey='handover-notes?kind=common';
-  assert.equal((await call(readHandover,'other',commonKey)).status,403);
-  assert.equal((await call(readHandover,'different',noteKey)).status,403);
-  assert.equal((await call(readHandover,'ob',noteKey)).status,403);
-  let initial=await call(readHandover,'lead',noteKey);
-  assert.equal(initial.status,200);assert.equal(initial.data.content,'');assert.equal(initial.data.updateTime,'');
-  const saved=await call(saveHandover,'lead','handover-notes',{kind:'role',position:'기타 파트장',content:'기타 파트 업무',expectedUpdateTime:''});
-  assert.equal(saved.status,200,JSON.stringify(saved));
-  const peer=await call(readHandover,'staff',noteKey);
-  assert.equal(peer.data.content,'기타 파트 업무');
-  assert.equal((await call(saveHandover,'lead','handover-notes',{kind:'role',position:'기타 파트장',content:'오래된 저장',expectedUpdateTime:''})).status,409);
-  assert.equal((await call(readHandover,'different',noteKey)).status,403);
-  const common=await call(saveHandover,'ob','handover-notes',{kind:'common',position:'',content:'공통 인수인계',expectedUpdateTime:''});
+  const authorUid=persons.lead.uid;
+  const roleQuery='handover-notes?kind=role&position='+encodeURIComponent('기타 파트장')+'&authorUid='+authorUid;
+  const commonQuery='handover-notes?kind=common&authorUid='+authorUid;
+  assert.equal((await call(readHandover,'other',roleQuery)).status,403);
+  assert.equal((await call(readHandover,'other',commonQuery)).status,403);
+
+  const identity=await call(readHandover,'lead','handover-notes');
+  assert.equal(identity.status,200);
+  assert.deepEqual(identity.data.positions,['기타 파트장','회장']);
+  assert.equal(identity.data.name,'나재원');
+  assert.equal(identity.data.generation,'27');
+
+  const initial=await call(readHandover,'lead',roleQuery);
+  assert.equal(initial.status,200);
+  assert.equal(initial.data.content,'');
+  assert.equal(initial.data.updateTime,'');
+
+  const first=await call(saveHandover,'lead','handover-notes',{
+   kind:'role',position:'기타 파트장',content:'27기 기타파트 안내',expectedUpdateTime:'',
+  });
+  assert.equal(first.status,200,JSON.stringify(first));
+  const second=await call(saveHandover,'lead','handover-notes',{
+   kind:'role',position:'회장',content:'27기 회장 업무',expectedUpdateTime:'',
+  });
+  assert.equal(second.status,200,JSON.stringify(second));
+
+  // Another position holder, including OB, can read notes irrespective of their own roles.
+  for(const viewer of ['staff','different','ob']){
+   const view=await call(readHandover,viewer,roleQuery);
+   assert.equal(view.status,200,JSON.stringify(view));
+   assert.equal(view.data.content,'27기 기타파트 안내');
+  }
+  assert.equal((await call(readHandover,'different',
+   'handover-notes?kind=role&position='+encodeURIComponent('회장')+'&authorUid='+authorUid)).data.content,'27기 회장 업무');
+
+  // Only the author’s own current role can be written.
+  assert.equal((await call(saveHandover,'different','handover-notes',{
+   kind:'role',position:'기타 파트장',content:'잘못된 수정',expectedUpdateTime:first.data.updateTime,
+  })).status,403);
+  assert.equal((await call(saveHandover,'staff','handover-notes',{
+   kind:'role',position:'기타 파트장',authorUid,content:'새로운 담당자 기록',expectedUpdateTime:'',
+  })).status,200);
+  // A second holder writes their own independent record instead of overwriting the prior author.
+  assert.equal((await call(readHandover,'staff',roleQuery)).data.content,'27기 기타파트 안내');
+  assert.equal((await call(readHandover,'staff','handover-notes?kind=role&position='+encodeURIComponent('기타 파트장'))).data.content,'새로운 담당자 기록');
+  assert.equal((await call(saveHandover,'lead','handover-notes',{
+   kind:'role',position:'기타 파트장',content:'오래된 저장',expectedUpdateTime:'',
+  })).status,409);
+
+  const common=await call(saveHandover,'lead','handover-notes',{
+   kind:'common',position:'',content:'27기 운영진 공통 안내',expectedUpdateTime:'',
+  });
   assert.equal(common.status,200,JSON.stringify(common));
-  assert.equal((await call(readHandover,'lead',commonKey)).data.content,'공통 인수인계');
-  assert.equal((await call(readHandover,'other',commonKey)).status,403);
+  assert.equal((await call(readHandover,'ob',commonQuery)).data.content,'27기 운영진 공통 안내');
+
+  const obCommon=await call(saveHandover,'ob','handover-notes',{
+   kind:'common',position:'',content:'OB의 공통 인수인계',expectedUpdateTime:'',
+  });
+  assert.equal(obCommon.status,200);
+  assert.equal((await call(readHandover,'lead',commonQuery)).data.content,'27기 운영진 공통 안내');
+  assert.equal((await call(readHandover,'lead','handover-notes?kind=common&authorUid='+persons.ob.uid)).data.content,'OB의 공통 인수인계');
+
+  // Saved metadata includes historical author, generation and position snapshots.
+  const noteDocs=[...mock.docs.values()].filter(doc=>doc.name.includes('/handoverNotes/'));
+  assert.ok(noteDocs.some(doc=>docFields(doc).authorUid===authorUid&&docFields(doc).generation==='27'&&docFields(doc).position==='기타 파트장'));
+  // Moving to another position does not make the previously authored content unreadable.
+  const profilePath=root+'/users/'+authorUid,oldProfile=mock.docs.get(profilePath);
+  mock.docs.set(profilePath,{...oldProfile,fields:toFields({...persons.lead,positions:['보컬 파트장']})});
+  assert.equal((await call(readHandover,'lead',roleQuery)).data.content,'27기 기타파트 안내');
+  assert.equal((await call(readHandover,'ob',roleQuery)).data.content,'27기 기타파트 안내');
+  assert.equal((await call(saveHandover,'lead','handover-notes',{
+   kind:'role',position:'기타 파트장',content:'과거 직책 임의 변경',expectedUpdateTime:first.data.updateTime,
+  })).status,403);
+ }finally{mock.restore();}
+});
+
+test('legacy notes migrate non-destructively for their original author',async()=>{
+ const mock=setup();
+ try{
+  const bytes=new TextEncoder().encode('기타 파트장');
+  const b64=Buffer.from(bytes).toString('base64url');
+  mock.docs.set(root+'/handoverNotes/role_'+b64,{
+   name:root+'/handoverNotes/role_'+b64,
+   fields:toFields({content:'예전 작성 내용',updatedBy:persons.lead.uid}),
+   updateTime:'2026-10-16T12:00:00.000Z',
+  });
+  const query='handover-notes?kind=role&position='+encodeURIComponent('기타 파트장');
+  assert.equal((await call(readHandover,'lead',query)).data.content,'예전 작성 내용');
+  assert.equal((await call(readHandover,'staff',query)).data.content,'');
+  assert.equal((await call(saveHandover,'lead','handover-notes',{
+   kind:'role',position:'기타 파트장',content:'이어 작성한 내용',expectedUpdateTime:'',
+  })).status,200);
+  assert.equal((await call(readHandover,'lead',query)).data.content,'이어 작성한 내용');
+  assert.ok(mock.docs.has(root+'/handoverNotes/role_'+b64),'legacy content is not destroyed');
  }finally{mock.restore();}
 });

@@ -72,7 +72,8 @@ test('creating a schedule persists directly instead of navigating to a draft',as
  assert.match(nav,/page:'schedule-detail',path:'\/schedule\/:id'/);
  assert.match(component,/await createSchedule\(input\)/);
  assert.match(component,/onCreated\(result\.id\)/);
- assert.match(component,/disabled=\{!title\.trim\(\)\|\|dates\.size===0\|\|creating\}/);
+ assert.match(component,/disabled=\{!title\.trim\(\)\|\|dates\.size===0\|\|creating\|\|\(teamMode&&teamMembers\.length===0\)\}/);
+ assert.match(component,/disabled=\{creating\} onClick=\{\(\)=>setMemberDialog\(true\)\}/);
  assert.match(component,/\(!title\.trim\(\)\|\|dates\.size===0\)&&<p>제목과 후보 날짜를 선택해 주세요\.<\/p>/);
  assert.doesNotMatch(component,/시간표를 생성하면 본인만 참여자로 등록됩니다\./);
  assert.doesNotMatch(component,/schedule-create-selection-summary|선택한 날짜.*일 ·|candidateCount|displayDates/);
