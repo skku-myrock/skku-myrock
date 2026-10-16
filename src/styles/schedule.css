@@ -1,23 +1,4 @@
 /* Compact schedule landing, scrollable 30-minute availability heatmap, and right details panel. */
-/* Planned schedule features: information only; no invitation or confirmation interactions. */
-.schedule-usage-guide {
-  margin-top: 20px;
-  padding: 17px 20px 18px;
-  border: 1px solid #e0eae3;
-  background: #f8fbf9;
-}
-.schedule-usage-heading { display: flex; align-items: baseline; flex-wrap: wrap; gap: 5px 12px; margin-bottom: 12px; }
-.schedule-usage-heading strong { color: #435b4d; font-size: 12px; font-weight: 700; }
-.schedule-usage-heading span { color: #889c90; font-size: 11px; }
-.schedule-usage-list { display: grid; grid-template-columns: minmax(0, 1fr); gap: 9px; list-style: none; margin: 0; padding: 0; }
-.schedule-usage-list li { display: flex; align-items: baseline; gap: 9px; min-width: 0; }
-.schedule-usage-list li + li { border-top: 1px solid #e0eae3; padding-top: 9px; }
-.schedule-usage-list li > span { flex: 0 0 auto; color: #6f9c80; font: 700 10px 'DM Sans', sans-serif; }
-.schedule-usage-list p { margin: 0; color: #677d70; font-size: 12px; line-height: 1.7; word-break: keep-all; }
-@media (max-width: 620px) {
-  .schedule-usage-guide { margin-top: 16px; padding: 15px 16px; }
-}
-
 .schedule-landing {
   margin-top: 26px;
   margin-bottom: 0;
