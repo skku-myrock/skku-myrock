@@ -74,8 +74,6 @@ export default function ScheduleCreation({onBack,onCreated}:{onBack:()=>void;onC
       return updated;
     });
   }
-  const displayDates=[...dates].sort();
-  const candidateCount=displayDates.length;
   return <>
     <div className="page-heading container">
       <span className="eyebrow">SCHEDULE CREATE</span>
@@ -134,9 +132,6 @@ export default function ScheduleCreation({onBack,onCreated}:{onBack:()=>void;onC
             <ChevronDown size={27} strokeWidth={2.4} aria-hidden="true"/>
             <span>다음 달 보기</span>
           </button>
-          <p className="schedule-create-selection-summary" role="status">
-            {candidateCount?`선택한 날짜 ${candidateCount}일 · ${displayDates[0]}부터`:'선택한 날짜가 없습니다.'}
-          </p>
         </section>
         <section className="schedule-create-panel schedule-time-panel" aria-labelledby="candidate-time-title">
           <div className="schedule-create-panel-heading">
@@ -163,7 +158,7 @@ export default function ScheduleCreation({onBack,onCreated}:{onBack:()=>void;onC
         </section>
       </div>
       <div className="schedule-create-footer">
-        <p>{title.trim()&&dates.size?'시간표를 생성하면 본인만 참여자로 등록됩니다.':'제목과 후보 날짜를 선택해 주세요.'}</p>
+        {(!title.trim()||dates.size===0)&&<p>제목과 후보 날짜를 선택해 주세요.</p>}
         <button type="button" className="button button-primary"
           disabled={!title.trim()||dates.size===0||creating}
           onClick={()=>void submit({title:title.trim(),dates:[...dates].sort(),startHour,endHour})}>{creating?'생성 중…':'시간표 생성'}</button>
