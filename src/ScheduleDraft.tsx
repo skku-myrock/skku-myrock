@@ -30,6 +30,7 @@ export default function ScheduleDraft({initial,onBack}:{initial:unknown;onBack:(
   const [studentId,setStudentId]=useState('');
   const [searched,setSearched]=useState(false);
   const [searchResult,setSearchResult]=useState<string|null>(null);
+  const [inviteNotice,setInviteNotice]=useState('');
   const [selectedCell,setSelectedCell]=useState<CellPosition|null>(null);
   const stroke=useRef<Stroke|null>(null);
   const scrollRef=useRef<HTMLDivElement|null>(null);
@@ -47,6 +48,12 @@ export default function ScheduleDraft({initial,onBack}:{initial:unknown;onBack:(
     window.addEventListener('keydown',handle);
     return()=>{document.body.style.overflow=old;window.removeEventListener('keydown',handle);};
   },[rosterOpen]);
+
+  useEffect(()=>{
+    if(!inviteNotice)return;
+    const timeout=window.setTimeout(()=>setInviteNotice(''),3500);
+    return ()=>window.clearTimeout(timeout);
+  },[inviteNotice]);
 
   const togglePerson=(name:string)=>{
     setSelectedNames(previous=>previous.includes(name)
@@ -144,7 +151,7 @@ export default function ScheduleDraft({initial,onBack}:{initial:unknown;onBack:(
           <h2>시간 조율 현황</h2>
           <p>{dates.length}개 후보 날짜 · {formatTime(draft.startHour*60)}–{formatTime(draft.endHour*60)} · {people.length}명 초대 명단</p>
         </div>
-        <button type="button" className="outline-action schedule-roster-edit-trigger" onClick={()=>setRosterOpen(true)}>
+        <button type="button" className="outline-action schedule-roster-edit-trigger" onClick={()=>{setInviteNotice('');setRosterOpen(true);}}>
           <Users size={16} aria-hidden="true"/> 명단 수정
         </button>
       </div>
@@ -245,13 +252,17 @@ export default function ScheduleDraft({initial,onBack}:{initial:unknown;onBack:(
           </div>
         </form>
         {searched&&(searchResult?<div className="schedule-roster-found">
-          <span><Check size={17} aria-hidden="true"/><strong>{searchResult}</strong></span>
-          <button type="button" className="button button-primary" disabled
-            title="실제 초대 및 초대 수락 기능은 추후 구현됩니다.">초대하기</button>
+          <span><Check size={17} aria-hidden="true"/><span>{searchResult}</span></span>
+          <button type="button" className="button button-primary"
+            onClick={()=>setInviteNotice('초대했습니다')}>초대하기</button>
         </div>:<p className="schedule-roster-no-result" role="status">검색 결과가 없습니다.</p>)}
         <div className="schedule-roster-footer"><span>예시 검색만 지원합니다. 실제 초대 요청이나 초대 수락 기능은 아직 구현되지 않았습니다.</span>
           <button type="button" className="outline-action" onClick={()=>setRosterOpen(false)}>닫기</button>
         </div>
+        {inviteNotice&&<div className="toast schedule-invite-toast" role="status" aria-live="polite">
+          <Check size={17} aria-hidden="true"/><span>{inviteNotice}</span>
+          <button type="button" aria-label="알림 닫기" onClick={()=>setInviteNotice('')}><X size={15}/></button>
+        </div>}
       </div>
     </div>}
   </>;
