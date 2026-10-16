@@ -4,6 +4,8 @@ import {generateKeyPairSync,createSign} from 'node:crypto';
 import {onRequestPost as create,onRequestGet as list} from '../functions/api/schedules/index.js';
 import {onRequestGet as detail} from '../functions/api/schedules/[id]/index.js';
 import {onRequestPost as invite} from '../functions/api/schedules/[id]/invite.js';
+import {onRequestGet as ownerInvitations} from '../functions/api/schedules/[id]/invitations.js';
+import {onRequestPost as cancelInvite} from '../functions/api/schedules/[id]/cancel-invite.js';
 import {onRequestGet as inbox} from '../functions/api/schedule-invitations/index.js';
 import {onRequestPost as respond} from '../functions/api/schedule-invitations/[id]/respond.js';
 import {onRequestPost as save} from '../functions/api/schedules/[id]/availability.js';
@@ -129,6 +131,10 @@ test('full Firestore invitation, consent and explicit bitset save lifecycle uses
   const invited=await call(invite,alice,'POST','/api/schedules/'+id+'/invite',{studentId:'2026300002'},{id});
   assert.equal(invited.status,200,JSON.stringify(invited));
   assert.deepEqual(invited.data,nonexistent.data);
+  const pending=(await call(ownerInvitations,alice,'GET','/api/schedules/'+id+'/invitations',undefined,{id})).data.invitations;
+  assert.deepEqual(pending.map(item=>item.studentId).sort(),['2026300002','2026999999']);
+  assert.ok(pending.every(item=>!('name'in item)&&!('recipientUid'in item)));
+  assert.equal((await call(ownerInvitations,bob,'GET','/api/schedules/'+id+'/invitations',undefined,{id})).status,403);
   const aliceBefore=(await call(detail,alice,'GET','/api/schedules/'+id,undefined,{id})).data;
   assert.equal(aliceBefore.people.length,1,'inviting must not reveal or add recipient');
   const received=(await call(inbox,bob,'GET','/api/schedule-invitations')).data.invitations;
@@ -140,6 +146,8 @@ test('full Firestore invitation, consent and explicit bitset save lifecycle uses
   const accepted=await call(respond,bob,'POST','/api/schedule-invitations/'+inviteId+'/respond',{action:'accept'},{id:inviteId});
   assert.equal(accepted.status,200,JSON.stringify(accepted));
   assert.equal((await call(inbox,bob,'GET','/api/schedule-invitations')).data.invitations.length,0);
+  assert.deepEqual((await call(ownerInvitations,alice,'GET','/api/schedules/'+id+'/invitations',undefined,{id})).data.invitations.map(item=>item.studentId),['2026999999']);
+  assert.equal((await call(cancelInvite,alice,'POST','/api/schedules/'+id+'/cancel-invite',{invitationId:inviteId},{id})).status,409);
   assert.equal((await call(list,bob,'GET','/api/schedules')).data.schedules.length,1);
   const details=(await call(detail,bob,'GET','/api/schedules/'+id,undefined,{id})).data;
   assert.deepEqual(details.people.map(p=>p.name).sort(),['갑길동','을길동']);
@@ -166,4 +174,40 @@ test('full Firestore invitation, consent and explicit bitset save lifecycle uses
   assert.ok(stats.writes>1);
   assert.ok([...documents.keys()].some(key=>key.includes('/scheduleInvitations/')));
  }finally{globalThis.fetch=realFetch;}
+});
+
+test('pending invitation cancellation removes access before acceptance without revealing account presence',async()=>{
+ const originalFetch=globalThis.fetch;
+ setupMock();
+ try{
+  const result=await call(create,alice,'POST','/api/schedules',{
+   title:'취소 확인',dates:['2026-10-21'],startHour:8,endHour:10,
+  });
+  assert.equal(result.status,201,JSON.stringify(result));
+  const id=result.data.id;
+  const known=await call(invite,alice,'POST','/api/schedules/'+id+'/invite',{studentId:'2026300002'},{id});
+  const unknown=await call(invite,alice,'POST','/api/schedules/'+id+'/invite',{studentId:'2026999999'},{id});
+  assert.equal(known.status,200);assert.deepEqual(known.data,unknown.data);
+  const p=await call(ownerInvitations,alice,'GET','/api/schedules/'+id+'/invitations',undefined,{id});
+  assert.equal(p.status,200,JSON.stringify(p));
+  assert.deepEqual(p.data.invitations.map(x=>x.studentId).sort(),['2026300002','2026999999']);
+  assert.ok(p.data.invitations.every(x=>!Object.hasOwn(x,'recipientUid')&&!Object.hasOwn(x,'name')));
+  assert.equal((await call(ownerInvitations,eve,'GET','/api/schedules/'+id+'/invitations',undefined,{id})).status,403);
+  const knownId=p.data.invitations.find(x=>x.studentId==='2026300002').id;
+  const unknownId=p.data.invitations.find(x=>x.studentId==='2026999999').id;
+  assert.equal((await call(inbox,bob,'GET','/api/schedule-invitations')).data.invitations.length,1);
+  assert.equal((await call(inbox,eve,'GET','/api/schedule-invitations')).data.invitations.length,0);
+  assert.equal((await call(cancelInvite,bob,'POST','/api/schedules/'+id+'/cancel-invite',{invitationId:knownId},{id})).status,403);
+  assert.equal((await call(cancelInvite,alice,'POST','/api/schedules/'+id+'/cancel-invite',{invitationId:knownId},{id})).status,200);
+  assert.equal((await call(inbox,bob,'GET','/api/schedule-invitations')).data.invitations.length,0);
+  assert.equal((await call(respond,bob,'POST','/api/schedule-invitations/'+knownId+'/respond',{action:'accept'},{id:knownId})).status,409);
+  assert.deepEqual((await call(ownerInvitations,alice,'GET','/api/schedules/'+id+'/invitations',undefined,{id})).data.invitations.map(x=>x.studentId),['2026999999']);
+  assert.equal((await call(cancelInvite,alice,'POST','/api/schedules/'+id+'/cancel-invite',{invitationId:knownId},{id})).status,409);
+  assert.equal((await call(invite,alice,'POST','/api/schedules/'+id+'/invite',{studentId:'2026300002'},{id})).status,200);
+  const received=(await call(inbox,bob,'GET','/api/schedule-invitations')).data.invitations;
+  assert.equal(received.length,1);
+  assert.equal((await call(respond,bob,'POST','/api/schedule-invitations/'+received[0].id+'/respond',{action:'decline'},{id:received[0].id})).status,200);
+  assert.equal((await call(cancelInvite,alice,'POST','/api/schedules/'+id+'/cancel-invite',{invitationId:unknownId},{id})).status,200);
+  assert.deepEqual((await call(ownerInvitations,alice,'GET','/api/schedules/'+id+'/invitations',undefined,{id})).data.invitations,[]);
+ }finally{globalThis.fetch=originalFetch;}
 });
