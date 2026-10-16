@@ -370,7 +370,7 @@
 .schedule-calendar-weekdays span{display:flex;justify-content:center;align-items:center;height:36px;color:#2a3c46;font-size:13px;font-weight:700}
 .schedule-calendar-weekdays .is-sunday{color:#f05057}
 .schedule-calendar-weekdays .is-saturday{color:#357bef}
-.schedule-calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));grid-auto-rows:51px;align-items:center;justify-items:center;user-select:none;touch-action:none;cursor:crosshair}
+.schedule-calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));grid-auto-rows:51px;align-items:center;justify-items:center;user-select:none;touch-action:pan-y;cursor:crosshair}
 .schedule-calendar-day{display:flex;align-items:center;justify-content:center;width:38px;height:38px;min-width:0;padding:0;border:0;border-radius:50%;background:transparent;color:#173042;font-size:14px;font-variant-numeric:tabular-nums;cursor:crosshair;transition:background .1s,color .1s}
 .schedule-calendar-day:hover{background:#edf7f0}
 .schedule-calendar-day:focus-visible{outline:2px solid #267a50;outline-offset:2px}

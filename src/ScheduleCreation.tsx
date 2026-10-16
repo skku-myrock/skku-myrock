@@ -53,6 +53,13 @@ export default function ScheduleCreation({onBack}:{onBack:()=>void}){
     brush.current=null;
     if(event.currentTarget.hasPointerCapture(event.pointerId))event.currentTarget.releasePointerCapture(event.pointerId);
   }
+  function cancelBrush(event:ReactPointerEvent<HTMLDivElement>){
+    const active=brush.current;
+    if(!active||active.pointerId!==event.pointerId)return;
+    // A vertical touch swipe scrolls the month list instead of leaving an accidental selection.
+    setDates(new Set(active.baseline));
+    endBrush(event);
+  }
   function toggleKeyboard(cell:CandidateCell){
     setDates(previous=>{
       const updated=new Set(previous);
@@ -91,7 +98,7 @@ export default function ScheduleCreation({onBack}:{onBack:()=>void}){
             aria-label="후보 날짜 달력, 아래로 스크롤하여 다음 달 보기"
             onScroll={revealNextMonth}
             onPointerDown={startBrush} onPointerMove={moveBrush}
-            onPointerUp={endBrush} onPointerCancel={endBrush}
+            onPointerUp={endBrush} onPointerCancel={cancelBrush}
             onLostPointerCapture={()=>{brush.current=null;}}>
             {months.map(month=><div className="schedule-calendar-month" key={month.key}>
               <div className="schedule-calendar-top">

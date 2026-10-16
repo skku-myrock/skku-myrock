@@ -76,7 +76,8 @@ test('schedule creation route, responsive editor and intentionally inactive save
  assert.match(component,/onPointerDown=\{startBrush\}/);
  assert.match(component,/onPointerMove=\{moveBrush\}/);
  assert.match(component,/onPointerUp=\{endBrush\}/);
- assert.match(component,/onPointerCancel=\{endBrush\}/);
+ assert.match(component,/onPointerCancel=\{cancelBrush\}/);
+ assert.match(component,/setDates\(new Set\(active\.baseline\)\)/);
  assert.match(component,/role="region" tabIndex=\{0\}/);
  assert.match(component,/futureCalendarMonths\(today,visibleMonthCount\)/);
  assert.match(component,/onScroll=\{revealNextMonth\}/);
@@ -97,4 +98,5 @@ test('schedule creation route, responsive editor and intentionally inactive save
  assert.match(style,/\.schedule-calendar-scroll\{max-height:465px;overflow-y:auto/);
  assert.match(style,/\.schedule-calendar-day\{[^}]*width:38px;height:38px;[^}]*border-radius:50%/);
  assert.match(style,/\.schedule-calendar-day\.is-selected\{background:#b9edd0;color:#16583b/);
+ assert.match(style,/touch-action:pan-y/);
 });
