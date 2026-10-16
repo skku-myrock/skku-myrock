@@ -9,6 +9,9 @@ import type {MemberProfile} from './firebase';
 import {ArrowRight,ChevronDown,Trash2,CircleHelp,LockKeyhole,Mail,Menu,X,UserRound,LogOut} from 'lucide-react';
 import logo from './logo-transparent.png';
 import MemberManager from './MemberManager';
+import EquipmentManager from './EquipmentManager';
+import {demoEquipment} from './equipmentDemo';
+import type {EquipmentItem} from './equipmentDemo';
 import {purgeAllOtherMembers} from './memberAdmin';
 import {ScheduleLanding} from './SchedulePages';
 import ScheduleRoom from './ScheduleRoom';
@@ -263,6 +266,7 @@ function App() {
     }finally{setGalleryResetting(false);}
   }
   const isDeveloperSuperadmin=Boolean(user && profile?.superadmin && hasSystemClaim);
+  const [equipmentItems,setEquipmentItems]=useState<EquipmentItem[]>(demoEquipment);
   const currentLevel=managementLevel(profile,hasSystemClaim);
   const canManage=currentLevel!==null;
   const canManageDonations=currentLevel==='staff'||currentLevel==='president';
@@ -293,7 +297,8 @@ function App() {
       ? <ScheduleRoom key={activeScheduleId} id={activeScheduleId} onBack={() => navigate('schedule')} registerLeaveGuard={registerEditorLeaveGuard}/>
       : <section className="container section-block"><p>시간표를 확인하려면 로그인해 주세요.</p><button type="button" className="button button-primary" onClick={showLogin}>로그인</button></section>,
     'gallery': <Gallery key={galleryRevision} canRegister={Boolean(user && !authPending && currentLevel)}/>,
-    'equipment': <Equipment notify={notify}/>,
+    'equipment': <Equipment notify={notify} items={equipmentItems} canManage={Boolean(user&&!authPending&&currentLevel)} onManage={()=>navigate('equipment-manage')}/>,
+    'equipment-manage': authPending?<section className="container section-block"><p>권한 확인 중입니다.</p></section>:user&&currentLevel?<EquipmentManager items={equipmentItems} setItems={setEquipmentItems} onBack={()=>navigate('equipment')}/>:<section className="container section-block"><EmptyState icon={<LockKeyhole size={26}/>} title="접근 권한이 없습니다" description="장비 관리는 파트장 이상만 이용할 수 있습니다."/></section>,
     'finance': <FinanceLanding onDonations={() => navigate('donations')} onExpenses={() => navigate('expenses')} canEditAccount={Boolean(user&&!authPending&&currentLevel==='president')} loggedIn={Boolean(user&&profile&&!authPending)} authPending={authPending} onLogin={showLogin}/>,
     'donations': <DonationHistory key={financeRevision} onBack={() => navigate('finance')} loggedIn={Boolean(user)} authPending={authPending} onLogin={showLogin} canManageDonations={Boolean(!authPending&&user&&canManageDonations)} onManage={()=>navigate('donation-manage')}/>,
     'donation-manage': (authPending?<section className="container section-block"><EmptyState title="권한 확인 중" description="로그인 상태 확인 중입니다."/></section>:user&&canManageDonations?<DonationManagement onBack={()=>navigate('donations')}/>:<section className="container section-block"><EmptyState icon={<LockKeyhole size={26}/>} title="접근 권한이 없습니다" description="후원 내역 관리는 실무단 이상만 가능합니다."/></section>),
