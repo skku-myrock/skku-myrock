@@ -32,8 +32,7 @@ export default function EquipmentManager({items,busy,loading,error,onRefresh,onM
  }
  const details=(item:EquipmentItem)=><div className="equipment-manage-item-info">
   <strong>{item.name}</strong><span>{item.product}</span>
-  <small className={'equipment-status equipment-status-'+equipmentStatusTone(item.status)}>{item.status}</small>
-  {item.borrower&&<span className="equipment-borrower">{item.status}({equipmentDate(item.borrower.borrowedAt)}) · {item.borrower.name}({item.borrower.studentId})</span>}
+  <small className={'equipment-status equipment-status-'+equipmentStatusTone(item.status)}>{item.borrower?`${item.status}(${equipmentDate(item.borrower.borrowedAt)}) · ${item.borrower.name}(${item.borrower.studentId})`:item.status}</small>
   {item.queueLength>0&&<span className="equipment-queue-caption">대기 신청 {item.queueLength}건</span>}
  </div>;
  return <>
