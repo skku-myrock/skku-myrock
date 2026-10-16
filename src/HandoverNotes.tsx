@@ -50,45 +50,59 @@ function NoteEditor({kind,position,title,description}:{
  </section>;
 }
 export default function HandoverNotesEditor({onBack}:{onBack:()=>void}){
- const [positions,setPositions]=useState<string[]>([]);
- const [position,setPosition]=useState('');
+ const [identity,setIdentity]=useState<{positions:string[];name:string;generation:string}>({
+  positions:[],name:'',generation:'',
+ });
  const [error,setError]=useState('');
  const [ready,setReady]=useState(false);
  useEffect(()=>{
   let mounted=true;
   void getHandoverPositions().then(result=>{
-   if(!mounted)return;
-   setPositions(result.positions);
-   setPosition(result.positions[0]??'');
+   if(mounted)setIdentity(result);
   }).catch(e=>{if(mounted)setError(e instanceof Error?e.message:'직책을 확인할 수 없습니다.');})
     .finally(()=>{if(mounted)setReady(true);});
   return()=>{mounted=false;};
  },[]);
+ const {positions,name,generation}=identity;
+ const generationLabel=generation?(generation.endsWith('기')?generation:generation+'기'):'';
+ const writerSubtitle=ready&&name?[generationLabel,positions.join(' · '),name].filter(Boolean).join(' '):'작성자 정보를 불러오는 중입니다.';
  return <>
-  <PageHeading tag="HANDOVER EDITOR" title="인수인계 작성하기" description="직책별 인수인계와 운영진 공통 인수인계를 각각 작성하고 저장합니다."/>
+  <PageHeading tag="HANDOVER EDITOR" title="인수인계 작성하기" description={writerSubtitle}/>
   <section className="container section-block handover-editor-page">
    <button type="button" className="schedule-back-button" onClick={onBack}><ArrowLeft size={16}/> 인수인계로 돌아가기</button>
+   <p className="handover-editor-intro">현직 운영진과 OB 운영진 모두 작성된 인수인계를 확인할 수 있습니다.</p>
    {error&&<p className="form-error" role="alert">{error}</p>}
-   {!ready?<p role="status">작성 권한을 확인하는 중입니다.</p>:<>
-    {positions.length>1&&<label className="handover-position-picker">작성 직책
-     <select value={position} onChange={event=>{
-      if(event.target.value===position)return;
-      if(!window.confirm('직책을 변경하면 저장하지 않은 수정 내용이 사라질 수 있습니다. 변경하시겠습니까?'))return;
-      setPosition(event.target.value);
-     }}>{positions.map(item=><option key={item} value={item}>{item}</option>)}</select>
-    </label>}
-    <NoteEditor kind="role" position={position} title={'직책별 인수인계'+(position?' · '+position:'')} description="현재 선택한 직책을 가진 운영진만 확인할 수 있는 내용입니다."/>
-    <NoteEditor kind="common" position="" title="운영진 공통 인수인계" description="인수인계 접근 권한을 가진 운영진 모두가 확인할 수 있는 내용입니다."/>
+   {!ready?<p role="status">작성 권한을 확인하는 중입니다.</p>:!error&&<>
+    {positions.length===0&&<p className="handover-editor-help">등록된 직책이 없습니다. 운영진에게 직책 정보를 확인해 주세요.</p>}
+    {positions.map(position=><NoteEditor key={'role-'+position} kind="role" position={position}
+     title={'직책별 인수인계 · '+position}
+     description={'후배 '+position+'에게 전달하고 싶은 내용을 작성해주세요.'}/>)}
+    <NoteEditor key="common" kind="common" position="" title="운영진 공통 인수인계"
+     description="후배 운영진 모두에게 전달하고 싶은 내용을 작성해주세요."/>
    </>}
   </section>
  </>;
 }
+
+const exampleArchive=[
+ {generation:'27기',positions:'보컬파트장',name:'나재원'},
+ {generation:'28기',positions:'회장, 보컬파트장',name:'김서연'},
+ {generation:'28기',positions:'공연부장, 기타파트장',name:'배은성'},
+];
 export function HandoverNotesView({onBack}:{onBack:()=>void}){
  return <>
-  <PageHeading tag="HANDOVER ARCHIVE" title="인수인계 확인하기" description="운영진 인수인계를 확인하는 공간입니다."/>
+  <PageHeading tag="HANDOVER ARCHIVE" title="인수인계 확인하기" description="현직 운영진과 OB 운영진 모두 인수인계를 확인할 수 있습니다."/>
   <section className="container section-block handover-editor-page">
    <button type="button" className="schedule-back-button" onClick={onBack}><ArrowLeft size={16}/> 인수인계로 돌아가기</button>
-   <div className="handover-view-placeholder"><h2>인수인계 확인하기</h2><p>이 페이지의 상세 열람 화면은 추후 구현할 예정입니다.</p></div>
+   <p className="handover-archive-notice">아래 목록은 화면 구성 예시입니다. 실제 작성자별 조회 및 열람 기능은 추후 연결됩니다.</p>
+   <div className="handover-archive-list" aria-label="인수인계 목록 예시">
+    {exampleArchive.map((entry,index)=><div className="handover-archive-row" key={index}>
+     <span className="handover-archive-generation">{entry.generation}</span>
+     <span className="handover-archive-positions">{entry.positions}</span>
+     <strong className="handover-archive-name">{entry.name}</strong>
+     <button type="button" className="outline-action" disabled title="상세 열람은 추후 지원 예정입니다.">확인하기</button>
+    </div>)}
+   </div>
   </section>
  </>;
 }
