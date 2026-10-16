@@ -80,6 +80,7 @@ export async function commit(env,writes){
   ...write,
   ...(write.update?{update:{...write.update,name:firestoreResourceName(write.update.name)}}:{}),
   ...(write.delete?{delete:firestoreResourceName(write.delete)}:{}),
+  ...(write.verify?{verify:firestoreResourceName(write.verify)}:{}),
  }));
  const result=await googleRequest(env,FIRESTORE_ROOT+':commit',{method:'POST',body:{writes:normalized}});
  if(!result.ok)err(result,'Firestore atomic commit');
