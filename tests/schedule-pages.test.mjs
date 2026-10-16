@@ -117,7 +117,7 @@ test('landing shows exact planned-feature copy in a vertical three-item guide wi
   assert.match(styles, /\.schedule-usage-list li \+ li\s*\{[^}]*border-top:\s*1px solid #e0eae3;/s);
 });
 
-test('existing management-role gating and unimplemented creation buttons are preserved', () => {
+test('role-gated team creation and preview-only schedule draft routing', () => {
   assert.match(source, /\{canCreateTeam && <button/);
   assert.match(app, /canCreateTeam=\{Boolean\(user && !authPending && currentLevel\)\}/);
   assert.match(app, /const currentLevel=managementLevel\(profile,hasSystemClaim\)/);

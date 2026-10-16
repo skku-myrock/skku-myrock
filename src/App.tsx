@@ -12,6 +12,8 @@ import MemberManager from './MemberManager';
 import {purgeAllOtherMembers} from './memberAdmin';
 import {findSchedule,ScheduleDetail,ScheduleLanding} from './SchedulePages';
 import ScheduleCreation from './ScheduleCreation';
+import ScheduleDraft from './ScheduleDraft';
+import type {ScheduleDraftInput} from './scheduleDraftModel';
 import {DonationHistory,ExpenseHistory,FinanceLanding} from './FinancePages';
 import ExpenseManagement from './ExpenseManagement';
 import DonationManagement from './DonationManagement';
@@ -281,7 +283,11 @@ function App() {
         onCreateTeam={() => notify('구성팀 시간표 만들기 기능은 추후 연결할 예정입니다.')}
         onOpen={openSchedule}
       />,
-    'schedule-create': <ScheduleCreation onBack={() => navigate('schedule')}/> ,
+    'schedule-create': <ScheduleCreation onBack={() => navigate('schedule')}
+      initial={(location.state as {draft?:unknown}|null)?.draft}
+      onPreview={(draft:ScheduleDraftInput)=>routerNavigate(pathFor('schedule-draft'),{state:{draft}})}/> ,
+    'schedule-draft': <ScheduleDraft initial={(location.state as {draft?:unknown}|null)?.draft}
+      onBack={()=>routerNavigate(pathFor('schedule-create'),{state:{draft:(location.state as {draft?:unknown}|null)?.draft}})}/> ,
     'schedule-detail': <ScheduleDetail schedule={findSchedule(activeScheduleId ?? '')} onBack={() => navigate('schedule')}/>,
     'gallery': <Gallery key={galleryRevision} canRegister={Boolean(user && !authPending && currentLevel)}/>,
     'equipment': <Equipment notify={notify}/>,

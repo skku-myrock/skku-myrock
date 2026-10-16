@@ -411,3 +411,49 @@
   .schedule-create-footer{flex-direction:column;align-items:stretch}
   .schedule-create-footer button{width:100%}
 }
+
+/* Empty, locally editable draft timetable; no persisted availability. */
+.schedule-roster-edit-trigger{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:9px 13px;font-size:12px;min-height:36px}
+.schedule-draft-help{margin:1px 0 18px;font-size:12px;line-height:1.8;color:var(--muted)}
+.schedule-draft-page .schedule-time-body,.schedule-draft-block{touch-action:pan-y;user-select:none}
+.schedule-draft-block{background:#fff}
+.schedule-draft-block.is-selected{background:color-mix(in srgb,var(--accent) 58%,white)}
+.schedule-draft-block.is-selected:hover{background:color-mix(in srgb,var(--accent) 70%,white)}
+.schedule-draft-page .schedule-draft-block:hover,.schedule-draft-page .schedule-draft-block:focus-visible{outline-color:var(--accent-dark)}
+.schedule-draft-selected-count{display:block;color:var(--accent-dark);font-size:21px;margin:-3px 0 8px}
+.schedule-draft-hover{margin:0 0 17px;font-size:11px;color:var(--muted);min-height:20px}
+.schedule-draft-participant{display:flex;align-items:center;gap:9px;min-height:32px;padding:6px 5px;color:#5b6f69;font-size:12px}
+.schedule-draft-participant svg{color:var(--accent-dark)}
+.schedule-draft-empty-roster{margin:0;font-size:12px;color:var(--muted)}
+.schedule-draft-people-panel .schedule-people-heading{margin-top:18px}
+.schedule-roster-backdrop{position:fixed;inset:0;z-index:90;background:rgba(20,34,31,.52);display:flex;align-items:center;justify-content:center;padding:18px}
+.schedule-roster-dialog{width:min(100%,490px);max-height:min(700px,calc(100dvh - 36px));overflow-y:auto;background:#fff;padding:29px;box-shadow:0 25px 80px rgba(15,40,33,.26)}
+.schedule-roster-dialog-header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding-bottom:18px;border-bottom:1px solid var(--border)}
+.schedule-roster-dialog-header h2{margin:0 0 8px;font-size:21px;color:var(--ink)}
+.schedule-roster-dialog-header p{margin:0;font-size:11px;line-height:1.8;color:var(--muted);word-break:keep-all}
+.schedule-roster-dialog-header>button{border:0;background:none;padding:4px;color:var(--muted)}
+.schedule-roster-dialog h3{margin:23px 0 12px;font-size:14px;color:var(--ink)}
+.schedule-roster-list{display:flex;flex-direction:column;gap:7px;max-height:195px;overflow-y:auto}
+.schedule-roster-list>div{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border:1px solid var(--border);min-height:39px}
+.schedule-roster-list>div>span{display:flex;gap:8px;align-items:center;font-size:12px;color:var(--ink)}
+.schedule-roster-list>div svg{color:var(--accent-dark)}
+.schedule-roster-list>div>button{display:flex;gap:4px;align-items:center;border:0;background:none;font-size:11px;color:#a45959}
+.schedule-roster-list>div>button svg{color:inherit}
+.schedule-roster-list>p{font-size:12px;color:var(--muted)}
+.schedule-roster-search-form{display:flex;flex-direction:column;gap:10px;margin-top:26px}
+.schedule-roster-search-form label{font-size:13px;font-weight:700;color:var(--ink)}
+.schedule-roster-search-form>div{display:flex;gap:9px}
+.schedule-roster-search-form input{min-width:0;flex:1;height:41px;padding:0 11px;border:1px solid #d9e4de;color:var(--ink);font-size:12px}
+.schedule-roster-search-form button{display:inline-flex;align-items:center;justify-content:center;gap:6px;flex-shrink:0;padding:8px 12px;font-size:12px}
+.schedule-roster-search-form button:disabled{opacity:.5}
+.schedule-roster-found{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#f3faf8;border:1px solid #d4eae6;padding:12px;margin-top:12px}
+.schedule-roster-found>span{display:flex;align-items:center;gap:8px;color:var(--accent-dark);font-size:12px;min-width:0;flex-wrap:wrap}
+.schedule-roster-found small{color:var(--muted);font-size:10px}
+.schedule-roster-found button{display:inline-flex;align-items:center;gap:5px;padding:8px 10px;min-height:34px;font-size:11px;white-space:nowrap}
+.schedule-roster-found button:disabled{opacity:.52}
+.schedule-roster-no-result{padding:12px;margin:12px 0 0;color:#a05a52;background:#fff6f4;font-size:12px}
+.schedule-roster-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:28px;border-top:1px solid var(--border);padding-top:16px}
+.schedule-roster-footer span{font-size:10px;color:var(--muted);line-height:1.8;word-break:keep-all}
+.schedule-roster-footer button{font-size:12px}
+@media(max-width:740px){.schedule-draft-page .schedule-detail-heading{flex-wrap:wrap}.schedule-roster-dialog{padding:23px 17px}}
+@media(max-width:420px){.schedule-roster-search-form>div{gap:6px}.schedule-roster-found{align-items:stretch;flex-direction:column}.schedule-roster-found button{align-self:flex-end}}
