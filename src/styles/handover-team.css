@@ -1,0 +1,45 @@
+.schedule-team-section{margin:28px 0 15px;padding:24px;border:1px solid var(--border);background:#fff}
+.schedule-team-heading{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.schedule-team-heading h2{font-size:17px;margin:0 0 6px}
+.schedule-team-heading p,.schedule-team-empty{font-size:12px;color:var(--muted);line-height:1.7;margin:0}
+.schedule-team-empty{margin-top:17px}
+.schedule-team-members{padding:0;margin:15px 0 0;list-style:none;border-top:1px solid var(--border)}
+.schedule-team-members li{display:flex;align-items:center;gap:9px;padding:12px 2px;border-bottom:1px solid var(--border);font-size:12px}
+.schedule-team-members li>span{flex:1}
+.schedule-team-members li>svg{color:#6d9581}
+.schedule-team-members li>button{border:0;background:none;color:#9e5550;display:flex;align-items:center;gap:6px;font-size:11px;padding:6px}
+.schedule-team-dialog-backdrop,.handover-choice-backdrop{position:fixed;inset:0;z-index:120;background:rgba(15,26,21,.56);display:flex;align-items:center;justify-content:center;padding:18px}
+.schedule-team-dialog,.handover-choice-dialog{background:#fff;width:min(540px,100%);max-height:calc(100vh - 36px);overflow:auto;box-shadow:0 16px 50px rgba(0,0,0,.17);padding:25px}
+.schedule-team-dialog-title,.handover-choice-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:18px}
+.schedule-team-dialog-title h2,.handover-choice-heading h2{font-size:20px;margin:0 0 7px}
+.schedule-team-dialog-title p,.handover-choice-dialog>p{font-size:12px;color:var(--muted);margin:0 0 18px}
+.schedule-team-dialog-title>button,.handover-choice-heading>button{border:0;background:transparent;display:flex;padding:4px;color:#74857b}
+.schedule-team-search{display:flex;gap:9px;margin:12px 0 13px}
+.schedule-team-search input{min-width:0;flex:1;border:1px solid #d8e2db;padding:10px 12px;font-size:13px}
+.schedule-team-results{min-height:75px;max-height:280px;overflow:auto;border-top:1px solid var(--border)}
+.schedule-team-results>p{font-size:12px;color:var(--muted);margin:15px 0}
+.schedule-team-result{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 2px;border-bottom:1px solid var(--border);font-size:12px}
+.schedule-team-result .outline-action{padding:8px 12px}
+.schedule-team-result button:disabled{opacity:.55}
+.schedule-team-dialog-foot{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:18px}
+.schedule-team-dialog-foot span{font-size:11px;color:var(--muted)}
+.handover-choice-dialog{width:min(450px,100%)}
+.handover-choice-actions{display:flex;gap:10px;flex-wrap:wrap}
+.handover-choice-actions button{justify-content:center;flex:1}
+.handover-editor-page{margin-top:30px}
+.handover-editor-panel{background:#fff;border:1px solid var(--border);padding:28px;margin:20px 0}
+.handover-editor-heading h2{font-size:18px;margin:0 0 8px}
+.handover-editor-heading p,.handover-editor-help{font-size:12px;color:var(--muted);line-height:1.7;margin:0 0 20px}
+.handover-editor-panel textarea{width:100%;min-height:250px;box-sizing:border-box;resize:vertical;line-height:1.8;font-size:13px;padding:15px;border:1px solid #d9e2dc;font-family:inherit}
+.handover-editor-panel textarea:focus{outline:2px solid #91cbb5;outline-offset:1px}
+.handover-editor-panel textarea:disabled{background:#f6f8f7}
+.handover-editor-actions{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-top:16px}
+.handover-editor-actions span{font-size:11px;color:var(--muted)}
+.handover-editor-actions button:disabled{opacity:.48;cursor:not-allowed}
+.handover-save-notice{color:#25815d;font-size:12px;margin-top:13px}
+.handover-position-picker{display:flex;align-items:center;gap:12px;font-size:12px}
+.handover-position-picker select{min-height:39px;border:1px solid var(--border);padding:0 12px;background:#fff}
+.handover-view-placeholder{border:1px solid var(--border);padding:45px 30px;text-align:center}
+.handover-view-placeholder h2{font-size:18px;margin:0 0 11px}
+.handover-view-placeholder p{font-size:12px;color:var(--muted)}
+@media(max-width:620px){.schedule-team-section{padding:17px}.schedule-team-heading{align-items:flex-start;flex-wrap:wrap}.schedule-team-heading button{width:100%;justify-content:center}.schedule-team-dialog,.handover-choice-dialog{padding:20px 16px}.schedule-team-search button{padding:0 12px}.handover-editor-panel{padding:18px}.handover-editor-actions{flex-wrap:wrap}.handover-editor-actions button{margin-left:auto}.handover-choice-actions{flex-direction:column}.handover-choice-actions button{flex:none}}
