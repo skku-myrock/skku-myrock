@@ -4,6 +4,7 @@ import {ArrowLeft,CalendarDays,ChevronDown,Clock3,Plus,Search,Trash2,X,Users} fr
 import {brushCalendarDays,futureCalendarMonths,candidateHourLabel,isoLocalToday} from './scheduleCreationModel';
 import type {CandidateCell} from './scheduleCreationModel';
 import {createSchedule,createTeamSchedule,searchTeamMembers} from './scheduleApi';
+import {auth} from './firebase';
 import type {TeamMember} from './scheduleApi';
 import type {ScheduleInput} from './scheduleGrid';
 
@@ -20,7 +21,7 @@ export default function ScheduleCreation({onBack,onCreated,teamMode=false}:{onBa
   async function searchMembers(){
     if(!memberQuery.trim())return;
     setSearching(true);setMemberError('');
-    try{setMemberResults(await searchTeamMembers(memberQuery.trim()));}
+    try{setMemberResults((await searchTeamMembers(memberQuery.trim())).filter(member=>member.uid!==auth.currentUser?.uid));}
     catch(error){setMemberError(error instanceof Error?error.message:'부원 검색에 실패했습니다.');}
     finally{setSearching(false);}
   }
