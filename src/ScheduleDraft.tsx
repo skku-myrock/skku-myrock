@@ -164,7 +164,7 @@ export default function ScheduleDraft({initial,onBack}:{initial:unknown;onBack:(
               </div>
             </div>
           </div>
-          <p className="schedule-detail-footnote">한 칸은 30분입니다. 현재는 아무 시간도 선택되어 있지 않습니다. 선택한 내용은 서버에 저장되지 않습니다.</p>
+          <p className="schedule-detail-footnote">한 칸은 30분입니다. 현재 {selected.size}칸 선택했습니다. 선택한 내용은 서버에 저장되지 않습니다.</p>
         </div>
         <aside className="schedule-people-panel schedule-draft-people-panel" aria-label="임시 시간표 명단 및 선택 현황">
           <span className="schedule-side-eyebrow">선택 현황</span>
