@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { ChangeEvent, FormEvent } from 'react';
 import { ArrowRight, Check, Download, FileSpreadsheet, KeyRound, Plus, RefreshCw, Search, Trash2, Upload, Users } from 'lucide-react';
 import type { MemberRole, Session } from './firebase';
+import type { Notify } from './app/siteNavigation';
 import {
   callError, deleteMember, downloadExampleCsv, formatMemberValues, loadMembers,
   parseMembersCsv, previewMembers, registerMembers, resetMemberPassword,
@@ -18,7 +19,7 @@ type Tab = 'list' | 'add';
 type EditMode = 'sessions' | 'details' | 'permissions';
 type ManagementLevel = 'part_leader' | 'staff' | 'president';
 
-export default function MemberManager({ currentUid, level }: { currentUid: string; level: ManagementLevel }) {
+export default function MemberManager({ currentUid, level, notify }: { currentUid: string; level: ManagementLevel; notify: Notify }) {
   const isPresident = level === 'president';
   const canEditDetails = level !== 'part_leader';
   const [tab, setTab] = useState<Tab>('list');
@@ -190,7 +191,12 @@ export default function MemberManager({ currentUid, level }: { currentUid: strin
   }
 
   async function removeMember(member: MemberRecord) {
-    if (!isPresident || busy || member.protected || member.uid === currentUid) return;
+    if (!isPresident || busy) return;
+    if (member.role !== 'member' || member.handoverAccess || member.protected) {
+      notify('권한이 부여된 인원은 삭제할 수 없습니다. 먼저 권한을 해제해주세요.');
+      return;
+    }
+    if (member.uid === currentUid) return;
     const typed = window.prompt(`${member.name} (${member.studentId}) 부원을 완전히 삭제하려면 학번 10자리를 입력해 주세요.\\nFirebase 로그인 계정과 부원 프로필이 삭제됩니다.`);
     if (typed !== member.studentId) return;
     setBusy(true); setError(''); setMessage('');
@@ -237,7 +243,7 @@ export default function MemberManager({ currentUid, level }: { currentUid: strin
                   {isPresident && <>
                     <button type="button" className="outline-action" disabled={busy || member.protected || member.uid === currentUid} onClick={() => startEdit(member,'permissions')}>권한 수정</button>
                     <button type="button" className="outline-action" disabled={busy || member.protected || member.uid === currentUid} onClick={() => void resetPassword(member)}><KeyRound size={13}/> 비밀번호 초기화</button>
-                    <button type="button" className="outline-action member-danger" disabled={busy || member.protected || member.uid === currentUid} onClick={() => void removeMember(member)}><Trash2 size={13}/> 삭제</button>
+                    <button type="button" className={"outline-action member-danger"+(member.role !== 'member' || member.handoverAccess || member.protected ? " member-danger-restricted" : "")} aria-disabled={member.role !== 'member' || member.handoverAccess || member.protected || member.uid === currentUid} disabled={busy || (member.uid === currentUid && member.role === 'member' && !member.handoverAccess && !member.protected)} onClick={() => void removeMember(member)}><Trash2 size={13}/> 삭제</button>
                   </>}
                 </div>
               </div>

@@ -176,10 +176,28 @@ test('signed tokens enforce role hierarchy through real handlers and Auth/Firest
     }),env})).status,200);
     assert.equal(docFields(docs.get(uid)).role,'part_leader');
     assert.equal(docFields(docs.get(uid)).handoverAccess,false, 'non-members do not retain the OB-only flag');
+    const restrictedRoleDelete=await deleteMember({request:post('president','delete',{
+      uid,expectedUpdateTime:docs.get(uid).updateTime,
+    }),env});
+    assert.equal(restrictedRoleDelete.status,403);
+    assert.equal((await restrictedRoleDelete.json()).error,'권한이 부여된 인원은 삭제할 수 없습니다. 먼저 권한을 해제해주세요.');
+    assert.equal(accounts.has(uid),true);
+    assert.equal(docs.has(uid),true);
     assert.equal((await permissions({request:post('president','permissions',{
       uid,role:'member',handoverAccess:true,expectedUpdateTime:docs.get(uid).updateTime,
     }),env})).status,200);
     assert.equal(docFields(docs.get(uid)).handoverAccess,true);
+    const restrictedObDelete=await deleteMember({request:post('president','delete',{
+      uid,expectedUpdateTime:docs.get(uid).updateTime,
+    }),env});
+    assert.equal(restrictedObDelete.status,403);
+    assert.equal((await restrictedObDelete.json()).error,'권한이 부여된 인원은 삭제할 수 없습니다. 먼저 권한을 해제해주세요.');
+    assert.equal(accounts.has(uid),true);
+    assert.equal(docs.has(uid),true);
+    assert.equal((await permissions({request:post('president','permissions',{
+      uid,role:'member',handoverAccess:false,expectedUpdateTime:docs.get(uid).updateTime,
+    }),env})).status,200);
+    assert.equal(docFields(docs.get(uid)).handoverAccess,false);
     assert.equal((await resetPassword({request:post('president','reset-password',{uid}),env})).status,200);
     assert.equal(lastResetPassword,'2026300002');
     assert.equal((await deleteMember({request:post('president','delete',{

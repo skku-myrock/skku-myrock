@@ -15,6 +15,12 @@ export async function onRequestPost({ request, env }) {
     const expectedUpdateTime = validateUpdateTime(body?.expectedUpdateTime);
     const document = await getFirestoreDocument(env, uid);
     requireMutableTarget(caller, document, uid, { protectSelf: true });
+    // Only a plain member without OB handover privileges may be deleted.
+    // Verify against Firestore, never a role supplied by the browser.
+    if (document?.fields?.role?.stringValue !== 'member' ||
+        document?.fields?.handoverAccess?.booleanValue === true) {
+      reject('권한이 부여된 인원은 삭제할 수 없습니다. 먼저 권한을 해제해주세요.', 403);
+    }
     requireFreshVersion(document, expectedUpdateTime);
 
     // Delete the profile with a version precondition, then the Auth account.
