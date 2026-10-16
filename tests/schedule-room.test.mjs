@@ -89,9 +89,9 @@ test('backend requests verify identities and separate consent from participant c
  assert.match(invite,/status:'pending'/);
  assert.match(ownerInvites,/requireOwner\(schedule,caller\.uid\)/);
  assert.match(ownerInvites,/invitation\.studentId/);
- assert.match(ownerInvites,/\['pending','not_found'\]/);
- assert.match(invite,/status:'not_found'/);
- assert.match(invite,/recipientUid:''/);
+ assert.match(ownerInvites,/doc.status==='pending'/);
+ assert.match(invite,/if\(!found\)return success/);
+ assert.doesNotMatch(invite,/status:'not_found',createdAt/);
  assert.match(cancelInvites,/requireOwner\(schedule,caller\.uid\)/);
  assert.match(cancelInvites,/\['pending','not_found'\]\.includes\(invitation\.status\)/);
  assert.match(cancelInvites,/status:'cancelled'/);
@@ -122,14 +122,25 @@ test('roster owner can see and cancel student-ID-only pending invitations',async
   read('src/ScheduleRoom.tsx'),read('src/scheduleApi.ts'),read('src/styles/schedule.css')
  ]);
  assert.match(view,/초대 요청 명단 \(\{pendingInvites\.length\}\)/);
- assert.match(view,/item\.status==='not_found'/);
- assert.match(view,/setInviteFeedback\('존재하지 않는 학번입니다\.'\)/);
+ assert.match(view,/item.status==='pending'/);
+ assert.match(view,/setNotice\('존재하지 않는 학번입니다\.'\)/);
  assert.match(view,/item\.studentId/);
  assert.match(view,/await cancelScheduleInvitation\(id,item\.id\)/);
  assert.match(view,/await listPendingScheduleInvitations\(id\)/);
  assert.match(view,/await loadPending\(\)/);
- assert.match(view,/나중에 가입하더라도 자동으로 전달되지 않습니다/);
+ assert.doesNotMatch(view,/나중에 가입하더라도 자동으로 전달되지 않습니다/);
  assert.match(api,/export type PendingScheduleInvitation/);
  assert.match(api,/export const cancelScheduleInvitation/);
  assert.match(css,/\.schedule-roster-pending-list\{/);
+});
+
+test('leave controls, cleanup endpoint and equipment sample labels exist',async()=>{
+ const [room,leave,api,equipment]=await Promise.all([read('src/ScheduleRoom.tsx'),read('functions/api/schedules/[id]/leave.js'),read('src/scheduleApi.ts'),read('src/pages/SitePages.tsx')]);
+ assert.match(room,/onClick=\{\(\)=>void leave\(\)\}/);
+ assert.doesNotMatch(room,/\?\' \(나\)\'/);
+ assert.match(leave,/schedule.participantUids.length!==1/);
+ assert.match(leave,/await commit\(env,writes\)/);
+ assert.match(api,/export const leaveSchedule/);
+ for(const status of ['대여 가능','대여 승인 대기중','대여중','반납 확인중'])assert.ok(equipment.includes(status));
+ assert.doesNotMatch(equipment,/장비 정보 및 대여 상태 표시 예시/);
 });

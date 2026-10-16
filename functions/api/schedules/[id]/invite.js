@@ -1,6 +1,6 @@
 import {failure,parseBody,reject,secureOrigin,success} from '../../../_lib/shared.js';
 import {lookupAccount,getFirestoreDocument} from '../../../_lib/google.js';
-import {callerProfile,commit,docData,getSchedule,getDocument,invitationDoc,requireOwner,requireStudentId,THROTTLES,toWrite} from '../../../_lib/schedules.js';
+import {callerProfile,commit,docData,getSchedule,getDocument,invitationDoc,requireOwner,requireStudentId,THROTTLES,toWrite,scheduleDoc,firestoreResourceName} from '../../../_lib/schedules.js';
 
 const GENERIC='초대 요청을 접수했습니다.';
 async function requestId(scheduleId,studentId){
@@ -13,7 +13,7 @@ export async function onRequestPost({request,env,params}){
  try{
   secureOrigin(request);
   const caller=await callerProfile(request,env);
-  const schedule=docData(await getSchedule(env,params.id));
+  const scheduleDocument=await getSchedule(env,params.id),schedule=docData(scheduleDocument);
   requireOwner(schedule,caller.uid);
   if(schedule.status!=='active')reject('종료된 시간표에는 초대할 수 없습니다.',409);
   const studentId=requireStudentId(await parseBody(request));
@@ -37,18 +37,7 @@ export async function onRequestPost({request,env,params}){
   const registered=candidateUid?await getFirestoreDocument(env,candidateUid):null;
   const found=Boolean(registered);
   const alreadyMember=found&&(candidateUid===caller.uid||schedule.participantUids?.includes(candidateUid));
-  if(!found){
-   // A terminal request record is visible to the owner, but is NEVER deliverable.
-   // It has no recipient UID, and cannot become an invitation after later registration.
-   const createdAt=new Date().toISOString();
-   try{
-    await commit(env,[toWrite(url,{
-     scheduleId:params.id,studentId,recipientUid:'',inviterUid:caller.uid,
-     status:'not_found',createdAt,updatedAt:createdAt,
-    },existing?{updateTime:existing.updateTime}:{exists:false})]);
-   }catch(error){if(error.status!==409)throw error;}
-   return success({message:'존재하지 않는 학번입니다.',status:'not_found'});
-  }
+  if(!found)return success({message:'존재하지 않는 학번입니다.',status:'not_found'});
   if(alreadyMember)return success({message:'이미 참여 중인 학번입니다.',status:'already_member'});
   if(existing&&['pending','accepted'].includes(existing.fields?.status?.stringValue))
    return success({message:GENERIC,status:existing.fields.status.stringValue});
@@ -59,7 +48,9 @@ export async function onRequestPost({request,env,params}){
   if(legacy?.fields?.status?.stringValue==='pending')return success({message:GENERIC,status:'pending'});
   const createdAt=new Date().toISOString();
   try{
-   await commit(env,[toWrite(url,{
+   await commit(env,[
+    {verify:firestoreResourceName(scheduleDoc(params.id)),currentDocument:{updateTime:scheduleDocument.updateTime}},
+    toWrite(url,{
     scheduleId:params.id,studentId,recipientUid:candidateUid,inviterUid:caller.uid,
     status:'pending',createdAt,updatedAt:createdAt,
    },existing?{updateTime:existing.updateTime}:{exists:false})]);
