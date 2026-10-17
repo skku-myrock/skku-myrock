@@ -1,7 +1,7 @@
 import {useToastSignals} from './useToastSignals';
 import { useEffect, useRef, useState } from 'react';
 import type { KeyboardEvent as ReactKeyboardEvent, MouseEvent as ReactMouseEvent, TouchEvent as ReactTouchEvent } from 'react';
-import { ArrowLeft, ArrowRight, ArrowUpRight, Image as ImageIcon, MoreHorizontal, Plus, Trash2, Pencil, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ArrowUpRight, Image as ImageIcon, ChevronDown, Plus, Trash2, Pencil, X } from 'lucide-react';
 import {getGalleryPage,deleteGalleryAlbum} from './galleryApi';
 import GalleryUploadDialog from './GalleryUploadDialog';
 import LoadingText from './LoadingText';
@@ -271,13 +271,13 @@ export default function PhotoGallery({ canRegister }: { canRegister: boolean }) 
           </div>
           <div className="gallery-lightbox-header-actions">
             {canRegister&&<div className="gallery-manage-wrapper">
-              <button type="button" className="gallery-manage-trigger" disabled={deleting}
+              <button type="button" className="outline-action content-manage-trigger" disabled={deleting}
                 onClick={openManagement} aria-expanded={manageOpen} aria-haspopup="true">
-                <MoreHorizontal size={18} aria-hidden="true"/> 관리
+                관리 <ChevronDown size={15} aria-hidden="true"/>
               </button>
-              {manageOpen&&<div className="gallery-manage-menu" role="group" aria-label="앨범 관리">
+              {manageOpen&&<div className="content-manage-menu gallery-manage-menu" role="group" aria-label="앨범 관리">
                 <button type="button" onClick={startEditing}><Pencil size={15} aria-hidden="true"/> 수정하기</button>
-                <button type="button" className="gallery-manage-delete" onClick={()=>void removeAlbum()}><Trash2 size={15} aria-hidden="true"/> 삭제하기</button>
+                <button type="button" className="content-manage-delete" onClick={()=>void removeAlbum()}><Trash2 size={15} aria-hidden="true"/> 삭제하기</button>
               </div>}
             </div>}
             <button type="button" ref={closeButtonRef} className="gallery-close-button" disabled={deleting}
