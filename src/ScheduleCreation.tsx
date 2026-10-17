@@ -1,3 +1,4 @@
+import {useToastSignals} from './useToastSignals';
 import {useMemo,useRef,useState} from 'react';
 import type {PointerEvent as ReactPointerEvent} from 'react';
 import {ArrowLeft,CalendarDays,ChevronDown,Clock3,Plus,Search,Trash2,X,Users} from 'lucide-react';
@@ -30,6 +31,8 @@ export default function ScheduleCreation({onBack,onCreated,teamMode=false}:{onBa
   }
   const [creating,setCreating]=useState(false);
   const [error,setError]=useState('');
+  useToastSignals({error});
+  useToastSignals({error:memberError});
   async function submit(input:ScheduleInput){
     if(creating)return;
     setCreating(true);setError('');
@@ -194,7 +197,7 @@ export default function ScheduleCreation({onBack,onCreated,teamMode=false}:{onBa
             disabled={!title.trim()||dates.size===0||creating||(teamMode&&teamMembers.length===0)}
             onClick={()=>void submit({title:title.trim(),dates:[...dates].sort(),startHour,endHour})}>{creating?'생성 중…':'시간표 생성'}</button>
         </div>
-        {error&&<p role="alert" className="schedule-side-warning">{error}</p>}
+        
       </div>
       {teamMode&&memberDialog&&<div className="schedule-team-dialog-backdrop" onMouseDown={event=>{if(event.target===event.currentTarget)setMemberDialog(false);}}>
         <section className="schedule-team-dialog" role="dialog" aria-modal="true" aria-label="구성팀 인원 추가">
@@ -203,7 +206,7 @@ export default function ScheduleCreation({onBack,onCreated,teamMode=false}:{onBa
             <input autoFocus value={memberQuery} onChange={event=>setMemberQuery(event.target.value)} placeholder="이름 또는 학번 검색" maxLength={40} aria-label="이름 또는 학번" />
             <button type="submit" className="button button-primary" disabled={searching||!memberQuery.trim()}><Search size={15}/>{searching?'검색 중…':'검색'}</button>
           </form>
-          {memberError&&<p role="alert" className="schedule-side-warning">{memberError}</p>}
+          
           <div className="schedule-team-results">{memberResults.length===0?<p>검색 결과가 없습니다. 검색어를 입력하고 검색을 눌러주세요.</p>:
            memberResults.map(member=><div className="schedule-team-result" key={member.uid}><span><strong>{member.name}</strong> ({member.studentId})</span>
             <button type="button" className="outline-action" disabled={teamMembers.some(entry=>entry.uid===member.uid)} onClick={()=>addMember(member)}>{teamMembers.some(entry=>entry.uid===member.uid)?'추가됨':'추가하기'}</button></div>)}</div>
