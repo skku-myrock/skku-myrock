@@ -25,6 +25,8 @@ test('dummy API checks signed superadmin and uses stable document IDs, batches a
  assert.match(s,/documentId\(stage,index\)/);
  assert.match(s,/dummyBatch:'pagination-v1'/);
  assert.match(s,/validateGalleryAlbum/);
+ assert.match(s,/getDummyGalleryFixtures/);
+ assert.match(s,/ensureDummyGalleryFixtures/);
  assert.match(s,/photos\.slice\(rotate\)/);
  assert.doesNotMatch(s,/uploadImagesBatch|GITHUB_IMAGES_TOKEN|createGalleryAlbum\(/);
  const client=await read('src/adminResets.ts');
@@ -71,4 +73,14 @@ test('async editors and full-page management operations opt into wait cursor sta
   'src/MemberManager.tsx','src/ScheduleRoom.tsx','src/HandoverNotes.tsx','src/App.tsx']){
   assert.match(await read(path),/data-async-busy=\{/,'missing busy marker in '+path);
  }
+});
+
+test('gallery fixtures use GitHub blob references and survive ordinary gallery purge',async()=>{
+ const [images,gallery]=await Promise.all([read('functions/_lib/githubImages.js'),read('functions/_lib/gallery.js')]);
+ assert.match(images,/export async function getDummyGalleryFixtures/);
+ assert.match(images,/export async function ensureDummyGalleryFixtures/);
+ assert.match(images,/fixtures\/gallery/);
+ assert.match(images,/sha\};/);
+ assert.match(images,/const FOLDERS=new Set\(\['site','notices','gallery'\]\)/);
+ assert.match(gallery,/fixtures\\\/gallery/);
 });
