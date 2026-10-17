@@ -34,7 +34,7 @@ export default function ScheduleRoom({id,onBack,registerLeaveGuard}:{
  const [leaving,setLeaving]=useState(false);
  const [inviteFeedback,setInviteFeedback]=useState('');
  const [notice,setNotice]=useState(''),[selectedCell,setSelectedCell]=useState<Cell|null>(null);
- useToastFeedback(notice,notice==='존재하지 않는 학번입니다.'?'warning':'success');
+ useToastFeedback(notice,notice==='존재하지 않는 학번입니다.'||notice==='다른 참여자가 있는 시간표는 방장이 나갈 수 없습니다.'?'warning':'success');
  useToastFeedback(error,'error');
  useToastFeedback(inviteFeedback,'warning');
  const stroke=useRef<Stroke|null>(null);
