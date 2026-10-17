@@ -31,6 +31,10 @@ function mockFirestore(){
  const stamp=()=>new Date(Date.UTC(2026,9,17,1,0,0)+1000*(++revision)).toISOString();
  const store=(name,fields)=>documents.set(name,{name,fields,updateTime:stamp()});
  for(const x of Object.values(users))store(root+'/users/'+x.uid,toFields(x));
+ // Explicitly register one test-only equipment document; production no longer seeds defaults.
+ store(root+'/equipment/test-guitar',toFields({
+  name:'테스트 기타',product:'테스트 모델',imageUrl:'',queue:[],borrower:{},returnRequestedAt:'',archived:false
+ }));
  const json=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:{'content-type':'application/json'}});
  const prefix='projects/skku-myrock/databases/(default)/documents/';
  const toUrl=name=>root+'/'+name.slice(prefix.length);
@@ -84,15 +88,15 @@ async function invoke(handler,as,path,body){
 const view=(as,manageView=false)=>invoke(list,as,manageView?'?manage=1':'');
 const doAction=(as,id,operation)=>invoke(action,as,'/action',{id,action:operation});
 const doManage=(as,id,operation,fields={})=>invoke(manage,as,'/manage',{id,action:operation,...fields});
-const guitar='demo-guitar';
+const guitar='test-guitar';
 const byId=(response,id=guitar)=>response.data.items.find(item=>item.id===id);
 
-test('four defaults available; FIFO cancellation, approval, return and next queue',async()=>{
+test('persisted equipment supports FIFO cancellation, approval, return and next queue',async()=>{
  const mock=mockFirestore();
  try{
   let page=await view(null);
   assert.equal(page.status,200);
-  assert.deepEqual(page.data.items.map(x=>x.status),Array(4).fill('대여 가능'));
+  assert.deepEqual(page.data.items.map(x=>x.status),['대여 가능']);
   assert.ok(page.data.items.every(x=>!('borrower'in x)&&!('queue'in x)));
 
   assert.equal((await doAction('alice',guitar,'apply')).status,200);
@@ -160,7 +164,7 @@ test('manager can edit and delete only idle equipment, and cannot force statuses
   assert.ok(!(await view(null)).data.items.some(x=>x.id===guitar));
   const added=await doManage('leader',undefined,'add',{name:'베이스 앰프',product:'Fender Rumble'});
   assert.equal(added.status,201,JSON.stringify(added));
-  assert.equal((await view(null)).data.items.length,4);
+  assert.equal((await view(null)).data.items.length,1);
   assert.equal(byId(await view(null),added.data.id).status,'대여 가능');
   assert.equal((await doManage('leader',added.data.id,'edit',{name:'앰프',product:'Fender Rumble 40',status:'대여중'})).status,200);
   assert.equal(byId(await view(null),added.data.id).status,'대여 가능');
