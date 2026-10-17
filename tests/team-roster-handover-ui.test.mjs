@@ -93,5 +93,5 @@ test('handover drive button shows an explicit missing-link popup',async()=>{
  const app=await read('src/App.tsx');
  assert.match(code,/onClick=\{\(\)=>notify\('연결된 링크가 없습니다'\)\}/);
  assert.match(code,/인수인계 드라이브/);
- assert.match(app,/\{toast&&<div className="toast" role="status">/);
+ assert.match(app,/bottomNotice&&<TimedBottomToast key=\{bottomNotice.id\}/);
 });
