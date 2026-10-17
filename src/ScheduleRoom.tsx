@@ -202,7 +202,7 @@ export default function ScheduleRoom({id,onBack,registerLeaveGuard}:{
   .filter((time,i)=>time%60===0||i===0||i===slots.length):[];
  return <>
   <div className="page-heading container"><span className="eyebrow">SCHEDULE</span><h1>{schedule?.title??'합주 시간표'}</h1></div>
-  <section className="container section-block schedule-detail schedule-draft-page">
+  <section className="container section-block schedule-detail schedule-draft-page" data-async-busy={saving||leaving||inviteBusy?"true":undefined}>
    <button type="button" className="schedule-back-button" onClick={onBack}><ArrowLeft size={16}/> 내가 참여한 시간표 목록</button>
    {loading?<LoadingText>시간표를 불러오는 중입니다</LoadingText>:!schedule?<p role="alert">{error||'시간표를 찾을 수 없습니다.'}</p>:<>
     <div className="schedule-detail-heading"><div><h2>시간 조율 현황</h2></div>
