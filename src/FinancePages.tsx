@@ -221,7 +221,7 @@ export function DonationHistory({
               <span>{displayDate(row.date)}</span><span>{row.donorName}</span><span>{displayAmount(row.amount)}</span>
             </div>)}
         </div>
-        {allCursor&&<div className="list-bottom"><button type="button" className="outline-action" disabled={loadingMoreAll} onClick={()=>void loadMoreDonations()}>{loadingMoreAll?'더 불러오는 중...':'후원 내역 더 보기'}</button></div>}
+        {allCursor&&<div className="list-bottom"><button type="button" className="outline-action" disabled={loadingMoreAll} className={loadingMoreAll?"outline-action is-fetching":"outline-action"} onClick={()=>void loadMoreDonations()}>{loadingMoreAll?'더 불러오는 중...':'후원 내역 더 보기'}</button></div>}
       </section>
       <section className="finance-record-section" aria-labelledby="my-donations-heading">
         <FinanceSectionTitle title="내 후원 내역" description="로그인한 부원의 학번에 연결된 기록만 표시합니다." />
@@ -291,7 +291,7 @@ export function ExpenseHistory({ onBack, canManageExpenses, onManage }: {
               <span>{formatWon(row.amount)}</span><span>{formatWon(row.balance)}</span><span>{row.description}</span>
             </div>)}
         </div>
-        {expenseCursor&&<div className="list-bottom"><button type="button" className="outline-action" disabled={loadingMore} onClick={()=>void loadMoreExpenses()}>{loadingMore?'더 불러오는 중...':'회비 내역 더 보기'}</button></div>}
+        {expenseCursor&&<div className="list-bottom"><button type="button" className="outline-action" disabled={loadingMore} className={loadingMore?"outline-action is-fetching":"outline-action"} onClick={()=>void loadMoreExpenses()}>{loadingMore?'더 불러오는 중...':'회비 내역 더 보기'}</button></div>}
       </section>
       <div className="finance-detail-footer"><BackToFinance onBack={onBack}/></div>
     </div>
