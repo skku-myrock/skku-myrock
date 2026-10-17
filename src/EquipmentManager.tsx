@@ -97,7 +97,7 @@ export default function EquipmentManager({items,busy,loading,error,onRefresh,onM
     <div><Package size={18}/><span>반납 확인중</span><strong>{returning.length}</strong></div>
    </div>
    <div className="equipment-manage-refresh"><button className="outline-action" type="button" onClick={onRefresh} disabled={busy||loading}>새로고침</button></div>
-   {error&&<p className="form-error" role="alert">{error}</p>}
+   
    {loading&&<p role="status">장비 현황을 불러오는 중입니다.</p>}
    <section className="equipment-manage-section" aria-labelledby="equipment-pending-title">
     <div className="equipment-manage-heading"><div><h2 id="equipment-pending-title">승인 대기 목록</h2><p>대여 신청은 먼저 신청한 부원부터 승인됩니다. 반납 확인도 이곳에서 처리합니다.</p></div></div>
