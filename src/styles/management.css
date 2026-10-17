@@ -285,10 +285,13 @@ body:has([data-async-busy="true"]),body:has([data-async-busy="true"]) *{
 .notice-detail-byline{display:flex;align-items:center;gap:12px 22px;flex-wrap:wrap;min-width:0}
 .notice-detail-byline>span{color:#667e70}
 .notice-manage-actions{display:flex;justify-content:flex-end;align-items:center;flex-shrink:0;margin:0 0 0 auto;position:relative}
-.notice-manage-menu{position:absolute;top:calc(100% + 5px);right:0;z-index:10;display:flex;flex-direction:column;min-width:128px;gap:5px;align-items:stretch;background:#fff;border:1px solid #e0e8e2;padding:6px;box-shadow:0 6px 20px #00000012}
-.notice-manage-menu button{border:1px solid #cad8cf;background:#fff;color:#365b46;padding:8px 14px;font-size:12px;cursor:pointer}
-.notice-manage-menu button:last-child{color:#a43f3f;border-color:#e1caca}
-.notice-manage-menu button:hover{background:#f2f7f3}
+/* Shared management controls for notices and gallery albums. */
+.content-manage-trigger{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:35px;padding:7px 10px;white-space:nowrap}
+.content-manage-menu{position:absolute;right:0;top:calc(100% + 6px);z-index:20;display:flex;flex-direction:column;min-width:128px;gap:2px;padding:5px;background:#fff;border:1px solid #dae6de;box-shadow:0 8px 23px #15291c1f}
+.content-manage-menu button{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;min-height:35px;box-sizing:border-box;border:0;background:#fff;color:#415d4a;padding:7px 8px;text-align:center;font-size:12px;cursor:pointer;white-space:nowrap}
+.content-manage-menu button:hover{background:#f3f8f4}
+.content-manage-menu button.content-manage-delete{color:#a54343}
+.content-manage-menu button.content-manage-delete:hover{background:#fff2f2}
 .notice-detail-image-single{margin:22px auto;max-width:100%}
 .notice-detail-image-single img{display:block;height:auto;max-width:100%;margin:auto;object-fit:contain}
 .notice-detail-content>.notice-detail-body{margin:16px 0}
