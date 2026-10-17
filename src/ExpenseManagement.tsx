@@ -127,7 +127,7 @@ export default function ExpenseManagement({onBack}:{onBack:()=>void}){
                   <div className="finance-manager-actions"><button type="submit" className="button button-primary" disabled={busy}><Save size={14}/> 저장</button><button type="button" className="outline-action" disabled={busy} onClick={()=>setAdd(null)}>취소</button></div>
                 </form>
               </td></tr>}
-              {loading?<tr><td colSpan={6}>거래 기록을 불러오는 중입니다.</td></tr>:
+              {loading?<tr><td colSpan={6}>거래 내역을 불러오는 중입니다.</td></tr>:
                 records.length===0&&!add?<tr><td colSpan={6}>등록된 거래 내역이 없습니다.</td></tr>:
                 records.map(record=>editing?.id===record.id?
                   <tr key={record.id} className="finance-inline-edit">
