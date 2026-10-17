@@ -6,7 +6,7 @@ import {doc,getDoc} from 'firebase/firestore';
 import {useBlocker,useLocation,useNavigate as useRouterNavigate,Route,Routes,Navigate as RouterRedirect} from 'react-router-dom';
 import {auth,db} from './firebase';
 import type {MemberProfile} from './firebase';
-import {ArrowRight,ChevronDown,Trash2,CircleHelp,LockKeyhole,Mail,Menu,X,UserRound,LogOut} from 'lucide-react';
+import {ArrowRight,ChevronDown,Trash2,LockKeyhole,Mail,Menu,X,UserRound,LogOut} from 'lucide-react';
 import logo from './logo-transparent.png';
 import MemberManager from './MemberManager';
 import EquipmentManager from './EquipmentManager';
@@ -95,10 +95,8 @@ function App() {
     window.addEventListener('myrock:toast',listener);
     return()=>window.removeEventListener('myrock:toast',listener);
   },[]);
-  const [toast,setToast] = useState('');
-  const [aboutSaveNotice,setAboutSaveNotice]=useState('');
-  const [loginNotice,setLoginNotice]=useState('');
-  const [logoutNotice,setLogoutNotice]=useState('');
+
+
   const leaveGuardRef=useRef<(()=>boolean)|null>(null);
   const registerEditorLeaveGuard=useCallback((guard:(()=>boolean)|null)=>{leaveGuardRef.current=guard;},[]);
   const canLeaveEditor=()=>leaveGuardRef.current?.()??true;
