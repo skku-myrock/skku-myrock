@@ -1,3 +1,4 @@
+import {useToastSignals} from './useToastSignals';
 import { useEffect, useRef, useState } from 'react';
 import type { ChangeEvent, DragEvent, KeyboardEvent } from 'react';
 import { ArrowDown, ArrowUp, Download, GripVertical, Trash2, X } from 'lucide-react';
@@ -24,6 +25,7 @@ export default function GalleryUploadDialog({ onClose,onCreated,initialAlbum,onU
   }))??[]);
   const [dropActive, setDropActive] = useState(false);
   const [error, setError] = useState('');
+  useToastSignals({error});
   const [busy,setBusy]=useState(false);
   const busyRef=useRef(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
