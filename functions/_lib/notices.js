@@ -56,8 +56,37 @@ export async function listNotices(env){
   }
   return items.sort((a,b)=>b.publishedAt.localeCompare(a.publishedAt));
 }
+/** Search the titles of *all* notices, not only the first browser-loaded page.
+ * Firestore does not provide substring queries, so scan indexed pages using a
+ * small field mask, return up to 30 matches, and resume with its page token.
+ * Stop after a bounded number of pages rather than silently giving partial results.
+ */
+export async function searchNoticeTitlesPage(env,request){
+ const url=new URL(request.url),search=(url.searchParams.get('search')??'').trim();
+ if(!search||search.length>100)reject('검색어는 1~100자로 입력해 주세요.',400);
+ const category=url.searchParams.get('category')??'전체';
+ if(category!=='전체'&&!categories.has(category))reject('공지사항 분류가 올바르지 않습니다.',400);
+ const keyword=search.toLocaleLowerCase('ko'),matches=[];
+ let token=url.searchParams.get('pageToken')??'';
+ for(let i=0;i<300;i++){
+  const nextRequest=new URL(url);nextRequest.searchParams.delete('pageToken');
+  if(token)nextRequest.searchParams.set('pageToken',token);
+  const page=await firestorePage(env,ROOT,{request:{url:nextRequest.href},orderBy:'publishedAt desc',
+   fields:['title','category','author','publishedAt','description']});
+  for(const document of page.documents){
+   const fields=docFields(document);
+   if((category==='전체'||fields.category===category)
+      &&String(fields.title??'').toLocaleLowerCase('ko').includes(keyword))matches.push(noticeFromDoc(document));
+  }
+  token=page.nextPageToken??'';
+  if(matches.length>=30||!token)return {notices:matches,nextPageToken:token||null};
+ }
+ reject('공지사항 검색 범위를 초과했습니다. 검색어를 구체적으로 입력해 주세요.',503);
+}
+
 /** Public list: only metadata and searchable text, never image blocks or serialized galleries. */
 export async function listNoticeSummariesPage(env,request){
+  if(new URL(request.url).searchParams.has('search'))return searchNoticeTitlesPage(env,request);
   const {documents,nextPageToken}=await firestorePage(env,ROOT,{
     request,orderBy:'publishedAt desc',
     fields:['title','category','author','publishedAt','description']

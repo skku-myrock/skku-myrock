@@ -6,14 +6,15 @@ export type Page = 'home' | 'about' | 'about-manage' | 'news' | 'notice-detail' 
 export type Navigate = (page:Page)=>void;
 export type Notify = (message?:string)=>void;
 export type NavItem = {id:Page;label:string};
+export type NavGroupItem = NavItem | {id:"ddrak";label:string;href:string};
 
-export const navGroups:{label:string;items:NavItem[]}[]=[
+export const navGroups:{label:string;items:NavGroupItem[]}[]=[
  {label:'소개',items:[{id:'about',label:'동아리 소개'},{id:'gallery',label:'갤러리'}]},
  {label:'소식',items:[{id:'news',label:'공지사항'},{id:'finance',label:'후원 · 회계'}]},
- {label:'활동',items:[{id:'schedule',label:'합주 시간 조율'},{id:'equipment',label:'장비 대여'}]},
+ {label:'활동',items:[{id:'schedule',label:'합주 시간 조율'},{id:'equipment',label:'장비 대여'},{id:'ddrak',label:'뜨락',href:'https://ddrak.vercel.app/'}]},
 ];
 export const allNav:NavItem[]=[
- ...navGroups.flatMap(group=>group.items),
+ ...navGroups.flatMap(group=>group.items.filter((item):item is NavItem=>item.id!=='ddrak')),
  {id:'members',label:'부원 관리'},{id:'handover',label:'인수인계'},{id:'profile',label:'내 정보'},
 ];
 export const routeDefinitions:{page:Page;path:string}[]=[

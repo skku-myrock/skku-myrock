@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowRight, ArrowUpRight, Image as ImageIcon, ChevronDown, P
 import {getGalleryPage,deleteGalleryAlbum} from './galleryApi';
 import GalleryUploadDialog from './GalleryUploadDialog';
 import LoadingText from './LoadingText';
+import ImageShimmer from './ImageShimmer';
 import type { PhotoAlbum, PhotoCategory } from './galleryData';
 
 const categories = ['전체', '공연', '행사', '일상'] as const;
@@ -15,7 +16,7 @@ type PhotoKind = 'cover' | 'large' | 'thumb';
 
 function PhotoSlot({ src, label, kind }: { src: string | null; label: string; kind: PhotoKind }) {
   if (src) {
-    return <img className={'gallery-slot-image gallery-slot-' + kind} src={src} alt={label} loading={kind === 'large' ? 'eager' : 'lazy'} fetchPriority={kind === 'large' ? 'high' : 'low'} decoding="async" />;
+    return <ImageShimmer key={src} className={'gallery-slot-image gallery-slot-' + kind} src={src} alt={label} loading={kind === 'large' ? 'eager' : 'lazy'} fetchPriority={kind === 'large' ? 'high' : 'low'} />;
   }
   return <div className={'gallery-slot-empty gallery-slot-' + kind} role="img" aria-label={label + ' (사진 미등록)'}>
     <ImageIcon size={kind === 'thumb' ? 16 : kind === 'large' ? 35 : 25} strokeWidth={1.35} aria-hidden="true" />

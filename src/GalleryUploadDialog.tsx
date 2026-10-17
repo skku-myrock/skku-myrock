@@ -5,6 +5,7 @@ import { ArrowDown, ArrowUp, Download, GripVertical, Trash2, X } from 'lucide-re
 import type { PhotoCategory } from './galleryData';
 import {validateSourceImage} from './imageCompression';
 import {uploadImagesBatch} from './imageUpload';
+import ImageShimmer from './ImageShimmer';
 import {publishGalleryAlbum,updateGalleryAlbum} from './galleryApi';
 import type {PhotoAlbum} from './galleryData';
 
@@ -247,7 +248,7 @@ export default function GalleryUploadDialog({ onClose,onCreated,initialAlbum,onU
             onDragOver={event => { if (draggedPhotoId.current !== null) event.preventDefault(); }}
             onDrop={event => { event.preventDefault(); event.stopPropagation(); dropPhoto(photo.id); }}>
             <div className="gallery-upload-photo-preview">
-              <img src={photo.url} alt={'선택된 사진 ' + (index + 1)} />
+              <ImageShimmer key={photo.url} className="gallery-upload-preview-image" src={photo.url} alt={'선택된 사진 ' + (index + 1)} />
               <span className="gallery-upload-photo-index">{index === 0 ? '대표사진 · 01' : String(index + 1).padStart(2, '0')}</span>
             </div>
             <div className="gallery-upload-photo-meta">

@@ -50,7 +50,7 @@
 /* Equipment imagery and manual reconciliation controls. */
 .equipment-row>.equipment-photo{width:112px;min-width:112px;height:93px;object-fit:cover;background:#f0f3f2;display:block}
 .equipment-manage-description{display:flex;gap:13px;align-items:center;min-width:0}
-.equipment-manage-description>img,.equipment-manage-photo-empty{width:76px;min-width:76px;height:66px;object-fit:cover;background:#f1f4f2}
+.equipment-manage-description>img,.equipment-manage-description>.image-shimmer-frame,.equipment-manage-photo-empty{width:76px;min-width:76px;height:66px;object-fit:cover;background:#f1f4f2}
 .equipment-manage-photo-empty{display:flex;align-items:center;justify-content:center;color:#9eaaa5;font-size:11px}
 .equipment-manage-description>div:last-child{display:flex;flex-direction:column;gap:5px;min-width:0}
 .equipment-manage-description strong{font-size:14px}
@@ -69,4 +69,4 @@
 .equipment-correction-form select,.equipment-correction-form input{height:40px;border:1px solid #d2dfd7;padding:0 11px;background:#fff;font-size:12px;min-width:0;width:100%}
 .equipment-correction-form>p{font-size:11px;color:var(--muted);line-height:1.7;flex-basis:100%;margin:0}
 .equipment-correction-form .equipment-manage-form-actions{width:100%;margin:0}
-@media(max-width:620px){.equipment-row>.equipment-photo{width:84px;min-width:84px;height:80px}.equipment-correction-form{padding:13px}.equipment-manage-description>img,.equipment-manage-photo-empty{width:65px;min-width:65px;height:60px}}
+@media(max-width:620px){.equipment-row>.equipment-photo{width:84px;min-width:84px;height:80px}.equipment-correction-form{padding:13px}.equipment-manage-description>img,.equipment-manage-description>.image-shimmer-frame,.equipment-manage-photo-empty{width:65px;min-width:65px;height:60px}}

@@ -6,28 +6,31 @@ import {commit,firestoreResourceName,getDocument} from './schedules.js';
 // The FIFO queue and current loan change atomically, so a competing approval
 // or cancellation cannot jump ahead or approve two borrowers.
 export const EQUIPMENT_ROOT=FIRESTORE_ROOT+'/equipment';
-export const DEFAULT_EQUIPMENT=[
- {id:'demo-guitar',name:'기타',product:'바커스 BST-2-RSM'},
- {id:'demo-mic',name:'마이크',product:'슈어 SM98'},
- {id:'demo-di',name:'DI 박스',product:'래디얼 ProDI'},
- {id:'demo-stand',name:'마이크 스탠드',product:'K&M 210/9'},
-];
-const defaultMap=new Map(DEFAULT_EQUIPMENT.map(item=>[item.id,item]));
+/* Hide legacy demonstration rows if they were persisted during earlier tests.
+ * A row deliberately renamed or assigned a different product remains a real item.
+ * The developer's "other reset" permanently deletes any remaining legacy rows.
+ */
+const RETIRED_SAMPLES=new Map([
+ ['demo-guitar',{name:'기타',product:'바커스 BST-2-RSM'}],
+ ['demo-mic',{name:'마이크',product:'슈어 SM98'}],
+ ['demo-di',{name:'DI 박스',product:'래디얼 ProDI'}],
+ ['demo-stand',{name:'마이크 스탠드',product:'K&M 210/9'}]
+]);
+const isRetiredSample=item=>{
+ const original=RETIRED_SAMPLES.get(item?.id);
+ return Boolean(original&&item.name===original.name&&item.product===original.product);
+};
+
 const ID=/^[A-Za-z0-9_-]{8,128}$/;
 export function equipmentId(value){
  if(typeof value!=='string'||!ID.test(value))reject('장비 식별자가 올바르지 않습니다.');
  return value;
 }
 export const equipmentDoc=id=>EQUIPMENT_ROOT+'/'+encodeURIComponent(equipmentId(id));
-export const defaultItem=id=>defaultMap.get(id)?{
- ...defaultMap.get(id),queue:[],borrower:null,returnRequestedAt:null,archived:false,
-}:null;
 export async function readEquipment(env,id){
  const doc=await getDocument(env,equipmentDoc(id));
- if(doc)return {item:{...docFields(doc),id},doc};
- const fallback=defaultItem(id);
- if(!fallback)reject('장비를 찾지 못했습니다.',404);
- return {item:fallback,doc:null};
+ if(doc){const item={...docFields(doc),id};if(isRetiredSample(item))reject('삭제된 임시 장비입니다.',404);return {item,doc};}
+ reject('장비를 찾지 못했습니다.',404);
 }
 export function normalize(item){
  return {
@@ -61,12 +64,12 @@ export async function listEquipment(env){
   if(!cursor)break;
   if(page===9)throw new Error('장비 목록이 너무 많습니다.');
  }
- const items=new Map(DEFAULT_EQUIPMENT.map(value=>[value.id,defaultItem(value.id)]));
+ const items=new Map();
  for(const doc of docs){
   const id=doc.name?.split('/').pop();
   if(id&&ID.test(id))items.set(id,{...docFields(doc),id});
  }
- return [...items.values()].map(normalize).filter(item=>!item.archived);
+ return [...items.values()].map(normalize).filter(item=>!item.archived&&!isRetiredSample(item));
 }
 export function renderItem(raw,caller,manager=false){
  const item=normalize(raw),mine=caller?.uid??'';

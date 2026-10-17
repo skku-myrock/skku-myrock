@@ -26,7 +26,7 @@ import {showToast,classifyToast} from './toastBus';
 import {useToastSignals} from './useToastSignals';
 import type {ToastDetail} from './toastBus';
 import {purgeDonations} from './donationApi';
-import {purgeNotices,resetClubIntroduction,resetSiteAssets,purgeGallery,purgeSchedules,resetEquipmentLoans,generateDummyBatch} from './adminResets';
+import {purgeNotices,resetClubIntroduction,resetSiteAssets,purgeGallery,purgeSchedules,resetEquipmentLoans,purgeEquipmentInventory,generateDummyBatch} from './adminResets';
 import {invalidateAboutCache} from './aboutContent';
 import {listNoticesPage,getNotice,deleteNotice} from './noticesData';
 import type {NoticePost} from './noticesData';
@@ -172,8 +172,8 @@ function App() {
     const descriptions:Record<ResetScope,string>={
       finance:'후원 기록, 익명자 명단, 회비 집행 내역을 삭제합니다. 계좌 정보는 유지합니다.',
       activity:'모든 합주 시간표·참여자·초대·초대 제한 기록을 삭제하고 장비 대여자·대기열·반납 요청을 비웁니다. 장비 정보와 사진은 유지합니다.',
-      other:'공지사항·갤러리 전체 및 GitHub notices/, gallery/, site/ 사진을 삭제합니다. 메인·소개·운영진 사진을 지우고 28기 운영진 및 연혁으로 초기화합니다.',
-      all:'위 세 초기화를 전부 실행합니다. 회원 명단·로그인 계정·인수인계·회비 계좌 및 장비 정보·사진은 유지합니다.'
+      other:'공지사항·갤러리 전체 및 관련 이미지를 삭제하고 동아리 소개를 복원합니다. 모든 등록 장비 문서와 GitHub equipment/ 사진도 삭제합니다.',
+      all:'위 세 초기화를 전부 실행합니다. 회원 명단·로그인 계정·인수인계·회비 계좌는 유지하며, 장비 목록과 사진도 삭제합니다.'
     };
     if(!window.confirm('경고: '+RESET_LABELS[scope]+'를 실행합니다.\n'+descriptions[scope]+'\n\n삭제한 데이터는 복구할 수 없으며 일부만 처리되면 같은 초기화를 다시 실행해야 합니다. 계속하시겠습니까?'))return;
     setResettingScope(scope);setResetStage('초기화를 준비하고 있습니다.');setAccountOpen(false);setMenuOpen(false);
@@ -192,6 +192,7 @@ function App() {
       if(scope==='other'||scope==='all'){
         await drain(purgeNotices,'공지사항과 사진 초기화 중',1000);
         await drain(purgeGallery,'갤러리와 사진 초기화 중',1000);
+        await drain(purgeEquipmentInventory,'장비 목록·장비 사진 초기화 중',1000);
         setResetStage('GitHub site/ 사진과 참조 URL 초기화 중');
         await resetSiteAssets();
         setResetStage('28기 운영진과 연혁 복원 중');
@@ -205,7 +206,7 @@ function App() {
       showToast(RESET_LABELS[scope]+'가 중단되었습니다. '+(error instanceof Error?error.message:'서버 오류')+' 같은 초기화를 다시 실행해 남은 항목을 처리해 주세요.','error');
     }finally{
       if(scope==='finance'||scope==='all')setFinanceRevision(v=>v+1);
-      if(scope==='other'||scope==='all'){setGalleryRevision(v=>v+1);invalidateAboutCache();setAboutRevision(v=>v+1);}
+      if(scope==='other'||scope==='all'){setGalleryRevision(v=>v+1);invalidateAboutCache();setAboutRevision(v=>v+1);void loadEquipment(false,true);}
       if(failed&&(scope==='other'||scope==='all'))void listNoticesPage().then(result=>{setNotices(result.notices);setNoticeCursor(result.nextPageToken);}).catch(()=>{});
       setResetStage('');setResettingScope(null);
     }
@@ -332,7 +333,7 @@ function App() {
   return <div className="site-root" data-async-busy={resettingScope||dummyGenerating||equipmentBusyId!==null||noticeMoreLoading ? "true" : undefined}>
     <header className="site-header"><div className="container header-inner">
       <button type="button" className="brand" onClick={()=>navigate('home')} aria-label="모여락 홈으로 이동"><img src={logo} alt="모여락 로고"/><span><strong>모여락</strong><small>MYROCK</small></span></button>
-      <nav className="desktop-nav" aria-label="주 메뉴">{navGroups.map(group=><div className="more-wrapper nav-group" key={group.label} onMouseEnter={()=>setOpenGroup(group.label)} onMouseLeave={()=>setOpenGroup(null)}><button type="button" aria-expanded={openGroup===group.label} className={group.items.some(i=>i.id===page)?'active':''} onClick={()=>setOpenGroup(openGroup===group.label?null:group.label)}>{group.label} <ChevronDown size={13}/></button>{openGroup===group.label&&<div className="more-menu">{group.items.map(item=><button type="button" key={item.id} onClick={()=>navigate(item.id)}>{item.label}</button>)}</div>}</div>)}</nav>
+      <nav className="desktop-nav" aria-label="주 메뉴">{navGroups.map(group=><div className="more-wrapper nav-group" key={group.label} onMouseEnter={()=>setOpenGroup(group.label)} onMouseLeave={()=>setOpenGroup(null)}><button type="button" aria-expanded={openGroup===group.label} className={group.items.some(i=>i.id===page)?'active':''} onClick={()=>setOpenGroup(openGroup===group.label?null:group.label)}>{group.label} <ChevronDown size={13}/></button>{openGroup===group.label&&<div className="more-menu">{group.items.map(item=>item.id==='ddrak'?<a key={item.id} href={item.href} target="_blank" rel="noopener noreferrer" onClick={()=>{setOpenGroup(null);setMenuOpen(false);}}>{item.label}</a>:<button type="button" key={item.id} onClick={()=>navigate(item.id)}>{item.label}</button>)}</div>}</div>)}</nav>
       <div className="header-actions">
         {!user?<button type="button" className="login-button" onClick={showLogin}>로그인</button>:<div className="more-wrapper account-wrapper"
           onMouseEnter={() => { if (window.matchMedia('(hover: hover)').matches) { setAccountOpen(true); setOpenGroup(null); } }}
@@ -344,7 +345,7 @@ function App() {
           aria-haspopup="menu" aria-expanded={accountOpen}><UserRound size={15}/>{profile?.name??'내 계정'}<ChevronDown size={13}/></button>{accountOpen&&<div className="more-menu account-menu"><button type="button" onClick={()=>navigate('profile')}>내 정보</button>{canManage&&<button type="button" onClick={()=>navigate('members')}>부원 관리</button>}{canHandover&&<button type="button" onClick={()=>navigate('handover')}>인수인계</button>}<button type="button" onClick={logout} disabled={Boolean(resettingScope||dummyGenerating)}>로그아웃</button>{isDeveloperSuperadmin && <><button type="button" className="developer-reset-action" disabled={Boolean(resettingScope||dummyGenerating)} onClick={()=>void resetCategory('finance')}>후원 회계 초기화</button><button type="button" className="developer-reset-action" disabled={Boolean(resettingScope||dummyGenerating)} onClick={()=>void resetCategory('activity')}>활동 초기화</button><button type="button" className="developer-reset-action" disabled={Boolean(resettingScope||dummyGenerating)} onClick={()=>void resetCategory('other')}>나머지 초기화</button><button type="button" className="developer-reset-action" disabled={Boolean(resettingScope||dummyGenerating)} onClick={()=>void resetCategory('all')}>완전 초기화</button><button type="button" className="developer-reset-action" disabled={Boolean(resettingScope||dummyGenerating)} onClick={()=>void createDummyData()}>더미 데이터 생성</button></>}</div>}</div>}
         <button type="button" className="mobile-menu-button" onClick={()=>setMenuOpen(!menuOpen)} aria-label={menuOpen?'메뉴 닫기':'메뉴 열기'} aria-expanded={menuOpen}>{menuOpen?<X size={22}/>:<Menu size={22}/>}</button>
       </div>
-    </div>{menuOpen&&<nav className="mobile-nav" aria-label="모바일 메뉴"><div className="container">{navGroups.map(group=><div className="mobile-group" key={group.label}><button type="button" aria-expanded={openGroup===group.label} onClick={()=>setOpenGroup(openGroup===group.label?null:group.label)}><strong>{group.label}</strong><ChevronDown size={16}/></button>{openGroup===group.label&&<div className="mobile-submenu">{group.items.map(item=><button type="button" key={item.id} onClick={()=>navigate(item.id)}>{item.label}</button>)}</div>}</div>)}{user&&<><button type="button" onClick={()=>navigate('profile')}>내 정보<ArrowRight size={16}/></button>{canManage&&<button type="button" onClick={()=>navigate('members')}>부원 관리<ArrowRight size={16}/></button>}{canHandover&&<button type="button" onClick={()=>navigate('handover')}>인수인계<ArrowRight size={16}/></button>}<button type="button" onClick={logout} disabled={Boolean(resettingScope||dummyGenerating)}>로그아웃<LogOut size={16}/></button>{isDeveloperSuperadmin && <><button type="button" className="developer-reset-action" disabled={Boolean(resettingScope||dummyGenerating)} onClick={()=>void resetCategory('finance')}>후원 회계 초기화<Trash2 size={15}/></button><button type="button" className="developer-reset-action" disabled={Boolean(resettingScope||dummyGenerating)} onClick={()=>void resetCategory('activity')}>활동 초기화<Trash2 size={15}/></button><button type="button" className="developer-reset-action" disabled={Boolean(resettingScope||dummyGenerating)} onClick={()=>void resetCategory('other')}>나머지 초기화<Trash2 size={15}/></button><button type="button" className="developer-reset-action" disabled={Boolean(resettingScope||dummyGenerating)} onClick={()=>void resetCategory('all')}>완전 초기화<Trash2 size={15}/></button><button type="button" className="developer-reset-action" disabled={Boolean(resettingScope||dummyGenerating)} onClick={()=>void createDummyData()}>더미 데이터 생성<Trash2 size={15}/></button></>}</>}</div></nav>}
+    </div>{menuOpen&&<nav className="mobile-nav" aria-label="모바일 메뉴"><div className="container">{navGroups.map(group=><div className="mobile-group" key={group.label}><button type="button" aria-expanded={openGroup===group.label} onClick={()=>setOpenGroup(openGroup===group.label?null:group.label)}><strong>{group.label}</strong><ChevronDown size={16}/></button>{openGroup===group.label&&<div className="mobile-submenu">{group.items.map(item=>item.id==='ddrak'?<a key={item.id} href={item.href} target="_blank" rel="noopener noreferrer" onClick={()=>{setOpenGroup(null);setMenuOpen(false);}}>{item.label}</a>:<button type="button" key={item.id} onClick={()=>navigate(item.id)}>{item.label}</button>)}</div>}</div>)}{user&&<><button type="button" onClick={()=>navigate('profile')}>내 정보<ArrowRight size={16}/></button>{canManage&&<button type="button" onClick={()=>navigate('members')}>부원 관리<ArrowRight size={16}/></button>}{canHandover&&<button type="button" onClick={()=>navigate('handover')}>인수인계<ArrowRight size={16}/></button>}<button type="button" onClick={logout} disabled={Boolean(resettingScope||dummyGenerating)}>로그아웃<LogOut size={16}/></button>{isDeveloperSuperadmin && <><button type="button" className="developer-reset-action" disabled={Boolean(resettingScope||dummyGenerating)} onClick={()=>void resetCategory('finance')}>후원 회계 초기화<Trash2 size={15}/></button><button type="button" className="developer-reset-action" disabled={Boolean(resettingScope||dummyGenerating)} onClick={()=>void resetCategory('activity')}>활동 초기화<Trash2 size={15}/></button><button type="button" className="developer-reset-action" disabled={Boolean(resettingScope||dummyGenerating)} onClick={()=>void resetCategory('other')}>나머지 초기화<Trash2 size={15}/></button><button type="button" className="developer-reset-action" disabled={Boolean(resettingScope||dummyGenerating)} onClick={()=>void resetCategory('all')}>완전 초기화<Trash2 size={15}/></button><button type="button" className="developer-reset-action" disabled={Boolean(resettingScope||dummyGenerating)} onClick={()=>void createDummyData()}>더미 데이터 생성<Trash2 size={15}/></button></>}</>}</div></nav>}
     </header>
     <main key={page}>
       <Routes>
@@ -361,7 +362,7 @@ function App() {
         <nav className="footer-nav" aria-label="푸터 사이트 메뉴">
           {navGroups.map(group => <div key={group.label}>
             <strong>{group.label}</strong>
-            {group.items.map(item => <button type="button" key={item.id} onClick={() => navigate(item.id)}>{item.label}</button>)}
+            {group.items.map(item => item.id==='ddrak'?<a key={item.id} href={item.href} target="_blank" rel="noopener noreferrer">{item.label}</a>:<button type="button" key={item.id} onClick={() => navigate(item.id)}>{item.label}</button>)}
           </div>)}
         </nav>
       </div>

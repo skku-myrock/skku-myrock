@@ -12,17 +12,9 @@ test('unknown student ID uses shared warning tone without changing saved success
  assert.match(styles,/\.site-bottom-toast\.is-warning\{/);
 });
 
-test('equipment sample rows have concrete model names, compact spacing and accessible status dots',async()=>{
+test('equipment list shows only persisted items with accessible status dots',async()=>{
  const [pages,styles,data]=await Promise.all([read('src/pages/SitePages.tsx'),read('src/styles/base.css'),read('src/equipmentDemo.ts')]);
- for(const [name,product,status,tone] of [
-  ['기타','바커스 BST-2-RSM','대여 가능','available'],
-  ['마이크','슈어 SM98','대여 가능','available'],
-  ['DI 박스','래디얼 ProDI','대여 가능','available'],
-  ['마이크 스탠드','K&M 210/9','대여 가능','available'],
- ]){
-  assert.ok(data.includes(`name:'${name}',product:'${product}',status:'${status}'`));
-  assert.ok(data.includes(`case '${status}':return '${tone}'`));
- }
+ assert.doesNotMatch(data,/demo-guitar|demo-mic|demo-di|demo-stand/);
  assert.match(pages,/className=\{"equipment-status equipment-status-"\+equipmentStatusTone\(g\.status\)\}>\{g\.status\}<\/span>/);
  assert.doesNotMatch(data,/제품명 미등록/);
  assert.match(styles,/\.equipment-info h3\{font-size:15px;margin:0 0 5px\}/);

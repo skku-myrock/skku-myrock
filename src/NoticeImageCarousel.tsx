@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { TouchEvent } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import ImageShimmer from './ImageShimmer';
 import { galleryFrame, slideDimensions } from './noticeCarouselSizing';
 
 export type NoticeSlide = {
@@ -53,8 +54,7 @@ export default function NoticeImageCarousel({ slides, label }: { slides: readonl
       onTouchStart={onTouchStart} onTouchEnd={onTouchEnd} onTouchCancel={() => { touchOrigin.current = null; }}>
       <div className="notice-slide-media" style={{ width: (size.width / frame.width * 100) + '%', height: (size.height / frame.height * 100) + '%' }}>
         {active.src ?
-          <img key={active.id} src={active.src} alt={active.alt} draggable={false} loading="eager" fetchPriority="high" decoding="async"
-            onLoad={event => active.onLoad?.(event.currentTarget.naturalWidth, event.currentTarget.naturalHeight)}/> :
+          <ImageShimmer key={active.id} className="notice-slide-image" src={active.src} alt={active.alt} draggable={false} loading="eager" fetchPriority="high" onLoad={(width,height)=>active.onLoad?.(width,height)}/> :
           <div className="notice-detail-photo-placeholder" role="img" aria-label={active.alt + ' 준비 중'}>
             <span aria-hidden="true">▧</span><small>{active.alt} 자리</small>
           </div>}

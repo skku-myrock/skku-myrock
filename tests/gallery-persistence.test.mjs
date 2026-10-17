@@ -45,7 +45,7 @@ test('gallery API enforces current operator authorization and protects non-galle
   assert.match(purge,/BATCH_SIZE=20/);
   assert.match(image,/folder!=='site'&&folder!=='notices'&&folder!=='gallery'/);
   assert.match(image,/const extensions=\{'image\/webp':'webp'\}/);
-  assert.match(github,/new Set\(\['site','notices','gallery'\]\)/);
+  assert.match(github,/new Set\(\['site','notices','gallery','equipment'\]\)/);
   assert.match(client,/fetch\('\/api\/gallery\/albums'/);
   assert.ok(resetClient.includes('>나머지 초기화</button>'));
    assert.match(resetClient,/await drain\(purgeGallery/);

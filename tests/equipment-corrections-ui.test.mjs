@@ -16,7 +16,7 @@ test('equipment manager exposes protected, data-aware manual corrections and rea
  assert.match(ui,/uploadImagesBatch\(\[imageFile\],'equipment'\)/);
  assert.match(ui,/validateSourceImage\(file\)/);
  assert.match(ui,/이미지 제거/);
- assert.match(publicPage,/g\.imageUrl\?<img className="equipment-photo"/);
+ assert.match(publicPage,/g\.imageUrl\?<ImageShimmer key=\{g\.imageUrl\} className="equipment-photo"/);
  assert.match(core,/imageUrl:item\.imageUrl/);
  assert.match(upload,/\|'equipment'='site'/);
 });

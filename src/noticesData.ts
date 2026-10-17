@@ -14,6 +14,11 @@ async function request<T>(url:string,method='GET',body?:unknown):Promise<T>{
 }
 export type NoticePage={notices:NoticePost[];nextPageToken:string|null};
 export const listNoticesPage=(pageToken:string|null=null)=>request<NoticePage>('/api/notices'+(pageToken?'?pageToken='+encodeURIComponent(pageToken):''));
+export const searchNoticeTitlesPage=(query:string,category:string,pageToken:string|null=null)=>{
+ const params=new URLSearchParams({search:query,category});
+ if(pageToken)params.set('pageToken',pageToken);
+ return request<NoticePage>('/api/notices?'+params.toString());
+};
 export const listNotices=async()=> (await listNoticesPage()).notices;
 export const getNotice=async(id:string)=>(await request<{notice:NoticePost}>('/api/notices/'+encodeURIComponent(id))).notice;
 export const createNotice=async(input:NoticeInput)=>(await request<{notice:NoticePost}>('/api/notices','POST',input)).notice;

@@ -18,6 +18,7 @@ import ImageShimmer from '../ImageShimmer';
 import {DEFAULT_ABOUT,getAbout,peekAboutCache} from '../aboutContent';
 import type {AboutContent} from '../aboutContent';
 import type {NoticePost} from '../noticesData';
+import {searchNoticeTitlesPage} from '../noticesData';
 import NoticeImageCarousel from '../NoticeImageCarousel';
 import type {Navigate,Notify} from '../app/siteNavigation';
 import {equipmentStatusTone} from '../equipmentDemo';
@@ -62,7 +63,7 @@ export function Home({ navigate, openNotice, notices, noticeLoading }: { navigat
         <p>성균관대학교 중앙 밴드 동아리 모여락입니다.<br />우리의 음악과 이야기를 이곳에 담습니다.</p>
         <TextLink onClick={() => navigate('about')}>동아리 소개</TextLink>
       </div>
-      <div className="hero-media">{homeImage?<ImageShimmer key={homeImage} className="home-hero-image" src={homeImage} alt="메인 페이지 사진" loading="eager" fetchPriority="high"/>:homeImage===null?<div className="home-hero-image image-pending image-shimmer-frame is-image-loading" role="status" aria-label="메인 페이지 사진을 불러오는 중"><span className="image-shimmer-band" aria-hidden="true"/></div>:<Placeholder label="메인 페이지 사진" />}</div>
+      <div className="hero-media">{homeImage?<ImageShimmer key={homeImage} className="home-hero-image" src={homeImage} alt="메인 페이지 사진" loading="eager" fetchPriority="high"/>:homeImage===null?<div className="home-hero-image image-pending image-shimmer-frame is-image-loading" role="status" aria-label="메인 페이지 사진을 불러오는 중"><span className="image-shimmer-band" aria-hidden="true"/></div>:<Placeholder label="메인 페이지 사진" className="home-hero-image"/>}</div>
     </section>
     <section className="container home-updates">
       <SectionHeading title="공지사항" aside="모여락의 새로운 소식" action="전체 보기" onAction={() => navigate('news')} />
@@ -94,8 +95,8 @@ export function About({ navigate, canEdit }: { navigate: Navigate;canEdit:boolea
       {canEdit&&<button type="button" className="admin-only-action" onClick={()=>navigate('about-manage')}>정보 수정</button>}
       {loadError&&<p role="status" className="about-load-error">{loadError}</p>}
     </section>
-    <section className="container about-intro section-block"><div className="about-description"><h2>음악을 좋아하는 사람들이<br />함께하는 공간</h2><p>보컬, 기타, 베이스, 드럼, 키보드. 서로 다른 소리로 모여 한 곡을 완성합니다. 이곳에는 동아리 소개와 활동 이야기가 정리될 예정입니다.</p><TextLink onClick={() => navigate('gallery')}>활동 사진 보러 가기</TextLink></div>
-      {content.heroImage?<ImageShimmer key={content.heroImage} className="about-hero-image" src={content.heroImage} alt="동아리 소개 사진" loading="eager" fetchPriority="high"/>:contentLoaded?<Placeholder label="동아리 대표 사진"/>:<div className="about-hero-image image-pending image-shimmer-frame is-image-loading" role="status" aria-label="동아리 소개 사진을 불러오는 중"><span className="image-shimmer-band" aria-hidden="true"/></div>}
+    <section className="container about-intro section-block"><div className="about-description"><h2>음악을 좋아하는 사람들이<br />함께하는 공간</h2><p>보컬, 기타, 베이스, 드럼, 키보드. 서로 다른 소리로 모여 한 곡을 완성합니다. 합주와 공연, 그리고 함께한 순간들을 통해 모여락만의 이야기를 만들어 갑니다.</p><TextLink onClick={() => navigate('gallery')}>활동 사진 보러 가기</TextLink></div>
+      {content.heroImage?<ImageShimmer key={content.heroImage} className="about-hero-image" src={content.heroImage} alt="동아리 소개 사진" loading="eager" fetchPriority="high"/>:contentLoaded?<Placeholder label="동아리 대표 사진" className="about-hero-image"/>:<div className="about-hero-image image-pending image-shimmer-frame is-image-loading" role="status" aria-label="동아리 소개 사진을 불러오는 중"><span className="image-shimmer-band" aria-hidden="true"/></div>}
     </section>
     <section className="container section-block" aria-label="28기 운영진 소개">
       <SectionHeading title="운영진" aside={content.cohortLabel} />
@@ -135,44 +136,79 @@ export function About({ navigate, canEdit }: { navigate: Navigate;canEdit:boolea
 
 
 export function News({ canWrite, onWrite, openNotice, notices, loading, error, hasMore, moreLoading, onLoadMore }: { canWrite: boolean; onWrite: () => void; openNotice: (id: string) => void; notices: NoticePost[]; loading:boolean; error:string; hasMore:boolean; moreLoading:boolean; onLoadMore:()=>void }) {
-  const [category, setCategory] = useState('전체');
-  const [query, setQuery] = useState('');
-  const search = query.trim().toLocaleLowerCase('ko');
-  const filtered = notices.filter(post =>
-    (category === '전체' || post.category === category) &&
-    (post.title + post.description).toLocaleLowerCase('ko').includes(search)
-  );
+  const [category,setCategory]=useState('전체');
+  const [query,setQuery]=useState('');
+  const [submitted,setSubmitted]=useState('');
+  const [searchRequest,setSearchRequest]=useState(0);
+  const [matches,setMatches]=useState<NoticePost[]>([]);
+  const [searchCursor,setSearchCursor]=useState<string|null>(null);
+  const [searchLoading,setSearchLoading]=useState(false);
+  const [searchMoreLoading,setSearchMoreLoading]=useState(false);
+  const [searchError,setSearchError]=useState('');
+  useEffect(()=>{
+    if(!submitted){setMatches([]);setSearchCursor(null);setSearchLoading(false);setSearchError('');return;}
+    let active=true;
+    setMatches([]);setSearchCursor(null);setSearchLoading(true);setSearchError('');
+    void searchNoticeTitlesPage(submitted,category).then(result=>{
+      if(active){setMatches(result.notices);setSearchCursor(result.nextPageToken);}
+    }).catch(reason=>{
+      if(active)setSearchError(reason instanceof Error?reason.message:'공지사항 검색 실패');
+    }).finally(()=>{if(active)setSearchLoading(false);});
+    return()=>{active=false;};
+  },[submitted,category,searchRequest]);
+  function submitSearch(event:FormEvent<HTMLFormElement>){
+    event.preventDefault();
+    setSubmitted(query.trim());
+    setSearchRequest(value=>value+1);
+  }
+  async function loadMoreSearch(){
+    if(!submitted||!searchCursor||searchMoreLoading)return;
+    setSearchMoreLoading(true);
+    try{
+      const result=await searchNoticeTitlesPage(submitted,category,searchCursor);
+      setMatches(prev=>[...prev,...result.notices.filter(item=>!prev.some(old=>old.id===item.id))]);
+      setSearchCursor(result.nextPageToken);setSearchError('');
+    }catch(reason){setSearchError(reason instanceof Error?reason.message:'공지사항 검색 추가 조회 실패');}
+    finally{setSearchMoreLoading(false);}
+  }
+  const searching=Boolean(submitted);
+  const filtered=searching?matches:notices.filter(post=>category==='전체'||post.category===category);
+  const currentLoading=searching?searchLoading:loading;
+  const currentError=searching?searchError:error;
+  const currentHasMore=searching?Boolean(searchCursor):hasMore;
+  const currentMoreLoading=searching?searchMoreLoading:moreLoading;
   return <>
     <PageHeading tag="NOTICE" title="공지사항" description="공연, 행사, 동아리 운영에 관한 소식을 확인하세요." />
     <section className="container section-block news-page">
+      {canWrite&&<div className="news-write-row"><button type="button" className="button button-primary" onClick={onWrite}><Plus size={15}/> 글쓰기</button></div>}
       <div className="toolbar">
         <div className="tabs" aria-label="공지 분류">
-          {['전체', '공지', '공연', '행사'].map(c => <button type="button" key={c}
-            className={category === c ? 'active' : ''} aria-pressed={category === c}
-            onClick={() => setCategory(c)}>{c}</button>)}
+          {['전체','공지','공연','행사'].map(c=><button type="button" key={c}
+            className={category===c?'active':''} aria-pressed={category===c}
+            onClick={()=>setCategory(c)}>{c}</button>)}
         </div>
-        <div className="toolbar-actions">
-          <label className="input-search"><Search size={16}/><input aria-label="공지사항 검색"
-            placeholder="제목 검색" value={query} onChange={e => setQuery(e.target.value)} /></label>
-          {canWrite && <button type="button" className="button button-primary" onClick={onWrite}>
-            <Plus size={15}/> 글쓰기
-          </button>}
-        </div>
+        <form className="toolbar-actions news-search-form" role="search" onSubmit={submitSearch}>
+          <label className="input-search"><Search size={16}/><input aria-label="공지사항 제목 검색"
+            placeholder="제목 검색" value={query} maxLength={100} onChange={e=>setQuery(e.target.value)}/></label>
+          <button type="submit" className="outline-action news-search-button" disabled={searchLoading||searchMoreLoading}>검색</button>
+        </form>
       </div>
       <div className="table-shell">
-        <div className={'notice-table-head has-author'}><span>분류</span><span>제목</span><span className="notice-date-cell">등록일</span><span className="notice-author-cell">작성자</span></div>
-        {filtered.map(post => <button type="button" key={post.id} className={'notice-table-row has-author'}
-          onClick={() => openNotice(post.id)} aria-label={post.title + ' 상세보기'}>
+        <div className="notice-table-head has-author"><span>분류</span><span>제목</span><span className="notice-date-cell">등록일</span><span className="notice-author-cell">작성자</span></div>
+        {filtered.map(post=><button type="button" key={post.id} className="notice-table-row has-author"
+          onClick={()=>openNotice(post.id)} aria-label={post.title+' 상세보기'}>
           <span className="notice-category">{post.category}</span>
           <span><strong>{post.title}</strong><small>{post.description}</small></span>
           <span className="notice-date-cell">{post.date}</span>
           <span className="notice-author-cell">{post.author}</span>
         </button>)}
-        {error&&<p role="alert" className="form-error">{error}</p>}
-        {loading&&<LoadingText>공지사항 목록을 불러오는 중입니다</LoadingText>}
-        {!loading&&filtered.length===0&&<EmptyState title="공지사항이 없습니다" description="등록된 공지사항이 없습니다." />}
+        {currentError&&<p role="alert" className="form-error">{currentError}</p>}
+        {currentLoading&&<LoadingText>{searching?'공지사항 제목을 검색하는 중입니다':'공지사항 목록을 불러오는 중입니다'}</LoadingText>}
+        {!currentLoading&&!currentError&&filtered.length===0&&<EmptyState title={searching?'검색 결과가 없습니다':'공지사항이 없습니다'} description={searching?'다른 제목으로 검색해 주세요.':'등록된 공지사항이 없습니다.'}/>}
       </div>
-      {hasMore&&<div className="list-bottom notice-list-bottom"><button type="button" className={moreLoading?"outline-action is-fetching":"outline-action"} disabled={moreLoading} onClick={onLoadMore}>{moreLoading?"더 불러오는 중...":"공지사항 더 보기"}</button></div>}
+      {currentHasMore&&<div className="list-bottom notice-list-bottom"><button type="button"
+        className={currentMoreLoading?"outline-action is-fetching":"outline-action"} disabled={currentMoreLoading||currentLoading}
+        onClick={()=>searching?void loadMoreSearch():onLoadMore()}>{currentMoreLoading?'더 불러오는 중...':'공지사항 더 보기'}</button></div>}
     </section>
   </>;
 }
@@ -204,7 +240,7 @@ export function NoticeDetail({ notice, canManage, backToList, onEdit, onDelete }
       <div className="notice-detail-content">
         {notice.blocks.map((block,index)=>block.kind==='text'?<div className="notice-detail-body" key={index}><p>{block.text}</p></div>:block.kind==='gallery'?
           <div key={index} className="notice-detail-images"><NoticeImageCarousel label={notice.title+' 이미지 슬라이드'} slides={block.images.map((image,i)=>({id:i,src:image.url,alt:image.name,width:Number(image.width)||320,height:Number(image.height)||240}))}/></div>:
-          <div key={index} className="notice-detail-image-single" style={{maxWidth:Number(block.width)||800}}><img src={block.url} alt={block.name} loading="lazy" decoding="async" style={{width:'100%',aspectRatio:Number(block.width)&&Number(block.height)?Number(block.width)+' / '+Number(block.height):'auto'}}/></div>)}
+          <div key={index} className="notice-detail-image-single" style={{maxWidth:Number(block.width)||800}}><ImageShimmer key={block.url} className="notice-detail-single-image" src={block.url} alt={block.name} style={{width:'100%',aspectRatio:Number(block.width)&&Number(block.height)?Number(block.width)+' / '+Number(block.height):'4 / 3'}}/></div>)}
       </div>
       <div className="notice-detail-footer">
         <button type="button" className="outline-action" onClick={backToList}>
@@ -239,7 +275,7 @@ export function Equipment({items,canManage,onManage,loggedIn,onLogin,loading,err
    {error&&<p className="form-error" role="alert">{error}</p>}
    {loading&&<LoadingText>장비 목록을 불러오는 중입니다.</LoadingText>}
    <div className="equipment-list">{!loading&&items.map(g=><div className="equipment-row" key={g.id}>
-    {g.imageUrl?<img className="equipment-photo" src={g.imageUrl} alt={g.name+" 장비 사진"} loading="lazy" decoding="async"/>:<Placeholder label="장비 사진" />}
+    {g.imageUrl?<ImageShimmer key={g.imageUrl} className="equipment-photo" src={g.imageUrl} alt={g.name+" 장비 사진"}/>:<Placeholder label="장비 사진" />}
     <div className="equipment-info"><h3>{g.name}</h3><p>{g.product}</p>
      <span className={"equipment-status equipment-status-"+equipmentStatusTone(g.status)}>{g.status}</span>
      {g.myPosition!==null&&<small className="equipment-own-position">내 신청 대기 순번: {g.myPosition}순위</small>}

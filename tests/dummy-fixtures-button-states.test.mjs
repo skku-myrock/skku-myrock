@@ -81,6 +81,6 @@ test('gallery fixtures use GitHub blob references and survive ordinary gallery p
  assert.match(images,/export async function ensureDummyGalleryFixtures/);
  assert.match(images,/fixtures\/gallery/);
  assert.match(images,/sha\};/);
- assert.match(images,/const FOLDERS=new Set\(\['site','notices','gallery'\]\)/);
+ assert.match(images,/const FOLDERS=new Set\(\['site','notices','gallery','equipment'\]\)/);
  assert.match(gallery,/fixtures\\\/gallery/);
 });
