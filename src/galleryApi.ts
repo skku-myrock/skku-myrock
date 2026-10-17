@@ -1,10 +1,12 @@
 import {auth} from './firebase';
 import type {PhotoAlbum,PhotoCategory} from './galleryData';
-export async function listGalleryAlbums():Promise<PhotoAlbum[]>{
-  const response=await fetch('/api/gallery/albums?preview=first12');
+export type GalleryPage={albums:PhotoAlbum[];page:number;pageSize:number;total:number;totalPages:number};
+export async function listGalleryAlbums(page=1,category:'전체'|PhotoCategory='전체'):Promise<GalleryPage>{
+  const query=new URLSearchParams({page:String(page),category});
+  const response=await fetch('/api/gallery/albums?'+query);
   const data=await response.json();
   if(!response.ok)throw Error(data?.error??'갤러리 목록 조회에 실패했습니다.');
-  return data.albums as PhotoAlbum[];
+  return data as GalleryPage;
 }
 export async function publishGalleryAlbum(category:PhotoCategory,title:string,photos:string[]):Promise<PhotoAlbum>{
   const token=await auth.currentUser?.getIdToken();
