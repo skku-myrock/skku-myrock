@@ -25,7 +25,7 @@ test('public about screen loads persisted introduction and leaves social links i
   assert.match(pages,/content\.officers\.map\(officer/);
   assert.match(pages,/content\.history\.map\(item/);
   assert.match(pages,/content\.cohortLabel/);
-  assert.match(pages,/content\.heroImage\?<img/);
+  assert.match(pages,/content\.heroImage\?<ImageShimmer/);
   assert.match(pages,/officer\.photoUrl\?<img/);
   assert.match(styles,/\.leader-item img\.leader-photo\{/);
   assert.match(pages,/href="https:\/\/www\.instagram\.com\/skku_m\.y\.rock\/"[^>]*target="_blank"[^>]*rel="noopener noreferrer"/);
@@ -57,7 +57,7 @@ test('about management save feedback is a bottom popup and the deploy-only R2 hi
 
 test('homepage and introduction images have distinct labels and fields',()=>{
   assert.match(defaults,/homeImage:''/);
-  assert.match(pages,/homeImage\?<img className="home-hero-image"/);
+  assert.match(pages,/homeImage\?<ImageShimmer key=\{homeImage\} className="home-hero-image"/);
   assert.match(pages,/alt="동아리 소개 사진"/);
   assert.match(editor,/type:'home'/);
   assert.match(editor,/메인 페이지 사진/);
