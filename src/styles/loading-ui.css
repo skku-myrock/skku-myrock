@@ -12,7 +12,7 @@
 .image-shimmer-frame.is-image-loading>.image-shimmer-content{opacity:0}
 .image-shimmer-frame>.image-shimmer-error{display:flex;align-items:center;justify-content:center;height:100%;width:100%;font-size:12px;color:#9da7a4;text-align:center;padding:12px}
 .about-manage-photo>.image-shimmer-frame{width:100%;min-height:180px;height:230px;max-height:300px;object-fit:contain}
-.about-manage-officer-photo .image-shimmer-frame{width:100%;height:100px;object-fit:cover}
+.about-manage-officer-photo .image-shimmer-frame{width:70px;height:92px;flex:0 0 70px;object-fit:cover}
 .hero-media>.image-shimmer-frame{width:100%;height:100%;object-fit:cover}
 .about-intro>.image-shimmer-frame{width:100%;object-fit:cover}
 .leader-item>.image-shimmer-frame{object-fit:cover}

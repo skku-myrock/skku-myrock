@@ -16,18 +16,26 @@ test('notice management action stays aligned with author and date',async()=>{
  assert.match(style,/\.notice-detail-meta\{[^}]*justify-content:space-between/);
 });
 
-test('desktop and mobile menus expose independently scoped reset actions including gallery',async()=>{
+test('desktop and mobile menus expose exactly four composed reset actions',async()=>{
  const app=await source('src/App.tsx');
  assert.match(app,/isDeveloperSuperadmin=Boolean\(user && profile\?\.superadmin && hasSystemClaim\)/);
- for(const name of ['공지사항 초기화','모여락 소개 초기화','에셋 초기화','갤러리 초기화'])
+ for(const name of ['후원 회계 초기화','활동 초기화','나머지 초기화','완전 초기화'])
    assert.equal(app.split('>'+name).length-1,2,name);
- for(const method of ['purgeNotices()','resetClubIntroduction()','resetSiteAssets()','purgeGallery()'])
-   assert.ok(app.includes(method),method);
- assert.match(app,/사진 URL과 GitHub 파일은 그대로 유지됩니다/);
+ for(const scope of ['finance','activity','other','all'])
+   assert.equal(app.split("resetCategory('"+scope+"')").length-1,2,scope);
+ assert.doesNotMatch(app,/>명단 초기화|>에셋 초기화|>갤러리 초기화/);
+ const start=app.indexOf('async function resetCategory(');
+ const end=app.indexOf('const isDeveloperSuperadmin=',start);
+ const section=app.slice(start,end);
+ for(const step of ['purgeDonations','purgeSchedules','resetEquipmentLoans','purgeNotices','purgeGallery','resetSiteAssets','resetClubIntroduction'])
+   assert.ok(section.includes(step),step);
+ assert.ok(section.indexOf('purgeNotices')<section.indexOf('resetSiteAssets'));
+ assert.ok(section.indexOf('resetSiteAssets')<section.indexOf('resetClubIntroduction'));
+ assert.match(section,/회원 명단·로그인 계정·인수인계/);
 });
 
 test('all reset APIs enforce signed and stored superadmin flags',async()=>{
- const handlers=await Promise.all(['functions/api/about/reset.js','functions/api/notices/purge.js','functions/api/images/reset.js','functions/api/gallery/purge.js'].map(source));
+ const handlers=await Promise.all(['functions/api/about/reset.js','functions/api/notices/purge.js','functions/api/images/reset.js','functions/api/gallery/purge.js','functions/api/schedules/purge.js','functions/api/equipment/reset.js'].map(source));
  for(const code of handlers){
    assert.match(code,/assertAccess\(request,env,'president'\)/);
    assert.match(code,/if\(!caller.superadmin\)reject/);
@@ -104,7 +112,8 @@ test('asset reset checks legacy notice references before GitHub reset, then clea
  assert.ok(handler.indexOf('if(referenced)reject')<handler.indexOf('clearImageFolder(env,\'site\')'));
  assert.ok(handler.indexOf('clearImageFolder(env,\'site\')')<handler.indexOf('saveAbout(env,withoutPhotos,updateTime)'));
  const app=await source('src/App.tsx');
- assert.match(app,/await resetSiteAssets\(\);\s*invalidateAboutCache\(\);\s*setAboutRevision\(v=>v\+1\)/);
+ assert.match(app,/await resetSiteAssets\(\)/);
+ assert.match(app,/invalidateAboutCache\(\);setAboutRevision\(v=>v\+1\)/);
  assert.match(app,/'home': <Home key=\{aboutRevision\}/);
  const notices=await source('functions/api/notices/purge.js');
  assert.doesNotMatch(notices,/getAbout|saveAbout|withoutAboutPhotoUrls/);
@@ -151,18 +160,33 @@ test('introduction reset API reuses stored image links instead of blank image de
  assert.match(asset,/withoutAboutPhotoUrls\(content\)/);
 });
 
-test('every destructive reset uses a single warning confirmation without typed prompts',async()=>{
+test('composed reset confirmation is shown once and clients use signed requests',async()=>{
  const app=await source('src/App.tsx');
  assert.doesNotMatch(app,/window\.prompt\(/);
- for(const name of ['resetRosterExceptMyself','resetDonationFinance','resetAllNotices','resetIntroduction','resetAssets']){
-   const start=app.indexOf('function '+name+'(');
-   assert.ok(start>=0,name);
-   const next=app.indexOf('\n  async function ',start+12);
-   const segment=app.slice(start,next<0?app.length:next);
-   assert.match(segment,/window\.confirm\(/,name);
-   assert.equal((segment.match(/window\.confirm\(/g)||[]).length,1,name);
- }
+ const start=app.indexOf('async function resetCategory(');
+ const end=app.indexOf('const isDeveloperSuperadmin=',start);
+ const block=app.slice(start,end);
+ assert.equal((block.match(/window\.confirm\(/g)||[]).length,1);
+ assert.match(block,/setResettingScope\(scope\)/);
  const client=await source('src/adminResets.ts');
- // Server confirmation values continue to be supplied automatically by the API client.
  assert.match(client,/confirmation/);
+ assert.match(client,/purgeSchedules/);
+ assert.match(client,/resetEquipmentLoans/);
+});
+
+test('schedule reset removes participant subcollections before schedule documents, then invitations and throttles',async()=>{
+ const endpoint=await source('functions/api/schedules/purge.js');
+ assert.match(endpoint,/SCHEDULES,INVITATIONS,THROTTLES/);
+ assert.match(endpoint,/schedule\.name\+'\/participants'/);
+ assert.ok(endpoint.indexOf("participants=await removePage")<endpoint.indexOf('await commit(env,validateDocuments([schedule]'));
+ assert.match(endpoint,/currentDocument:\{updateTime:doc\.updateTime\}/);
+ assert.match(endpoint,/RESET_SCHEDULES_CONFIRMATION/);
+});
+
+test('equipment reset retains definitions and photos, clears only loan state',async()=>{
+ const endpoint=await source('functions/api/equipment/reset.js');
+ assert.match(endpoint,/resolvedItem/);
+ assert.match(endpoint,/item\.archived/);
+ assert.match(endpoint,/itemWrite\(\{\.\.\.item,borrower:null,queue:\[\],returnRequestedAt:''\},doc\)/);
+ assert.doesNotMatch(endpoint,/clearImageFolder|deleteUnusedEquipmentImages|method:'DELETE'/);
 });

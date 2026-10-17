@@ -47,8 +47,9 @@ test('gallery API enforces current operator authorization and protects non-galle
   assert.match(image,/const extensions=\{'image\/webp':'webp'\}/);
   assert.match(github,/new Set\(\['site','notices','gallery'\]\)/);
   assert.match(client,/fetch\('\/api\/gallery\/albums'/);
-  assert.ok(resetClient.indexOf('>에셋 초기화</button>')<resetClient.indexOf('>갤러리 초기화</button>'));
-  assert.ok(resetClient.indexOf('>에셋 초기화<Trash2')<resetClient.indexOf('>갤러리 초기화<Trash2'));
+  assert.ok(resetClient.includes('>나머지 초기화</button>'));
+   assert.match(resetClient,/await drain\(purgeGallery/);
+  assert.ok(resetClient.includes('>나머지 초기화<Trash2'));
 });
 
 test('gallery upload and display use actual data rather than fixtures',async()=>{
