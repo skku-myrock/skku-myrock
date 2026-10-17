@@ -36,8 +36,8 @@ function NoteEditor({kind,position,title,description,initial}:{kind:Kind;positio
      <button type="button" className="button button-primary" disabled={loading||saving||!dirty} onClick={()=>void save()}><Save size={15}/>{saving?'저장 중…':'저장하기'}</button></div>
    </>
   }
-  {error&&<p className="form-error" role="alert">{error}</p>}
-  {message&&<p className="handover-save-notice" role="status">{message}</p>}
+
+}
  </section>;
 }
 export default function HandoverNotesEditor({onBack}:{onBack:()=>void}){
