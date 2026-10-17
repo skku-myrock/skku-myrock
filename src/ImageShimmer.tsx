@@ -1,16 +1,17 @@
-import {useState} from 'react';
-import type {ReactNode} from 'react';
+import {useEffect,useState} from 'react';
+import type {CSSProperties,ReactNode} from 'react';
 
 /** Keep the image frame stable until the actual image finishes loading. */
-export default function ImageShimmer({src,alt,className='',loading='lazy',fetchPriority='auto',fallback}:{
+export default function ImageShimmer({src,alt,className='',loading='lazy',fetchPriority='auto',style,draggable,onLoad}:{
  src:string;alt:string;className?:string;loading?:'eager'|'lazy';fetchPriority?:'high'|'low'|'auto';fallback?:ReactNode;
+ style?:CSSProperties;draggable?:boolean;onLoad?:(width:number,height:number)=>void;
 }){
- const [state,setState]=useState<'pending'|'ready'|'error'>('pending');
- return <div className={'image-shimmer-frame '+className+(state==='pending'?' is-image-loading':'')} role={state==='pending'?'status':undefined}
+ const [state,setState]=useState<'pending'|'ready'>('pending');
+ useEffect(()=>{setState('pending');},[src]);
+ return <div className={'image-shimmer-frame '+className+(state==='pending'?' is-image-loading':'')} style={style} role={state==='pending'?'status':undefined}
   aria-label={state==='pending'?alt+'을 불러오는 중':undefined}>
   {state==='pending'&&<span className="image-shimmer-band" aria-hidden="true"/>}
-  {state==='error'?(fallback??<span className="image-shimmer-error">사진을 불러올 수 없습니다.</span>):null}
   <img className="image-shimmer-content" src={src} alt={alt} loading={loading} fetchPriority={fetchPriority}
-   decoding="async" onLoad={()=>setState('ready')} onError={()=>setState('error')} hidden={state==='error'}/>
+   decoding="async" draggable={draggable} onLoad={event=>{onLoad?.(event.currentTarget.naturalWidth,event.currentTarget.naturalHeight);setState('ready');}} onError={()=>setState('pending')}/>
  </div>;
 }
