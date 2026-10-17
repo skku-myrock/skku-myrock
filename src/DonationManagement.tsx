@@ -1,3 +1,4 @@
+import {useToastFeedback} from './toast';
 import { useEffect, useState } from 'react';
 import LoadingText from './LoadingText';
 import type { ChangeEvent } from 'react';
@@ -24,6 +25,10 @@ export default function DonationManagement({onBack}:{onBack:()=>void}) {
   const peopleChanged=Boolean(data && hasAnonymousRosterChanges(people,data.people,pendingExclusions));
   const [peopleError,setPeopleError]=useState('');
   const [peopleMessage,setPeopleMessage]=useState('');
+  useToastFeedback(error,'error');
+  useToastFeedback(message,'success');
+  useToastFeedback(peopleError,'error');
+  useToastFeedback(peopleMessage,'success');
   function markPeopleChanged() {
     setPeopleError('');
     setPeopleMessage('');
@@ -119,8 +124,7 @@ export default function DonationManagement({onBack}:{onBack:()=>void}) {
     </div>
     <div className="container finance-details-content finance-manager" data-async-busy={busy ? "true" : undefined}>
       <button type="button" className="finance-return-link" onClick={onBack}><ArrowLeft size={16}/> 후원 내역으로 돌아가기</button>
-      {error&&<p role="alert" className="form-error">{error}</p>}
-      {message&&<p role="status" className="finance-manager-success">{message}</p>}
+
       {loading?<div className="finance-manager-loading-panels">
         <section className="finance-manager-section">
          <div className="finance-manager-heading"><div><h2>후원 기록</h2><p>내부 기록에는 익명 처리된 후원자의 원본 이름과 학번도 보관됩니다.</p></div></div>
@@ -225,10 +229,6 @@ export default function DonationManagement({onBack}:{onBack:()=>void}) {
         </section>
       </>}
     </div>
-    {(peopleError||peopleMessage)&&<div className={'site-bottom-toast'+(peopleError?' is-error':' is-success')}
-      role={peopleError?'alert':'status'} aria-live="polite">
-      <span>{peopleError||peopleMessage}</span>
-      <button type="button" aria-label="알림 닫기" onClick={()=>{setPeopleError('');setPeopleMessage('');}}>닫기</button>
-    </div>}
+
   </>;
 }
