@@ -7,6 +7,7 @@ import {equipmentDate,equipmentStatusTone} from './equipmentDemo';
 import type {EquipmentItem} from './equipmentDemo';
 import type {EquipmentManageAction,EquipmentManageInput} from './equipmentApi';
 import {uploadImagesBatch} from './imageUpload';
+import ImageShimmer from './ImageShimmer';
 import {validateSourceImage} from './imageCompression';
 import {PageHeading} from './pages/SitePages';
 
@@ -81,7 +82,7 @@ export default function EquipmentManager({items,busy,loading,error,onRefresh,onM
  }
  const details=(item:EquipmentItem)=><div className="equipment-manage-item-info">
   <div className="equipment-manage-description">
-   {item.imageUrl?<img src={item.imageUrl} alt={item.name+' 장비 사진'} loading="lazy" decoding="async"/>:<div className="equipment-manage-photo-empty">사진 없음</div>}
+   {item.imageUrl?<ImageShimmer key={item.imageUrl} src={item.imageUrl} alt={item.name+' 장비 사진'}/> :<div className="equipment-manage-photo-empty">사진 없음</div>}
    <div><strong>{item.name}</strong><span>{item.product}</span></div>
   </div>
   <small className={'equipment-status equipment-status-'+equipmentStatusTone(item.status)}>{item.borrower?`${item.status}(${equipmentDate(item.borrower.borrowedAt)}) · ${item.borrower.name}(${item.borrower.studentId})`:item.status}</small>
@@ -130,7 +131,7 @@ export default function EquipmentManager({items,busy,loading,error,onRefresh,onM
      </div>
      <div className="equipment-manage-image-picker">
       <div className="equipment-manage-image-preview">
-       {previewUrl||imageUrl?<img src={previewUrl||imageUrl} alt="장비 이미지 미리보기"/>:<span>사진 없음</span>}
+       {previewUrl||imageUrl?<ImageShimmer key={previewUrl||imageUrl} src={previewUrl||imageUrl} alt="장비 이미지 미리보기"/>:<span>사진 없음</span>}
       </div>
       <div className="equipment-manage-image-actions">
        <label className="outline-action"><ImagePlus size={15}/> 이미지 파일 선택
