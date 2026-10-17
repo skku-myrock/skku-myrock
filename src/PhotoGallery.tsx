@@ -203,7 +203,7 @@ export default function PhotoGallery({ canRegister }: { canRegister: boolean }) 
     if (event.key === ' ' && event.target === dialogRef.current) event.preventDefault();
   }
 
-  return <section className="container section-block gallery-section" data-async-busy={loading||deleting?"true":undefined}>
+  return <section className="container section-block gallery-section" data-async-busy={deleting?"true":undefined}>
     <div className="toolbar toolbar-bottom gallery-toolbar">
       <div className="tabs gallery-tabs" aria-label="갤러리 분류">
         {categories.map(category => <button type="button" key={category}
