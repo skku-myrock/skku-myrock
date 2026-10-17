@@ -130,6 +130,32 @@ export async function listGalleryFirstPage(env){
   .filter(row=>row.document).map(row=>galleryFromDoc(row.document)).slice(0,12);
 }
 
+/** Temporary index-free path for category filtering while the composite index is absent.
+ * Query only the automatically indexed category field, then sort before slicing
+ * so page boundaries remain correct. Restrict scans to avoid unbounded reads.
+ */
+async function readCategoryPageWithoutIndex(env,{page,pageSize,category}){
+ const all=[];
+ const chunkSize=100,maxDocuments=2000;
+ const where={fieldFilter:{field:{fieldPath:'category'},op:'EQUAL',value:{stringValue:category}}};
+ for(let offset=0;offset<=maxDocuments;offset+=chunkSize){
+  const response=await googleRequest(env,FIRESTORE_ROOT+':runQuery',{method:'POST',body:{
+   structuredQuery:{from:[{collectionId:'galleryAlbums'}],where,offset,limit:chunkSize}
+  }});
+  if(!response.ok)throw Error('갤러리 분류별 목록 조회 실패 '+response.status);
+  if(!Array.isArray(response.data))throw Error('갤러리 분류별 목록 응답 형식 오류');
+  const documents=response.data.filter(row=>row.document).map(row=>row.document);
+  if(offset===maxDocuments&&documents.length)reject('갤러리 앨범이 많아 인덱스 생성이 필요합니다.',503);
+  all.push(...documents.filter(doc=>docFields(doc).createdAt));
+  if(documents.length<chunkSize)break;
+ }
+ all.sort((a,b)=>String(docFields(b).createdAt).localeCompare(String(docFields(a).createdAt))
+  ||String(b.name).localeCompare(String(a.name)));
+ const total=all.length,totalPages=Math.max(1,Math.ceil(total/pageSize)),effectivePage=Math.min(page,totalPages);
+ const albums=all.slice((effectivePage-1)*pageSize,effectivePage*pageSize).map(galleryFromDoc);
+ return {albums,page:effectivePage,total,totalPages,pageSize};
+}
+
 /** Read one real gallery page. Firestore performs ordering and offset pagination. */
 export async function readGalleryPage(env,{page=1,pageSize=12,category='전체'}={}){
  if(!Number.isSafeInteger(page)||page<1||page>10000)reject('갤러리 페이지 번호가 올바르지 않습니다.');
@@ -140,7 +166,11 @@ export async function readGalleryPage(env,{page=1,pageSize=12,category='전체'}
  const count=await googleRequest(env,FIRESTORE_ROOT+':runAggregationQuery',{method:'POST',body:{
    structuredAggregationQuery:{structuredQuery:{from,...where},aggregations:[{alias:'total',count:{}}]}
  }});
- if(!count.ok)throw Error('갤러리 페이지 수 조회 실패 '+count.status);
+ if(!count.ok){
+  if(category!=='전체'&&count.code==='FAILED_PRECONDITION')
+   return readCategoryPageWithoutIndex(env,{page,pageSize,category});
+  throw Error('갤러리 페이지 수 조회 실패 '+count.status);
+ }
  const countRows=Array.isArray(count.data)?count.data:[];
  const total=Math.max(0,Number(countRows[0]?.result?.aggregateFields?.total?.integerValue??0));
  const totalPages=Math.max(1,Math.ceil(total/pageSize));
@@ -150,7 +180,11 @@ export async function readGalleryPage(env,{page=1,pageSize=12,category='전체'}
   offset:(effectivePage-1)*pageSize,limit:pageSize,
  }};
  const rows=await googleRequest(env,FIRESTORE_ROOT+':runQuery',{method:'POST',body:query});
- if(!rows.ok)throw Error('갤러리 목록 조회 실패 '+rows.status);
+ if(!rows.ok){
+  if(category!=='전체'&&rows.code==='FAILED_PRECONDITION')
+   return readCategoryPageWithoutIndex(env,{page,pageSize,category});
+  throw Error('갤러리 목록 조회 실패 '+rows.status);
+ }
  const albums=(Array.isArray(rows.data)?rows.data:[]).filter(row=>row.document).map(row=>galleryFromDoc(row.document));
  return {albums,page:effectivePage,total,totalPages,pageSize};
 }

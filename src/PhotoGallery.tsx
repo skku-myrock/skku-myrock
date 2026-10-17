@@ -68,7 +68,6 @@ export default function PhotoGallery({ canRegister }: { canRegister: boolean }) 
     return ()=>{alive=false;};
   },[previewPage,filter]);
   const shown=albums.slice(0,PAGE_SIZE);
-  const placeholders=Array.from({length:PAGE_SIZE-shown.length},(_,index)=>index);
   const PAGE_GROUP_SIZE=10;
   const windowStart=Math.floor((previewPage-1)/PAGE_GROUP_SIZE)*PAGE_GROUP_SIZE+1;
   const displayedPages=Array.from({length:Math.min(PAGE_GROUP_SIZE,totalPages-windowStart+1)},(_,i)=>windowStart+i);
@@ -234,10 +233,6 @@ export default function PhotoGallery({ canRegister }: { canRegister: boolean }) 
           <span className="gallery-album-action">{album.category} <span aria-hidden="true">·</span> 전체보기 <ArrowUpRight size={15} aria-hidden="true" /></span>
         </div>
       </button>)}
-      {!loading&&!loadError&&placeholders.map(index=><div className="gallery-album-card gallery-album-placeholder" aria-hidden="true" key={'empty-'+previewPage+'-'+index}>
-       <div className="gallery-album-cover gallery-album-placeholder-cover"><span>빈 갤러리</span></div>
-       <div className="gallery-album-details gallery-album-placeholder-details"><span>　</span></div>
-      </div>)}
     </div>
     {!loading&&!loadError&&<nav className="gallery-pagebar" aria-label="갤러리 페이지 탐색">
      <button type="button" className="gallery-page-jump" disabled={windowStart===1} onClick={()=>setPreviewPage(Math.max(1,windowStart-PAGE_GROUP_SIZE))} aria-label="이전 10페이지 목록">«</button>
