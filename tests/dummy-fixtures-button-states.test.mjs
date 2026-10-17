@@ -33,7 +33,7 @@ test('dummy API checks signed superadmin and uses stable document IDs, batches a
 });
 test('both superadmin menus expose single fixture generator below four reset actions',async()=>{
  const app=await read('src/App.tsx');
- assert.equal(app.split('>더미 데이터 생성').length-1,2);
+ assert.equal((app.match(/onClick=\{\(\)=>void createDummyData\(\)\}>더미 데이터 생성/g)||[]).length,2);
  assert.equal(app.split("createDummyData()").length-1,3);
  for(const label of ['후원 회계 초기화','활동 초기화','나머지 초기화','완전 초기화'])
   assert.equal(app.split('>'+label).length-1,2);
