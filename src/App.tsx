@@ -90,6 +90,7 @@ function App() {
   const [toast,setToast] = useState('');
   const [aboutSaveNotice,setAboutSaveNotice]=useState('');
   const [loginNotice,setLoginNotice]=useState('');
+  const [logoutNotice,setLogoutNotice]=useState('');
   const leaveGuardRef=useRef<(()=>boolean)|null>(null);
   const registerEditorLeaveGuard=useCallback((guard:(()=>boolean)|null)=>{leaveGuardRef.current=guard;},[]);
   const canLeaveEditor=()=>leaveGuardRef.current?.()??true;
@@ -160,7 +161,7 @@ function App() {
   const openSchedule=(id:string)=>{routerNavigate(schedulePath(id));setOpenGroup(null);setAccountOpen(false);setMenuOpen(false);window.scrollTo({top:0,behavior:'instant'});};
   const notify: Notify = (message='아직 연결되지 않은 기능입니다. 현재는 화면 구성 미리보기입니다.') => {setToast(message);window.setTimeout(()=>setToast(''),3500);};
   const showLogin=()=>{setLoginOpen(true);setMenuOpen(false);setAccountOpen(false);};
-  const logout=async()=>{if(!canLeaveEditor())return;try{await signOut(auth);leaveGuardRef.current=null;navigate('home');notify('로그아웃되었습니다.');}catch{notify('로그아웃하지 못했습니다. 잠시 후 다시 시도해 주세요.');}};
+  const logout=async()=>{if(!canLeaveEditor())return;try{await signOut(auth);leaveGuardRef.current=null;navigate('home');setLogoutNotice('로그아웃되었습니다.');}catch{setLogoutNotice('로그아웃하지 못했습니다. 잠시 후 다시 시도해 주세요.');}};
   async function resetRosterExceptMyself() {
     if (rosterResetting || financeResetting || noticeResetting || aboutResetting || assetResetting || !user || !profile?.superadmin || !hasSystemClaim) return;
     const confirmed = window.confirm(
@@ -423,6 +424,7 @@ function App() {
     {loginOpen&&<LoginDialog close={()=>setLoginOpen(false)} notify={message=>setLoginNotice(message??'')}/>}
     {aboutSaveNotice&&<TimedBottomToast message={aboutSaveNotice} onClose={()=>setAboutSaveNotice('')}/>}
     {loginNotice&&<TimedBottomToast message={loginNotice} onClose={()=>setLoginNotice('')}/>}
+    {logoutNotice&&<TimedBottomToast tone="error" message={logoutNotice} onClose={()=>setLogoutNotice('')}/>}
     {toast&&<div className="toast" role="status"><CircleHelp size={17}/><span>{toast}</span><button type="button" aria-label="알림 닫기" onClick={()=>setToast('')}><X size={15}/></button></div>}
   </div>;
 }
