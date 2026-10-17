@@ -21,8 +21,8 @@ test('both editors have dirty-state guarded navigation and preserve saved exits'
   assert.match(app,/blocker\.reset\(\)/);
   assert.doesNotMatch(app,/window\.history\.pushState/);
   assert.match(app,/registerLeaveGuard=\{registerEditorLeaveGuard\}/);
-  assert.match(app,/setAboutSaveNotice\(message\?\?'변경 사항을 저장했습니다/);
-  assert.match(app,/aboutSaveNotice&&<TimedBottomToast message=\{aboutSaveNotice\}/);
+  assert.match(app,/showToast\(message\?\?'변경 사항을 저장했습니다/);
+  assert.match(app,/bottomNotice&&<TimedBottomToast key=\{bottomNotice.id\}/);
 });
 test('exact introduction/photo notices and no GitHub draft implementation detail',async()=>{
   const [about,composer]=await Promise.all([src('src/AboutManagement.tsx'),src('src/NoticeComposer.tsx')]);
@@ -41,8 +41,8 @@ test('account save button disabled for unchanged saved data, successful save sho
   assert.match(page,/if\(!editing\|\|busy\|\|!accountChanged\)return/);
   assert.match(page,/disabled=\{busy\|\|!accountChanged\}/);
   assert.match(page,/setAccountMessage\('저장을 완료했습니다.'\)/);
-  assert.match(page,/accountMessage&&<TimedBottomToast tone="warning"/);
-  assert.match(page,/onClose=\{\(\)=>setAccountMessage\(''\)\}/);
+  assert.match(page,/useToastSignals\(\{error,message:accountMessage\}\)/);
+  assert.match(page,/setAccountMessage\('저장을 완료했습니다.'\)/);
 });
 test('file uploads reject GIF on client and server, while public GIF URL compatibility is unchanged',async()=>{
   const [compress,server]=await Promise.all([src('src/imageCompression.ts'),src('functions/api/images/batch.js')]);
