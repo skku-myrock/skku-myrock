@@ -11,10 +11,10 @@ test('temporary static gallery albums are removed and gallery is fetched from Fi
   assert.doesNotMatch(model,/2026-01-15-white-noise|fiveEmptyPhotos|photoAlbums/);
   assert.match(model,/PhotoCategory/);
   assert.match(model,/photos:readonly string\[\]/);
-  assert.match(component,/listGalleryAlbums\(\)/);
-  assert.match(component,/setAlbums\(items\)/);
+  assert.match(component,/getGalleryPage\(previewPage,filter\)/);
+  assert.match(component,/setAlbums\(result.albums\)/);
   assert.match(component,/아직 등록된 갤러리 앨범이 없습니다/);
-  assert.match(api,/fetch\('\/api\/gallery\/albums\?preview=first12'\)/);
+  assert.match(api,/export async function getGalleryPage\(page:number/);
   assert.match(backend,/FIRESTORE_ROOT\+'\/galleryAlbums'/);
 });
 test('gallery lightbox retains accessible navigation and responsive thumbnails',()=>{
