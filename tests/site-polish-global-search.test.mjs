@@ -72,7 +72,7 @@ test('site images retain shimmer after load errors, without retries, and feature
  assert.doesNotMatch(img,/사진을 불러올 수 없습니다|setTimeout|retry|setInterval/);
  assert.match(pages,/className="home-hero-image"\/>/);
  assert.match(pages,/className="about-hero-image"\/>/);
- assert.match(css,/\.hero-media>\.placeholder\.home-hero-image,\.about-intro>\.placeholder\.about-hero-image\{box-shadow/);
+ assert.match(css,/\.hero-media>\.placeholder\.home-hero-image,\.about-intro>\.placeholder\.about-hero-image\{display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow/);
  for(const file of ['src/PhotoGallery.tsx','src/NoticeImageCarousel.tsx','src/NoticeComposer.tsx','src/GalleryUploadDialog.tsx','src/EquipmentManager.tsx'])
   assert.match(await read(file),/ImageShimmer/);
 });
