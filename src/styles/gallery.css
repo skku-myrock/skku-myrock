@@ -404,7 +404,7 @@
 .gallery-upload-dropzone.is-compact .gallery-upload-dropzone-detail{font-size:10px;line-height:1.5;text-align:center}
 @media(max-width:680px){.gallery-upload-photo-grid>.gallery-upload-dropzone.is-compact{min-height:155px}}
 
-.gallery-empty-state{min-height:150px;padding:52px 15px;text-align:center;color:#82938a;font-size:13px}
+.gallery-empty-state{min-height:150px;padding:52px 15px;text-align:center;color:#9da7a4;font-size:13px}
 .gallery-load-error{padding:15px;border:1px solid #e4bdbc;background:#fff7f6;color:#994b43;font-size:12px}
 .gallery-load-error button{margin-left:10px;border:0;text-decoration:underline;background:transparent;color:inherit}
 .gallery-upload-dialog .gallery-upload-error{position:relative}
@@ -431,3 +431,14 @@
   .gallery-lightbox-header-actions{gap:6px}
   .gallery-manage-trigger{font-size:11px;min-height:31px;padding:0 7px}
 }
+
+/* Twenty-three-page pagination preview: actual album fetching stays on page one. */
+.gallery-pagebar{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;padding:25px 0 0}
+.gallery-pagebar>button{display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:34px;border:1px solid #dbe3df;background:#fff;color:#778681;font-size:12px;cursor:pointer}
+.gallery-pagebar>button[aria-current="page"]{color:#fff;border-color:var(--accent-dark);background:var(--accent-dark);font-weight:700}
+.gallery-pagebar>button:disabled{opacity:.3;cursor:not-allowed}
+.gallery-pagebar>.gallery-pagebar-ellipsis{font-size:12px;color:#889791;padding:0 4px}
+.gallery-pagination-preview-note{text-align:center;color:#9da7a4;font-size:11px;margin:12px 0 0}
+.gallery-album-placeholder{pointer-events:none;border:1px solid #e3e9e6;background:#f7f9f8;min-height:180px;display:flex;align-items:center;justify-content:center}
+.gallery-album-placeholder span{font-size:12px;color:#adb8b3}
+@media(max-width:620px){.gallery-pagebar{gap:4px}.gallery-pagebar>button{min-width:31px;height:32px}}
