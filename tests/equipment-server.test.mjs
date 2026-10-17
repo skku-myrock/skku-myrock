@@ -35,6 +35,7 @@ function mockFirestore(){
  store(root+'/equipment/test-guitar',toFields({
   name:'테스트 기타',product:'테스트 모델',imageUrl:'',queue:[],borrower:{},returnRequestedAt:'',archived:false
  }));
+ store(root+'/equipment/demo-guitar',toFields({name:'기타',product:'바커스 BST-2-RSM',queue:[],borrower:{},returnRequestedAt:'',archived:false}));
  const json=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:{'content-type':'application/json'}});
  const prefix='projects/skku-myrock/databases/(default)/documents/';
  const toUrl=name=>root+'/'+name.slice(prefix.length);
@@ -98,6 +99,7 @@ test('persisted equipment supports FIFO cancellation, approval, return and next 
   assert.equal(page.status,200);
   assert.deepEqual(page.data.items.map(x=>x.status),['대여 가능']);
   assert.ok(page.data.items.every(x=>!('borrower'in x)&&!('queue'in x)));
+  assert.equal((await doAction('alice','demo-guitar','apply')).status,404);
 
   assert.equal((await doAction('alice',guitar,'apply')).status,200);
   assert.equal(byId(await view('alice')).myPosition,1);
