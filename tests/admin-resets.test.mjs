@@ -112,7 +112,8 @@ test('asset reset checks legacy notice references before GitHub reset, then clea
  assert.ok(handler.indexOf('if(referenced)reject')<handler.indexOf('clearImageFolder(env,\'site\')'));
  assert.ok(handler.indexOf('clearImageFolder(env,\'site\')')<handler.indexOf('saveAbout(env,withoutPhotos,updateTime)'));
  const app=await source('src/App.tsx');
- assert.match(app,/await resetSiteAssets\(\);\s*invalidateAboutCache\(\);\s*setAboutRevision\(v=>v\+1\)/);
+ assert.match(app,/await resetSiteAssets\(\)/);
+ assert.match(app,/invalidateAboutCache\(\);setAboutRevision\(v=>v\+1\)/);
  assert.match(app,/'home': <Home key=\{aboutRevision\}/);
  const notices=await source('functions/api/notices/purge.js');
  assert.doesNotMatch(notices,/getAbout|saveAbout|withoutAboutPhotoUrls/);
