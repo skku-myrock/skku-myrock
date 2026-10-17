@@ -1,6 +1,5 @@
 /* Notice compose preview: plain text blocks and locally selected images. */
 .notice-composer-page { max-width: 900px; }
-.notice-composer-info { margin-bottom:26px }
 /* The shared image-compression-notice class supplies identical padding, border, palette and typography. */
 .notice-composer-fields { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 14px; margin-bottom: 36px; }
 .notice-composer-fields label { display: flex; flex-direction: column; gap: 9px; font-size: 12px; font-weight: 600; }
