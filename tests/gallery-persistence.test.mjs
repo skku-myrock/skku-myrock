@@ -56,7 +56,7 @@ test('gallery upload and display use actual data rather than fixtures',async()=>
     read('src/PhotoGallery.tsx'),read('src/GalleryUploadDialog.tsx'),
     read('src/galleryData.ts'),read('src/styles/management.css'),read('src/App.tsx')]);
   assert.doesNotMatch(model,/fiveEmptyPhotos|2026-01-15-white-noise|photoAlbums/);
-  assert.match(gallery,/listGalleryAlbums\(\)/);
+  assert.match(gallery,/getGalleryPage\(previewPage,filter\)/);
   assert.match(dialog,/uploadImagesBatch\(newPhotos\.map\(photo=>photo\.file!\),'gallery'\)/);
   assert.match(dialog,/publishGalleryAlbum\(category,title\.trim\(\),urls\)/);
   assert.match(css,/\.home-hero-image,\.about-intro>\.about-hero-image\{object-fit:cover\}/);
