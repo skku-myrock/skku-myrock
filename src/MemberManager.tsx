@@ -37,7 +37,7 @@ export default function MemberManager({ currentUid, level, notify }: { currentUi
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   useToastFeedback(error,'error');
-  useToastFeedback(message,message.startsWith('CSV 전체')?'warning':'success');
+  useToastFeedback(message,message.startsWith('CSV 전체')||/실패 [1-9]/.test(message)||message.includes('요청이 중단')?'warning':'success');
   const [fileName, setFileName] = useState('');
   const [preview, setPreview] = useState<NewMember[]>([]);
   const [csvStep, setCsvStep] = useState<'choose' | 'review' | 'complete'>('choose');
