@@ -1,3 +1,4 @@
+import {useToastFeedback} from './toast';
 import {useEffect,useMemo,useState} from 'react';
 import {ArrowLeft,Save,Search,X} from 'lucide-react';
 import {PageHeading} from './pages/SitePages';
@@ -13,6 +14,8 @@ function NoteEditor({kind,position,title,description,initial}:{kind:Kind;positio
  const [saving,setSaving]=useState(false);
  const [message,setMessage]=useState('');
  const [error,setError]=useState('');
+ useToastFeedback(error,'error');
+ useToastFeedback(message,'success');
  const loading=false;
  const dirty=text!==original;
  async function save(){
@@ -34,8 +37,7 @@ function NoteEditor({kind,position,title,description,initial}:{kind:Kind;positio
      <button type="button" className="button button-primary" disabled={loading||saving||!dirty} onClick={()=>void save()}><Save size={15}/>{saving?'저장 중…':'저장하기'}</button></div>
    </>
   }
-  {error&&<p className="form-error" role="alert">{error}</p>}
-  {message&&<p className="handover-save-notice" role="status">{message}</p>}
+
  </section>;
 }
 export default function HandoverNotesEditor({onBack}:{onBack:()=>void}){
@@ -44,6 +46,7 @@ export default function HandoverNotesEditor({onBack}:{onBack:()=>void}){
  });
  const [error,setError]=useState('');
  const [ready,setReady]=useState(false);
+ useToastFeedback(error,'error');
  const [initialNotes,setInitialNotes]=useState<Record<string,HandoverNote>>({});
  useEffect(()=>{
   let mounted=true;
@@ -69,7 +72,6 @@ export default function HandoverNotesEditor({onBack}:{onBack:()=>void}){
   </div>
   <section className="container section-block handover-editor-page">
    <button type="button" className="schedule-back-button" onClick={onBack}><ArrowLeft size={16}/> 인수인계로 돌아가기</button>
-   {error&&<p className="form-error" role="alert">{error}</p>}
    {!ready?<LoadingText>작성 권한을 확인하는 중입니다</LoadingText>:!error&&<>
     {positions.length===0&&<p className="handover-editor-help">등록된 직책이 없습니다. 운영진에게 직책 정보를 확인해 주세요.</p>}
     {positions.map(position=><NoteEditor key={'role-'+position} kind="role" position={position}
@@ -95,6 +97,8 @@ export function HandoverNotesView({onBack}:{onBack:()=>void}){
  const [notes,setNotes]=useState<{title:string;content:string}[]>([]);
  const [noteLoading,setNoteLoading]=useState(false);
  const [noteError,setNoteError]=useState('');
+ useToastFeedback(error,'error');
+ useToastFeedback(noteError,'error');
  const [reloadIndex,setReloadIndex]=useState(0);
  useEffect(()=>{
   let active=true;
@@ -149,7 +153,6 @@ export function HandoverNotesView({onBack}:{onBack:()=>void}){
     </label>
     <button type="button" className="outline-action" disabled={loading} onClick={()=>setReloadIndex(index=>index+1)}>새로고침</button>
    </div>
-   {error&&<p className="form-error" role="alert">{error}</p>}
    {loading?<LoadingText>인수인계 목록을 불러오는 중입니다.</LoadingText>:
     filtered.length===0?<p className="handover-archive-notice">{query.trim()?'검색 결과가 없습니다.':'저장된 인수인계가 없습니다.'}</p>:
     <div className="handover-archive-list" aria-label="저장된 인수인계 목록">
