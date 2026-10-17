@@ -8,14 +8,6 @@ export type EquipmentItem = {
  queue?:EquipmentRequest[];borrower?:EquipmentBorrower|null;returnRequestedAt?:string|null;
 };
 
-// These four items are fallback values if the equipment collection is empty.
-// Their actual states and queue are always loaded from the server.
-export const demoEquipment:EquipmentItem[] = [
- {id:'demo-guitar',name:'기타',product:'바커스 BST-2-RSM',status:'대여 가능',queueLength:0,myPosition:null,isBorrower:false},
- {id:'demo-mic',name:'마이크',product:'슈어 SM98',status:'대여 가능',queueLength:0,myPosition:null,isBorrower:false},
- {id:'demo-di',name:'DI 박스',product:'래디얼 ProDI',status:'대여 가능',queueLength:0,myPosition:null,isBorrower:false},
- {id:'demo-stand',name:'마이크 스탠드',product:'K&M 210/9',status:'대여 가능',queueLength:0,myPosition:null,isBorrower:false},
-];
 export function equipmentStatusTone(status:EquipmentStatus){
  switch(status){
   case '대여 가능':return 'available';
