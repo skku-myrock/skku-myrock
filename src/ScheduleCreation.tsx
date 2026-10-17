@@ -19,6 +19,7 @@ export default function ScheduleCreation({onBack,onCreated,teamMode=false}:{onBa
   const [memberResults,setMemberResults]=useState<TeamMember[]>([]);
   const [searching,setSearching]=useState(false);
   const [memberError,setMemberError]=useState('');
+ useToastFeedback(memberError,'error');
   async function searchMembers(){
     if(!memberQuery.trim())return;
     setSearching(true);setMemberError('');
@@ -205,7 +206,7 @@ export default function ScheduleCreation({onBack,onCreated,teamMode=false}:{onBa
             <input autoFocus value={memberQuery} onChange={event=>setMemberQuery(event.target.value)} placeholder="이름 또는 학번 검색" maxLength={40} aria-label="이름 또는 학번" />
             <button type="submit" className="button button-primary" disabled={searching||!memberQuery.trim()}><Search size={15}/>{searching?'검색 중…':'검색'}</button>
           </form>
-          {memberError&&<p role="alert" className="schedule-side-warning">{memberError}</p>}
+    
           <div className="schedule-team-results">{memberResults.length===0?<p>검색 결과가 없습니다. 검색어를 입력하고 검색을 눌러주세요.</p>:
            memberResults.map(member=><div className="schedule-team-result" key={member.uid}><span><strong>{member.name}</strong> ({member.studentId})</span>
             <button type="button" className="outline-action" disabled={teamMembers.some(entry=>entry.uid===member.uid)} onClick={()=>addMember(member)}>{teamMembers.some(entry=>entry.uid===member.uid)?'추가됨':'추가하기'}</button></div>)}</div>
