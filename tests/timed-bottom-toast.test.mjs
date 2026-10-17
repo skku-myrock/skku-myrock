@@ -24,6 +24,8 @@ test('login success and introduction edit notices share timed design while other
  assert.match(toast,/<X size=\{17\}/);
  assert.doesNotMatch(toast,/>닫기<\/button>/);
  assert.match(styles,/\.site-bottom-toast\.is-timed>button\{[\s\S]*?border:0/);
+ assert.match(styles,/\.site-bottom-toast\.is-timed\{padding-left:28px;/);
+ assert.match(styles,/@media\(max-width:700px\)\{\.site-bottom-toast\.is-timed\{padding-left:25px\}\}/);
  assert.match(styles,/@keyframes myrock-toast-depart/);
  assert.match(styles,/translate\(-50%,calc\(100% \+ 40px\)\)/);
 });
