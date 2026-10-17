@@ -223,7 +223,8 @@ export default function PhotoGallery({ canRegister }: { canRegister: boolean }) 
         </div>
       </button>)}
       {!loading&&!loadError&&placeholders.map(index=><div className="gallery-album-card gallery-album-placeholder" aria-hidden="true" key={'empty-'+previewPage+'-'+index}>
-       <span>빈 갤러리</span>
+       <div className="gallery-album-cover gallery-album-placeholder-cover"><span>빈 갤러리</span></div>
+       <div className="gallery-album-details gallery-album-placeholder-details"><span>　</span></div>
       </div>)}
     </div>
     {!loading&&!loadError&&<nav className="gallery-pagebar" aria-label="갤러리 페이지 탐색 (미리보기)">
