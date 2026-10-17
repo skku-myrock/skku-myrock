@@ -13,6 +13,7 @@ import logo from '../logo-transparent.png';
 import PasswordChange from '../PasswordChange';
 import PhotoGallery from '../PhotoGallery';
 import LoadingText from '../LoadingText';
+import {useToastSignals} from '../useToastSignals';
 import ImageShimmer from '../ImageShimmer';
 import {DEFAULT_ABOUT,getAbout,peekAboutCache} from '../aboutContent';
 import type {AboutContent} from '../aboutContent';
