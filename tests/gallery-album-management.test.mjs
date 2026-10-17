@@ -64,5 +64,5 @@ test('gallery lightbox management controls respect role and expose editor and de
   assert.match(client,/method:'DELETE'/);
   assert.match(client,/expectedUpdateTime:album\.updateTime/);
   assert.match(css,/\.gallery-toolbar \.admin-only-action\{align-self:flex-start\}/);
-  assert.match(css,/\.gallery-manage-menu/);
+  assert.match(css,/\.content-manage-menu/);
 });
