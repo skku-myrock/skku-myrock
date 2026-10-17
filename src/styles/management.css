@@ -351,16 +351,19 @@ body:has([data-async-busy="true"]),body:has([data-async-busy="true"]) *{
 }
 /* Keep the same shadow for image placeholders as for uploaded feature photos. */
 .hero-media>.placeholder.home-hero-image,.about-intro>.placeholder.about-hero-image{display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 12px 30px rgba(31,53,47,.18),0 3px 8px rgba(31,53,47,.09)}
-/* Reserve the existing heading-to-toolbar whitespace for the writer action. */
-.news-page .news-write-row{position:relative;height:0;display:flex;justify-content:flex-end;transform:translateY(-55px);z-index:1}
+/* Center the writer button in the existing heading-to-toolbar gap, without
+   adding space to the toolbar or relying on a fixed translation. */
+.news-page{position:relative}
+.news-page .news-write-row{position:absolute;top:-70px;left:0;right:0;height:70px;display:flex;align-items:center;justify-content:flex-end;z-index:1}
+@media(max-width:620px){.news-page .news-write-row{top:-45px;height:45px}}
 .news-page .news-search-form{display:flex;gap:9px;align-items:center}
 .news-page .news-search-button{height:39px;min-height:39px}
 @media(max-width:700px){.news-page .toolbar{flex-wrap:wrap}.news-page .news-search-form{width:100%;justify-content:flex-end}.news-page .news-search-form .input-search{flex:1;min-width:0}.news-page .news-search-form input{width:100%}}
 /* External navigation entries use the same row styling as internal buttons. */
-.desktop-nav .more-menu a{display:block;width:100%;padding:12px;text-align:left;font-size:12px;color:var(--ink)}
+.desktop-nav .more-menu a{display:flex;align-items:center;gap:7px;width:100%;padding:12px;text-align:left;font-size:12px;color:var(--ink)}
 .desktop-nav .more-menu a:hover{background:var(--light);color:var(--accent-dark)}
 @media(max-width:820px){
- .mobile-nav .mobile-submenu a{width:100%;display:flex;align-items:center;justify-content:space-between;padding:11px 6px;border-bottom:1px solid var(--border);font-size:12px;color:#667673}
+ .mobile-nav .mobile-submenu a{width:100%;display:flex;align-items:center;justify-content:flex-start;gap:7px;padding:11px 6px;border-bottom:1px solid var(--border);font-size:12px;color:#667673}
  .mobile-nav .mobile-submenu a:focus-visible{outline:2px solid var(--accent-dark)}
 }
-@media(max-width:620px){.news-page .news-write-row{transform:translateY(-43px)}}
+
