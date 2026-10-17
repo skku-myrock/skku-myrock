@@ -18,6 +18,58 @@ async function github(env,path,method='GET',body){
   }
   return response.json();
 }
+const FIXTURE_IMAGE=/^fixtures\/gallery\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.webp$/i;
+const SOURCE_GALLERY_IMAGE=/^gallery\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.webp)$/i;
+function fixtureBase(env){
+ const base=new URL(env.MYROCK_IMAGES_PUBLIC_BASE_URL);
+ if(base.protocol!=='https:'||base.pathname!=='/'||base.search||base.hash)reject('이미지 공개 주소 설정이 올바르지 않습니다.',503);
+ return base;
+}
+async function fixtureTree(env){
+ const head=await github(env,'git/ref/heads/main');
+ const commit=await github(env,'git/commits/'+head.object.sha);
+ const tree=await github(env,'git/trees/'+commit.tree.sha+'?recursive=1');
+ if(tree.truncated)reject('이미지 저장소 파일 목록이 불완전합니다.',503);
+ return {head,commit,entries:tree.tree??[]};
+}
+/** Store 17 immutable-by-convention demo image paths outside the purgeable gallery/ directory.
+ * Reference existing Git blob SHAs; no binary upload or duplicated image encoding is needed.
+ */
+export async function getDummyGalleryFixtures(env){
+ const base=fixtureBase(env);
+ const {entries}=await fixtureTree(env);
+ const files=entries.filter(entry=>entry.type==='blob'&&FIXTURE_IMAGE.test(entry.path)).sort((a,b)=>a.path.localeCompare(b.path)).slice(0,17);
+ return files.length===17?files.map(entry=>new URL(entry.path,base).href):[];
+}
+export async function ensureDummyGalleryFixtures(env,sourceUrls){
+ const base=fixtureBase(env);
+ if(!Array.isArray(sourceUrls)||sourceUrls.length<17)reject('테스트용 공연 사진 17장이 필요합니다.',409);
+ const names=[...new Set(sourceUrls.map(url=>{
+  const parsed=new URL(url),path=parsed.pathname.slice(1),match=SOURCE_GALLERY_IMAGE.exec(path);
+  if(parsed.origin!==base.origin||parsed.search||parsed.hash||!match)reject('테스트용 사진은 기존 gallery/ WebP 파일이어야 합니다.',409);
+  return {path,destination:'fixtures/gallery/'+match[1]};
+ }).map(entry=>JSON.stringify(entry)))].map(value=>JSON.parse(value));
+ if(names.length<17)reject('서로 다른 테스트용 사진 17장이 필요합니다.',409);
+ for(let attempt=0;attempt<3;attempt++){
+  const {head,commit,entries}=await fixtureTree(env);
+  const existing=new Map(entries.filter(entry=>entry.type==='blob').map(entry=>[entry.path,entry.sha]));
+  const ready=names.slice(0,17).every(({destination})=>existing.has(destination));
+  if(ready)return names.slice(0,17).map(({destination})=>new URL(destination,base).href);
+  const additions=names.slice(0,17).filter(({destination})=>!existing.has(destination)).map(({path,destination})=>{
+   const sha=existing.get(path);
+   if(!sha)reject('원본 갤러리 WebP 파일을 GitHub에서 찾지 못했습니다.',409);
+   return {path:destination,mode:'100644',type:'blob',sha};
+  });
+  const tree=await github(env,'git/trees','POST',{base_tree:commit.tree.sha,tree:additions});
+  const next=await github(env,'git/commits','POST',{message:'assets(fixtures): preserve 17 gallery test photos',tree:tree.sha,parents:[head.object.sha]});
+  try{
+   await github(env,'git/refs/heads/main','PATCH',{sha:next.sha,force:false});
+   return names.slice(0,17).map(({destination})=>new URL(destination,base).href);
+  }catch(error){if(error?.status!==409||attempt===2)throw error;}
+ }
+ reject('테스트용 이미지 등록에 실패했습니다.',503);
+}
+
 /** Replace only the selected folder tree, leaving all sibling directories intact. */
 export async function clearImageFolder(env,folder){
   if(!FOLDERS.has(folder))reject('허용되지 않은 이미지 폴더입니다.',400);
