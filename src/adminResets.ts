@@ -12,3 +12,6 @@ export const resetClubIntroduction=()=>request<{reset:boolean}>('/api/about/rese
 
 export const resetSiteAssets=()=>request<{reset:boolean;changed:boolean;commit:string|null}>('/api/images/reset','에셋 초기화');
 export const purgeGallery=()=>request<{deleted:number;done:boolean;imagesCleared:boolean;commit?:string|null}>('/api/gallery/purge','갤러리 초기화');
+
+export const purgeSchedules=()=>request<{deleted:number;done:boolean;stage:string}>('/api/schedules/purge','활동 초기화');
+export const resetEquipmentLoans=()=>request<{updated:number;done:boolean}>('/api/equipment/reset','활동 초기화');
