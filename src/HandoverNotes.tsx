@@ -96,6 +96,8 @@ export function HandoverNotesView({onBack}:{onBack:()=>void}){
  const [notes,setNotes]=useState<{title:string;content:string}[]>([]);
  const [noteLoading,setNoteLoading]=useState(false);
  const [noteError,setNoteError]=useState('');
+ useToastSignals({error});
+ useToastSignals({error:noteError});
  const [reloadIndex,setReloadIndex]=useState(0);
  useEffect(()=>{
   let active=true;
