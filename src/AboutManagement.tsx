@@ -1,3 +1,4 @@
+import {useToastFeedback} from './toast';
 import {useEffect,useRef,useState} from 'react';
 import type {ChangeEvent} from 'react';
 import {ArrowLeft,ArrowDown,ArrowUp,ImagePlus,Plus,Save,Trash2} from 'lucide-react';
@@ -5,7 +6,6 @@ import {DEFAULT_ABOUT,getAboutManagement,saveAbout} from './aboutContent';
 import {uploadImagesBatch} from './imageUpload';
 import {validateSourceImage} from './imageCompression';
 import {useEditorLeaveGuard} from './useEditorLeaveGuard';
-import TimedBottomToast from './TimedBottomToast';
 import LoadingText from './LoadingText';
 import ImageShimmer from './ImageShimmer';
 import type {AboutContent,Officer,HistoryEntry} from './aboutContent';
@@ -23,6 +23,8 @@ export default function AboutManagement({onBack,onSaved,registerLeaveGuard}:{onB
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState('');
   const [message,setMessage]=useState('');
+ useToastFeedback(error,'error');
+ useToastFeedback(message,'success');
   const hasUnsavedChanges=!loading&&savedSnapshot.current!==null&&JSON.stringify(content)!==savedSnapshot.current;
   useEditorLeaveGuard(hasUnsavedChanges||busy,registerLeaveGuard);
   useEffect(()=>{
@@ -159,9 +161,6 @@ export default function AboutManagement({onBack,onSaved,registerLeaveGuard}:{onB
         <div className="about-manage-footer"><button type="button" className="button button-primary" disabled={busy||loading} onClick={()=>void save()}><Save size={16}/> 변경 사항 저장</button></div>
       </>
     </div>
-    {(error||message)&&<TimedBottomToast
-      message={error||message} tone={error?'error':'success'}
-      onClose={()=>{setError('');setMessage('');}}
-    />}
+
   </>;
 }
