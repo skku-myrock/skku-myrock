@@ -40,7 +40,8 @@ export default function NoticeComposer({ onBack, onSaved, initial, registerLeave
   const [slidePickerId,setSlidePickerId]=useState<number|null>(null);
   const [pickerUrl,setPickerUrl]=useState('');
   const originalDraft=useRef(JSON.stringify({title,category,blocks}));
-  const hasUnsavedChanges=JSON.stringify({title,category,blocks})!==originalDraft.current||Boolean(pickerUrl.trim())||Object.keys(dimensionDrafts).length>0;
+  const hasPersistedChanges=JSON.stringify({title,category,blocks})!==originalDraft.current;
+  const hasUnsavedChanges=hasPersistedChanges||Boolean(pickerUrl.trim())||Object.keys(dimensionDrafts).length>0;
   useEditorLeaveGuard(hasUnsavedChanges||busy,registerLeaveGuard);
 
   useEffect(() => () => { objectUrls.current.forEach(url => URL.revokeObjectURL(url)); }, []);
@@ -260,7 +261,7 @@ export default function NoticeComposer({ onBack, onSaved, initial, registerLeave
     setBlocks(previous => previous.filter(block => block.id !== id));
   }
   async function publish(){
-    if(busy)return;
+    if(busy||(initial&&!hasPersistedChanges))return;
     if(!title.trim()){setError('제목을 입력해 주세요.');return;}
     const activeIds=new Set(blocks.flatMap(block=>block.kind==='image'?[block.id]:block.kind==='gallery'?block.images.map(image=>image.id):[]));
     if(Object.entries(dimensionErrors).some(([key,msg])=>msg&&activeIds.has(Number(key.split(':')[0])))){
@@ -289,7 +290,7 @@ export default function NoticeComposer({ onBack, onSaved, initial, registerLeave
     <div className="page-heading container"><span className="eyebrow">NOTICE EDITOR</span>
       <h1>{initial?'공지사항 수정하기':'공지사항 글쓰기'}</h1><p>글을 작성하고 이미지 위치를 조정할 수 있습니다.</p>
     </div>
-    <section className="container section-block notice-composer-page">
+    <section className="container section-block notice-composer-page" data-async-busy={busy?"true":undefined}>
       <button type="button" className="notice-detail-back" onClick={back}><ArrowLeft size={16}/> 공지사항 목록</button>
       <div className="notice-composer-info image-compression-notice" role="note">이미지를 저장할 때 자동으로 압축·크기 조정할 수 있습니다. <strong>업로드된 이미지는 원본을 대체하지 못하므로 원본 사진을 별도로 보관해 주세요.</strong></div>
       <div className="notice-composer-fields">
@@ -417,7 +418,7 @@ export default function NoticeComposer({ onBack, onSaved, initial, registerLeave
         <button type="button" className="button button-primary" onClick={() => setPreview(previous => !previous)}>{preview ? '편집으로 돌아가기' : '미리보기'}</button>
       </div>
       <div className="notice-composer-publish">
-        <button type="button" className="button button-primary" disabled={busy} onClick={()=>void publish()}>{busy?"저장 중...":initial?"변경 사항 저장":"발행"}</button>
+        <button type="button" className="button button-primary" disabled={busy||Boolean(initial&&!hasPersistedChanges)} onClick={()=>void publish()}>{busy?"저장 중...":initial?"변경 사항 저장":"발행"}</button>
       </div>
       <p className="notice-composer-footnote">사진은 저장 시 업로드됩니다. GitHub 커밋 후 이미지가 공개되기까지 Cloudflare 배포 시간이 걸릴 수 있습니다.</p>
     </section>
