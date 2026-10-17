@@ -1,7 +1,7 @@
 import {auth} from './firebase';
 import type {PhotoAlbum,PhotoCategory} from './galleryData';
 export async function listGalleryAlbums():Promise<PhotoAlbum[]>{
-  const response=await fetch('/api/gallery/albums');
+  const response=await fetch('/api/gallery/albums?preview=first12');
   const data=await response.json();
   if(!response.ok)throw Error(data?.error??'갤러리 목록 조회에 실패했습니다.');
   return data.albums as PhotoAlbum[];
