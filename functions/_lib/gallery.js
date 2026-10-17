@@ -116,3 +116,16 @@ export async function deleteGalleryAlbum(env,id,expectedTime){
   if(!result.ok)reject('갤러리 앨범 삭제에 실패했습니다.',503);
   return {deleted:true};
 }
+
+/** Preview page: fetch just the 12 newest album metadata documents. */
+export async function listGalleryFirstPage(env){
+ const query={structuredQuery:{
+  from:[{collectionId:'galleryAlbums'}],
+  orderBy:[{field:{fieldPath:'createdAt'},direction:'DESCENDING'}],
+  limit:12,
+ }};
+ const response=await googleRequest(env,FIRESTORE_ROOT+':runQuery',{method:'POST',body:query});
+ if(!response.ok)throw Error('갤러리 첫 페이지 조회 실패 '+response.status);
+ return (Array.isArray(response.data)?response.data:[])
+  .filter(row=>row.document).map(row=>galleryFromDoc(row.document)).slice(0,12);
+}
