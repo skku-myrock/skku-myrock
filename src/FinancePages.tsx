@@ -296,7 +296,7 @@ export function ExpenseHistory({ onBack, canManageExpenses, onManage }: {
               <span>{formatWon(row.amount)}</span><span>{formatWon(row.balance)}</span><span>{row.description}</span>
             </div>)}
         </div>
-        {expenseCursor&&<div className="list-bottom"><button type="button" className={loadingMore?"outline-action is-fetching":"outline-action"} disabled={loadingMore} onClick={()=>void loadMoreExpenses()}>{loadingMore?'더 불러오는 중...':'회비 내역 더 보기'}</button></div>}
+        {expenseCursor&&<div className="list-bottom finance-load-more"><button type="button" className={loadingMore?"outline-action is-fetching":"outline-action"} disabled={loadingMore} onClick={()=>void loadMoreExpenses()}>{loadingMore?'더 불러오는 중...':'회비 내역 더 보기'}</button></div>}
       </section>
       <div className="finance-detail-footer"><BackToFinance onBack={onBack}/></div>
     </div>
