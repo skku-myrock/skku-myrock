@@ -1,4 +1,4 @@
-import {useEffect,useState} from 'react';
+import {useEffect,useRef,useState} from 'react';
 import type {CSSProperties,ReactNode} from 'react';
 
 /** Keep the image frame stable until the actual image finishes loading. */
@@ -7,7 +7,10 @@ export default function ImageShimmer({src,alt,className='',loading='lazy',fetchP
  style?:CSSProperties;draggable?:boolean;onLoad?:(width:number,height:number)=>void;
 }){
  const [state,setState]=useState<'pending'|'ready'>('pending');
- useEffect(()=>{setState('pending');},[src]);
+ const previousSrc=useRef(src);
+ useEffect(()=>{
+  if(previousSrc.current!==src){previousSrc.current=src;setState('pending');}
+ },[src]);
  return <div className={'image-shimmer-frame '+className+(state==='pending'?' is-image-loading':'')} style={style} role={state==='pending'?'status':undefined}
   aria-label={state==='pending'?alt+'을 불러오는 중':undefined}>
   {state==='pending'&&<span className="image-shimmer-band" aria-hidden="true"/>}
