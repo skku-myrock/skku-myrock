@@ -2,7 +2,7 @@ import {useToastSignals} from './useToastSignals';
 import LoadingText from './LoadingText';
 import {useEffect,useMemo,useRef,useState} from 'react';
 import type {PointerEvent as ReactPointerEvent} from 'react';
-import {AlertTriangle,ArrowLeft,Check,LogOut,Trash2,Users,X} from 'lucide-react';
+import {ArrowLeft,LogOut,Trash2,Users,X} from 'lucide-react';
 import {decodeBits,encodeBits,rectangleTimeSelection,blockKey} from './scheduleGrid';
 import {cancelScheduleInvitation,getSchedule,inviteMember,leaveSchedule,listPendingScheduleInvitations,removeScheduleMember,saveAvailability} from './scheduleApi';
 import type {PendingScheduleInvitation} from './scheduleApi';
