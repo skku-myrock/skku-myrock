@@ -68,7 +68,7 @@ test('Ddrak launches in a new tab from desktop, mobile and footer activity links
 });
 test('site images retain shimmer after load errors, without retries, and feature placeholder shadows are kept',async()=>{
  const [img,pages,css]=await Promise.all([read('src/ImageShimmer.tsx'),read('src/pages/SitePages.tsx'),read('src/styles/management.css')]);
- assert.match(img,/onError=\{\(\)=>setState\('pending'\)\}/);
+ assert.match(img,/onError=\{\(\)=>setLoadedSrc\(null\)\}/);
  assert.doesNotMatch(img,/사진을 불러올 수 없습니다|setTimeout|retry|setInterval/);
  assert.match(pages,/className="home-hero-image"\/>/);
  assert.match(pages,/className="about-hero-image"\/>/);
