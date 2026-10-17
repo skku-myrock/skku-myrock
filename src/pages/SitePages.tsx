@@ -240,7 +240,7 @@ export function NoticeDetail({ notice, canManage, backToList, onEdit, onDelete }
       <div className="notice-detail-content">
         {notice.blocks.map((block,index)=>block.kind==='text'?<div className="notice-detail-body" key={index}><p>{block.text}</p></div>:block.kind==='gallery'?
           <div key={index} className="notice-detail-images"><NoticeImageCarousel label={notice.title+' 이미지 슬라이드'} slides={block.images.map((image,i)=>({id:i,src:image.url,alt:image.name,width:Number(image.width)||320,height:Number(image.height)||240}))}/></div>:
-          <div key={index} className="notice-detail-image-single" style={{maxWidth:Number(block.width)||800}}><img src={block.url} alt={block.name} loading="lazy" decoding="async" style={{width:'100%',aspectRatio:Number(block.width)&&Number(block.height)?Number(block.width)+' / '+Number(block.height):'auto'}}/></div>)}
+          <div key={index} className="notice-detail-image-single" style={{maxWidth:Number(block.width)||800}}><ImageShimmer key={block.url} className="notice-detail-single-image" src={block.url} alt={block.name} style={{width:'100%',aspectRatio:Number(block.width)&&Number(block.height)?Number(block.width)+' / '+Number(block.height):'4 / 3'}}/></div>)}
       </div>
       <div className="notice-detail-footer">
         <button type="button" className="outline-action" onClick={backToList}>
@@ -275,7 +275,7 @@ export function Equipment({items,canManage,onManage,loggedIn,onLogin,loading,err
    {error&&<p className="form-error" role="alert">{error}</p>}
    {loading&&<LoadingText>장비 목록을 불러오는 중입니다.</LoadingText>}
    <div className="equipment-list">{!loading&&items.map(g=><div className="equipment-row" key={g.id}>
-    {g.imageUrl?<img className="equipment-photo" src={g.imageUrl} alt={g.name+" 장비 사진"} loading="lazy" decoding="async"/>:<Placeholder label="장비 사진" />}
+    {g.imageUrl?<ImageShimmer key={g.imageUrl} className="equipment-photo" src={g.imageUrl} alt={g.name+" 장비 사진"}/>:<Placeholder label="장비 사진" />}
     <div className="equipment-info"><h3>{g.name}</h3><p>{g.product}</p>
      <span className={"equipment-status equipment-status-"+equipmentStatusTone(g.status)}>{g.status}</span>
      {g.myPosition!==null&&<small className="equipment-own-position">내 신청 대기 순번: {g.myPosition}순위</small>}
