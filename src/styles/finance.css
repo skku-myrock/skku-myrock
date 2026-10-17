@@ -309,3 +309,5 @@
 .finance-support-eligibility{margin:15px 0 0;color:#647b6e;font-size:12px;line-height:1.8;word-break:keep-all}
 .finance-support-eligibility strong{font-weight:700;color:#405d4e}
 @media(max-width:520px){.finance-account-locked{flex-wrap:wrap}.finance-account-locked .button{margin-left:auto}}
+/* Match right-aligned notice pagination controls. */
+.finance-load-more{justify-content:flex-end}
