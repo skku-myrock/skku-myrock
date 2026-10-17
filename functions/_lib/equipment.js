@@ -12,9 +12,6 @@ export function equipmentId(value){
  return value;
 }
 export const equipmentDoc=id=>EQUIPMENT_ROOT+'/'+encodeURIComponent(equipmentId(id));
-export const defaultItem=id=>defaultMap.get(id)?{
- ...defaultMap.get(id),queue:[],borrower:null,returnRequestedAt:null,archived:false,
-}:null;
 export async function readEquipment(env,id){
  const doc=await getDocument(env,equipmentDoc(id));
  if(doc)return {item:{...docFields(doc),id},doc};
