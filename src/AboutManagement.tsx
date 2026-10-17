@@ -5,6 +5,7 @@ import {DEFAULT_ABOUT,getAboutManagement,saveAbout} from './aboutContent';
 import {uploadImagesBatch} from './imageUpload';
 import {validateSourceImage} from './imageCompression';
 import {useEditorLeaveGuard} from './useEditorLeaveGuard';
+import TimedBottomToast from './TimedBottomToast';
 import type {AboutContent,Officer,HistoryEntry} from './aboutContent';
 
 type PhotoTarget={type:'home'}|{type:'hero'}|{type:'officer';id:string};
@@ -156,9 +157,9 @@ export default function AboutManagement({onBack,onSaved,registerLeaveGuard}:{onB
         <div className="about-manage-footer"><button type="button" className="button button-primary" disabled={busy} onClick={()=>void save()}><Save size={16}/> 변경 사항 저장</button></div>
       </>}
     </div>
-    {(error||message)&&<div className={'site-bottom-toast'+(error?' is-error':' is-success')} role={error?'alert':'status'} aria-live="polite">
-      <span>{error||message}</span>
-      <button type="button" aria-label="알림 닫기" onClick={()=>{setError('');setMessage('');}}>닫기</button>
-    </div>}
+    {(error||message)&&<TimedBottomToast
+      message={error||message} tone={error?'error':'success'}
+      onClose={()=>{setError('');setMessage('');}}
+    />}
   </>;
 }
