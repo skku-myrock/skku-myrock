@@ -14,7 +14,7 @@ test('temporary static gallery albums are removed and gallery is fetched from Fi
   assert.match(component,/listGalleryAlbums\(\)/);
   assert.match(component,/setAlbums\(items\)/);
   assert.match(component,/아직 등록된 갤러리 앨범이 없습니다/);
-  assert.match(api,/fetch\('\/api\/gallery\/albums'\)/);
+  assert.match(api,/fetch\('\/api\/gallery\/albums\?preview=first12'\)/);
   assert.match(backend,/FIRESTORE_ROOT\+'\/galleryAlbums'/);
 });
 test('gallery lightbox retains accessible navigation and responsive thumbnails',()=>{

@@ -30,6 +30,7 @@ import {listNoticesPage,getNotice,deleteNotice} from './noticesData';
 import type {NoticePost} from './noticesData';
 import NoticeComposer from './NoticeComposer';
 import {Home,About,News,NoticeDetail,Gallery,Equipment,Handover,LoginDialog,Profile,PageHeading,EmptyState} from './pages/SitePages';
+import LoadingText from './LoadingText';
 import {navGroups,allNav,routeDefinitions,routeFromPath,pathFor,noticePath,editNoticePath,schedulePath} from './app/siteNavigation';
 import type {Page,Navigate,Notify} from './app/siteNavigation';
 
@@ -318,13 +319,13 @@ function App() {
   const canHandover=canViewHandover(profile,hasSystemClaim);
   const activeFullNotice=noticeDetail?.id===activeNoticeId?noticeDetail:null;
   const pageViews:Record<Page,ReactNode>={
-    'home': <Home key={aboutRevision} navigate={navigate} openNotice={openNotice} notices={notices}/>,
+    'home': <Home key={aboutRevision} navigate={navigate} openNotice={openNotice} notices={notices} noticeLoading={noticeLoading}/>,
     'about': <About key={aboutRevision} navigate={navigate} canEdit={Boolean(user&&!authPending&&canManageDonations)}/>,
     'about-manage': (authPending?<section className="container section-block"><EmptyState title="권한 확인 중" description="로그인 상태를 확인하고 있습니다."/></section>:user&&canManageDonations?<AboutManagement onBack={()=>navigate('about')} registerLeaveGuard={registerEditorLeaveGuard} onSaved={message=>{navigate('about');setAboutSaveNotice(message??'변경 사항을 저장했습니다. 이미지 업로드까지 시간이 걸릴 수 있습니다.');}}/>:<section className="container section-block"><EmptyState icon={<LockKeyhole size={26}/>} title="접근 권한이 없습니다" description="동아리 소개 수정은 실무단 이상만 가능합니다."/></section>),
     'news': <News canWrite={Boolean(user && !authPending && currentLevel)} onWrite={() => navigate('notice-compose')} openNotice={openNotice} notices={notices} loading={noticeLoading} error={noticeError} hasMore={Boolean(noticeCursor)} moreLoading={noticeMoreLoading} onLoadMore={()=>void loadMoreNotices()}/>,
     'notice-compose': (authPending ? <section className="container section-block"><EmptyState title="권한 확인 중" description="로그인 상태를 확인하고 있습니다." /></section> : user && currentLevel ? <NoticeComposer onBack={() => navigate('news')} onSaved={savedNotice} registerLeaveGuard={registerEditorLeaveGuard}/> : <section className="container section-block"><EmptyState icon={<LockKeyhole size={26}/>} title="접근 권한이 없습니다" description="공지사항 글쓰기는 파트장 이상 운영진만 사용할 수 있습니다." /></section>),
     'notice-edit': (authPending||noticeDetailLoading||(!noticeDetailError&&!activeFullNotice)?<section className="container section-block"><EmptyState title="공지사항 확인 중" description="공지사항과 로그인 상태를 확인하고 있습니다."/></section>:user&&currentLevel&&activeFullNotice?<NoticeComposer key={activeNoticeId} initial={activeFullNotice} onBack={()=>activeNoticeId?openNotice(activeNoticeId):navigate('news')} onSaved={savedNotice} registerLeaveGuard={registerEditorLeaveGuard}/>:<section className="container section-block"><EmptyState title="접근 권한이 없습니다" description="공지사항 수정은 파트장 이상만 가능합니다."/></section>),
-    'notice-detail': (noticeDetailLoading||(!noticeDetailError&&!activeFullNotice)?<section className="container section-block"><p>공지사항을 불러오는 중입니다.</p></section>:noticeDetailError?<section className="container section-block"><EmptyState title="공지사항을 불러올 수 없습니다" description={noticeDetailError}/></section>:<NoticeDetail key={activeNoticeId} notice={activeFullNotice??undefined} canManage={Boolean(user&&!authPending&&currentLevel)} backToList={()=>navigate('news')} onEdit={()=>activeNoticeId&&editNotice(activeNoticeId)} onDelete={()=>{if(activeFullNotice)void removeNotice(activeFullNotice);}}/>),
+    'notice-detail': (noticeDetailLoading||(!noticeDetailError&&!activeFullNotice)?<section className="container section-block"><LoadingText>공지사항을 불러오는 중입니다</LoadingText></section>:noticeDetailError?<section className="container section-block"><EmptyState title="공지사항을 불러올 수 없습니다" description={noticeDetailError}/></section>:<NoticeDetail key={activeNoticeId} notice={activeFullNotice??undefined} canManage={Boolean(user&&!authPending&&currentLevel)} backToList={()=>navigate('news')} onEdit={()=>activeNoticeId&&editNotice(activeNoticeId)} onDelete={()=>{if(activeFullNotice)void removeNotice(activeFullNotice);}}/>),
     'schedule': <ScheduleLanding
         canCreateTeam={Boolean(user && !authPending && currentLevel)}
         loggedIn={Boolean(user && profile && !authPending)}

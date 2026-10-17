@@ -12,6 +12,8 @@ import {
 import logo from '../logo-transparent.png';
 import PasswordChange from '../PasswordChange';
 import PhotoGallery from '../PhotoGallery';
+import LoadingText from '../LoadingText';
+import ImageShimmer from '../ImageShimmer';
 import {DEFAULT_ABOUT,getAbout,peekAboutCache} from '../aboutContent';
 import type {AboutContent} from '../aboutContent';
 import type {NoticePost} from '../noticesData';
@@ -48,9 +50,9 @@ export function EmptyState({ icon, title, description }: { icon?: ReactNode; tit
   return <div className="empty-state">{icon && <span className="empty-icon">{icon}</span>}<strong>{title}</strong><p>{description}</p></div>;
 }
 
-export function Home({ navigate, openNotice, notices }: { navigate: Navigate; openNotice: (id: string) => void; notices: NoticePost[] }) {
+export function Home({ navigate, openNotice, notices, noticeLoading }: { navigate: Navigate; openNotice: (id: string) => void; notices: NoticePost[];noticeLoading:boolean }) {
   const [homeImage,setHomeImage]=useState<string|null>(()=>peekAboutCache()?.content.homeImage??null);
-  useEffect(()=>{let active=true;void getAbout().then(({content})=>{if(active)setHomeImage(content.homeImage??'');}).catch(()=>{});return()=>{active=false;};},[]);
+  useEffect(()=>{let active=true;void getAbout().then(({content})=>{if(active)setHomeImage(content.homeImage??'');}).catch(()=>{if(active)setHomeImage('');});return()=>{active=false;};},[]);
   return <>
     <section className="hero container">
       <div className="hero-copy">
@@ -59,12 +61,12 @@ export function Home({ navigate, openNotice, notices }: { navigate: Navigate; op
         <p>성균관대학교 중앙 밴드 동아리 모여락입니다.<br />우리의 음악과 이야기를 이곳에 담습니다.</p>
         <TextLink onClick={() => navigate('about')}>동아리 소개</TextLink>
       </div>
-      <div className="hero-media">{homeImage?<img className="home-hero-image" src={homeImage} alt="메인 페이지 사진" loading="eager" fetchPriority="high" decoding="async"/>:homeImage===null?<div className="home-hero-image image-pending" role="status" aria-label="메인 페이지 사진을 불러오는 중" />:<Placeholder label="메인 페이지 사진" />}</div>
+      <div className="hero-media">{homeImage?<ImageShimmer key={homeImage} className="home-hero-image" src={homeImage} alt="메인 페이지 사진" loading="eager" fetchPriority="high"/>:homeImage===null?<div className="home-hero-image image-pending image-shimmer-frame is-image-loading" role="status" aria-label="메인 페이지 사진을 불러오는 중"><span className="image-shimmer-band" aria-hidden="true"/></div>:<Placeholder label="메인 페이지 사진" />}</div>
     </section>
     <section className="container home-updates">
       <SectionHeading title="공지사항" aside="모여락의 새로운 소식" action="전체 보기" onAction={() => navigate('news')} />
       <div className="simple-notice-list">
-        {notices.slice(0, 3).map(post => <button type="button" className="simple-notice" key={post.id} onClick={() => openNotice(post.id)}>
+        {noticeLoading?<LoadingText>최근 공지를 불러오는 중입니다</LoadingText>:notices.slice(0, 3).map(post => <button type="button" className="simple-notice" key={post.id} onClick={() => openNotice(post.id)}>
           <span className="notice-category">{post.category}</span><span className="notice-title">{post.title}</span><span className="notice-date">{post.date}</span><ArrowUpRight size={16} aria-hidden="true" />
         </button>)}
       </div>
@@ -83,7 +85,7 @@ export function About({ navigate, canEdit }: { navigate: Navigate;canEdit:boolea
   useEffect(()=>{
     let active=true;
     void getAbout().then(data=>{if(active){setContent(data.content);setContentLoaded(true);}})
-      .catch(()=>{if(active)setLoadError('최신 소개 정보를 불러오지 못해 기본 소개 내용을 표시합니다.');});
+      .catch(()=>{if(active){setContentLoaded(true);setLoadError('최신 소개 정보를 불러오지 못해 기본 소개 내용을 표시합니다.');}});
     return()=>{active=false;};
   },[]);
   return <><PageHeading tag="ABOUT MYROCK" title="모여락 소개" description="함께 음악을 만들고 무대에 서는 사람들, 모여락을 소개합니다." />
@@ -92,13 +94,13 @@ export function About({ navigate, canEdit }: { navigate: Navigate;canEdit:boolea
       {loadError&&<p role="status" className="about-load-error">{loadError}</p>}
     </section>
     <section className="container about-intro section-block"><div className="about-description"><h2>음악을 좋아하는 사람들이<br />함께하는 공간</h2><p>보컬, 기타, 베이스, 드럼, 키보드. 서로 다른 소리로 모여 한 곡을 완성합니다. 이곳에는 동아리 소개와 활동 이야기가 정리될 예정입니다.</p><TextLink onClick={() => navigate('gallery')}>활동 사진 보러 가기</TextLink></div>
-      {content.heroImage?<img className="about-hero-image" src={content.heroImage} alt="동아리 소개 사진" loading="eager" fetchPriority="high" decoding="async"/>:contentLoaded?<Placeholder label="동아리 대표 사진"/>:<div className="about-hero-image image-pending" role="status" aria-label="동아리 소개 사진을 불러오는 중" />}
+      {content.heroImage?<ImageShimmer key={content.heroImage} className="about-hero-image" src={content.heroImage} alt="동아리 소개 사진" loading="eager" fetchPriority="high"/>:contentLoaded?<Placeholder label="동아리 대표 사진"/>:<div className="about-hero-image image-pending image-shimmer-frame is-image-loading" role="status" aria-label="동아리 소개 사진을 불러오는 중"><span className="image-shimmer-band" aria-hidden="true"/></div>}
     </section>
     <section className="container section-block" aria-label="28기 운영진 소개">
       <SectionHeading title="운영진" aside={content.cohortLabel} />
       <div className="leadership-grid">
         {content.officers.map(officer => <article className="leader-item" key={officer.id}>
-          {officer.photoUrl?<img className="leader-photo" src={officer.photoUrl} alt={officer.name+' 사진'} loading="lazy" fetchPriority="low" decoding="async"/>:contentLoaded?<Placeholder label="사진" className="leader-photo" />:<div className="leader-photo image-pending" role="status" aria-label="운영진 사진을 불러오는 중" />}
+          {officer.photoUrl?<ImageShimmer key={officer.photoUrl} className="leader-photo" src={officer.photoUrl} alt={officer.name+' 사진'} fetchPriority="low"/>:contentLoaded?<Placeholder label="사진" className="leader-photo" />:<div className="leader-photo image-pending image-shimmer-frame is-image-loading" role="status" aria-label="운영진 사진을 불러오는 중"><span className="image-shimmer-band" aria-hidden="true"/></div>}
           <div className="leader-description">
             <h3>{officer.name}</h3>
             <p>{officer.position}</p>
@@ -109,7 +111,7 @@ export function About({ navigate, canEdit }: { navigate: Navigate;canEdit:boolea
     <section className="container section-block">
       <SectionHeading title="연혁" aside="모여락의 활동 기록" />
       <div className="archive-timeline">
-        {content.history.map(item=><div key={item.id}><span>{item.year}</span><p>{item.description}</p></div>)}
+        {!contentLoaded?<LoadingText>연혁 정보를 불러오는 중입니다</LoadingText>:content.history.map(item=><div key={item.id}><span>{item.year}</span><p>{item.description}</p></div>)}
       </div>
     </section>
     <section className="container section-block about-social">
@@ -166,10 +168,10 @@ export function News({ canWrite, onWrite, openNotice, notices, loading, error, h
           <span className="notice-author-cell">{post.author}</span>
         </button>)}
         {error&&<p role="alert" className="form-error">{error}</p>}
-        {loading&&<p role="status">공지사항을 불러오는 중입니다.</p>}
+        {loading&&<LoadingText>공지사항 목록을 불러오는 중입니다</LoadingText>}
         {!loading&&filtered.length===0&&<EmptyState title="공지사항이 없습니다" description="등록된 공지사항이 없습니다." />}
       </div>
-      {hasMore&&<div className="list-bottom notice-list-bottom"><button type="button" className="outline-action" disabled={moreLoading} onClick={onLoadMore}>{moreLoading?"더 불러오는 중...":"공지사항 더 보기"}</button></div>}
+      {hasMore&&<div className="list-bottom notice-list-bottom"><button type="button" className={moreLoading?"outline-action is-fetching":"outline-action"} disabled={moreLoading} onClick={onLoadMore}>{moreLoading?"더 불러오는 중...":"공지사항 더 보기"}</button></div>}
     </section>
   </>;
 }
@@ -234,8 +236,8 @@ export function Equipment({items,canManage,onManage,loggedIn,onLogin,loading,err
     </div>
    </div>
    {error&&<p className="form-error" role="alert">{error}</p>}
-   {loading&&<p role="status">장비 목록을 불러오는 중입니다.</p>}
-   <div className="equipment-list">{items.map(g=><div className="equipment-row" key={g.id}>
+   {loading&&<LoadingText>장비 목록을 불러오는 중입니다.</LoadingText>}
+   <div className="equipment-list">{!loading&&items.map(g=><div className="equipment-row" key={g.id}>
     {g.imageUrl?<img className="equipment-photo" src={g.imageUrl} alt={g.name+" 장비 사진"} loading="lazy" decoding="async"/>:<Placeholder label="장비 사진" />}
     <div className="equipment-info"><h3>{g.name}</h3><p>{g.product}</p>
      <span className={"equipment-status equipment-status-"+equipmentStatusTone(g.status)}>{g.status}</span>
@@ -253,7 +255,7 @@ export function Equipment({items,canManage,onManage,loggedIn,onLogin,loading,err
    {!loading&&items.length===0&&<p className="equipment-manage-empty">등록된 장비가 없습니다.</p>}
    <section id="equipment-my-requests" className="equipment-my-requests">
     <h2 className="plain-h2">내 대여 내역</h2>
-    {!loggedIn?<p>대여 신청과 내역 조회는 로그인 후 이용할 수 있습니다.</p>:
+    {loading?<LoadingText className="is-compact">장비 목록을 불러오는 중입니다.</LoadingText>:!loggedIn?<p>대여 신청과 내역 조회는 로그인 후 이용할 수 있습니다.</p>:
      items.filter(item=>item.myPosition!==null||item.isBorrower).length===0?<p>대여 신청 또는 대여 중인 장비가 없습니다.</p>:
      <div>{items.filter(item=>item.myPosition!==null||item.isBorrower).map(item=>
       <p key={item.id}>{item.name} · {item.isBorrower?item.status:'승인 대기 '+item.myPosition+'순위'}</p>)}</div>}

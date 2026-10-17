@@ -1,3 +1,4 @@
+import LoadingText from './LoadingText';
 import {useCallback,useEffect,useState} from 'react';
 import {ArrowRight,ArrowUpRight,CalendarDays,Mail,Plus,Users,X} from 'lucide-react';
 import {listInvitations,listSchedules,respondInvitation} from './scheduleApi';
@@ -73,7 +74,7 @@ export function ScheduleLanding({canCreateTeam,loggedIn,authPending,onLogin,onCr
     </button>
    </div>
    {error&&<p className="schedule-side-warning" role="alert">{error}</p>}
-   {loading?<p>시간표를 불러오는 중입니다.</p>:!loggedIn?<p>로그인하면 시간표와 받은 초대를 확인할 수 있습니다.</p>:
+   {loading?<LoadingText>시간표를 불러오는 중입니다</LoadingText>:!loggedIn?<p>로그인하면 시간표와 받은 초대를 확인할 수 있습니다.</p>:
    schedules.length===0?<p className="schedule-draft-empty-roster">참여한 시간표가 없습니다.</p>:
    <div className="schedule-list" role="list">{schedules.map(schedule=><div className="schedule-list-item" role="listitem" key={schedule.id}>
     <div className="schedule-list-icon"><CalendarDays size={21} aria-hidden="true"/></div>

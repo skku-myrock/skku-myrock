@@ -1,3 +1,4 @@
+import LoadingText from './LoadingText';
 import {useEffect,useMemo,useRef,useState} from 'react';
 import type {PointerEvent as ReactPointerEvent} from 'react';
 import {AlertTriangle,ArrowLeft,Check,LogOut,Trash2,Users,X} from 'lucide-react';
@@ -201,7 +202,7 @@ export default function ScheduleRoom({id,onBack,registerLeaveGuard}:{
   <div className="page-heading container"><span className="eyebrow">SCHEDULE</span><h1>{schedule?.title??'합주 시간표'}</h1></div>
   <section className="container section-block schedule-detail schedule-draft-page">
    <button type="button" className="schedule-back-button" onClick={onBack}><ArrowLeft size={16}/> 내가 참여한 시간표 목록</button>
-   {loading?<p>시간표를 불러오는 중입니다.</p>:!schedule?<p role="alert">{error||'시간표를 찾을 수 없습니다.'}</p>:<>
+   {loading?<LoadingText>시간표를 불러오는 중입니다</LoadingText>:!schedule?<p role="alert">{error||'시간표를 찾을 수 없습니다.'}</p>:<>
     <div className="schedule-detail-heading"><div><h2>시간 조율 현황</h2></div>
      <div className="schedule-heading-actions">{schedule.createdBy===ownUid&&<button type="button" className="outline-action schedule-roster-edit-trigger"
       onClick={()=>setRosterOpen(true)}><Users size={16}/> 명단 수정</button>}
@@ -276,14 +277,14 @@ export default function ScheduleRoom({id,onBack,registerLeaveGuard}:{
     </div>
     <h3>현재 명단 ({people.length})</h3>
     <div className="schedule-roster-list">{people.map(p=><div key={p.uid}><span><Users size={15}/>{p.name}</span>
-     {p.uid!==ownUid&&<button type="button" disabled={inviteBusy} onClick={()=>void remove(p.uid,p.name)}><Trash2 size={15}/> 제외</button>}
+     {p.uid!==ownUid&&<button type="button" disabled={inviteBusy} className={inviteBusy?"is-fetching":undefined} onClick={()=>void remove(p.uid,p.name)}><Trash2 size={15}/> 제외</button>}
     </div>)}</div>
     <form className="schedule-roster-search-form" onSubmit={e=>{e.preventDefault();void invite();}}>
      <label htmlFor="schedule-invite-id">학번으로 초대</label>
      <div><input id="schedule-invite-id" type="text" inputMode="numeric" maxLength={10}
       pattern="[0-9]{10}" value={studentId} onChange={e=>{setStudentId(e.target.value);setInviteFeedback('');}}
       placeholder="학번을 입력하세요"/>
-      <button type="submit" className="button button-primary" disabled={inviteBusy||!/^[0-9]{10}$/.test(studentId)}>초대하기</button></div>
+      <button type="submit" className={inviteBusy?"button button-primary is-fetching":"button button-primary"} disabled={inviteBusy||!/^[0-9]{10}$/.test(studentId)}>초대하기</button></div>
      {inviteFeedback&&<p className="schedule-roster-invalid-id" role="status">{inviteFeedback}</p>}
     </form>
     <section className="schedule-roster-pending" aria-label="초대 대기 명단">

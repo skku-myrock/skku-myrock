@@ -1,3 +1,4 @@
+import LoadingText from './LoadingText';
 import { useEffect, useRef, useState } from 'react';
 import type { ChangeEvent, FormEvent } from 'react';
 import { ArrowRight, Check, Download, FileSpreadsheet, KeyRound, Plus, RefreshCw, Search, Trash2, Upload, Users } from 'lucide-react';
@@ -280,12 +281,12 @@ export default function MemberManager({ currentUid, level, notify }: { currentUi
               </form>}
             </div>)}
             {!loading && filtered.length === 0 && <div className="member-empty"><Users size={19}/> {members.length ? '현재 불러온 명단에서 검색 결과가 없습니다.' : '등록된 부원이 없습니다.'}</div>}
-            {loading && <div className="member-empty">회원 정보를 불러오는 중입니다...</div>}
+            {loading && members.length===0 && <LoadingText>부원 명단을 불러오는 중입니다.</LoadingText>}
           </div>
           {cursor && <>
             <div ref={loadSentinelRef} className="member-scroll-sentinel" aria-hidden="true" />
-            {loading && <p className="member-scroll-status" role="status">다음 부원 명단을 불러오는 중입니다...</p>}
-            {loadError && <button type="button" className="outline-action member-loadmore" disabled={loading} onClick={() => void loadMore()}>불러오기 다시 시도 <RefreshCw size={15}/></button>}
+            {loading && <p className="member-scroll-status is-fetching" role="status">다음 부원 명단을 불러오는 중입니다...</p>}
+            {loadError && <button type="button" className={loading?"outline-action member-loadmore is-fetching":"outline-action member-loadmore"} disabled={loading} onClick={() => void loadMore()}>불러오기 다시 시도 <RefreshCw size={15}/></button>}
             <p className="form-hint">스크롤을 내리면 다음 명단이 자동으로 표시됩니다. 검색은 현재 불러온 명단에 적용됩니다.</p>
           </>}
           <p className="form-hint">시스템 관리자 계정은 보호되며, 본인의 권한 변경·계정 삭제·비밀번호 초기화도 제한됩니다.</p>

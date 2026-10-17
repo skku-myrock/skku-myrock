@@ -102,7 +102,7 @@ test('gallery warning precedes inputs and add-photo tile joins the image grid',a
   assert.match(dialog,/\{photos\.length === 0 && dropZone\}/);
   assert.match(dialog,/\{dropZone\}\s*<\/div>/);
   assert.match(css,/gallery-upload-dropzone\.is-compact/);
-  assert.match(pages,/homeImage===null\?<div className="home-hero-image image-pending"/);
+  assert.match(pages,/homeImage===null\?<div className="home-hero-image image-pending image-shimmer-frame is-image-loading"/);
   assert.match(pages,/contentLoaded\?<Placeholder label="동아리 대표 사진"/);
   assert.match(pages,/fetchPriority="high"/);
   assert.match(pages,/fetchPriority="low"/);

@@ -16,6 +16,6 @@ test('profile session text and password change guidance match the requested copy
 test('notice count is removed while load-more stays conditional and right-aligned',async()=>{
  const [pages,css]=await Promise.all([read('src/pages/SitePages.tsx'),read('src/styles/notices.css')]);
  assert.doesNotMatch(pages,/불러온 공지사항 \{filtered\.length\}건/);
- assert.match(pages,/\{hasMore&&<div className="list-bottom notice-list-bottom"><button type="button" className="outline-action" disabled=\{moreLoading\} onClick=\{onLoadMore\}>/);
+ assert.match(pages,/\{hasMore&&<div className="list-bottom notice-list-bottom"><button type="button" className=\{moreLoading\?"outline-action is-fetching":"outline-action"\} disabled=\{moreLoading\} onClick=\{onLoadMore\}>/);
  assert.match(css,/\.notice-list-bottom \{ justify-content: flex-end; \}/);
 });
