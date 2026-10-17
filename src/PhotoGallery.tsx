@@ -3,9 +3,12 @@ import type { KeyboardEvent as ReactKeyboardEvent, MouseEvent as ReactMouseEvent
 import { ArrowLeft, ArrowRight, ArrowUpRight, Image as ImageIcon, MoreHorizontal, Plus, Trash2, Pencil, X } from 'lucide-react';
 import {listGalleryAlbums,deleteGalleryAlbum} from './galleryApi';
 import GalleryUploadDialog from './GalleryUploadDialog';
+import LoadingText from './LoadingText';
 import type { PhotoAlbum, PhotoCategory } from './galleryData';
 
 const categories = ['전체', '공연', '행사', '일상'] as const;
+const PAGE_SIZE=12;
+const DEMO_PAGE_COUNT=23;
 type Filter = '전체' | PhotoCategory;
 type PhotoKind = 'cover' | 'large' | 'thumb';
 
@@ -32,6 +35,7 @@ export default function PhotoGallery({ canRegister }: { canRegister: boolean }) 
   const [loadError,setLoadError]=useState('');
   const [message,setMessage]=useState('');
   const [filter, setFilter] = useState<Filter>('전체');
+  const [previewPage,setPreviewPage]=useState(1);
   const [activeAlbum, setActiveAlbum] = useState<PhotoAlbum | null>(null);
   const [photoIndex, setPhotoIndex] = useState(0);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -53,6 +57,10 @@ export default function PhotoGallery({ canRegister }: { canRegister: boolean }) 
     return ()=>{alive=false;};
   },[]);
   const filtered = filter === '전체' ? albums : albums.filter(album => album.category === filter);
+  const shown=previewPage===1?filtered.slice(0,PAGE_SIZE):[];
+  const placeholders=Array.from({length:PAGE_SIZE-shown.length},(_,index)=>index);
+  const windowStart=Math.max(1,Math.min(previewPage-2,DEMO_PAGE_COUNT-4));
+  const displayedPages=Array.from({length:5},(_,i)=>windowStart+i);
   const count = activeAlbum?.photos.length ?? 0;
 
   function openAlbum(album: PhotoAlbum, event: ReactMouseEvent<HTMLButtonElement>) {
@@ -85,6 +93,7 @@ export default function PhotoGallery({ canRegister }: { canRegister: boolean }) 
   }
   function onAlbumUpdated(updated:PhotoAlbum,cleanupPending:boolean){
     setAlbums(previous=>previous.map(album=>album.id===updated.id?updated:album));
+    setPreviewPage(1);
     setActiveAlbum(updated);
     setPhotoIndex(index=>Math.min(index,updated.photos.length-1));
     setMessage(cleanupPending?'변경 사항을 저장했지만 이전 이미지 정리가 지연되었습니다.':'앨범 변경 사항을 저장했습니다. 이미지 업로드까지 시간이 걸릴 수 있습니다.');
@@ -189,7 +198,7 @@ export default function PhotoGallery({ canRegister }: { canRegister: boolean }) 
         {categories.map(category => <button type="button" key={category}
           aria-pressed={filter === category}
           className={filter === category ? 'active' : ''}
-          onClick={() => setFilter(category)}>{category}</button>)}
+          onClick={() => {setFilter(category);setPreviewPage(1);}}>{category}</button>)}
       </div>
       {canRegister && <button type="button" className="admin-only-action" onClick={() => setUploadOpen(true)}>
         <Plus size={16} aria-hidden="true" /> 사진 등록
@@ -197,10 +206,10 @@ export default function PhotoGallery({ canRegister }: { canRegister: boolean }) 
     </div>
 
     {loadError && <p className="gallery-load-error" role="alert">{loadError} <button type="button" onClick={()=>void reload()}>다시 시도</button></p>}
-    {loading && <p className="gallery-empty-state" role="status">갤러리를 불러오는 중입니다.</p>}
-    {!loading&&!loadError&&filtered.length===0&&<p className="gallery-empty-state">{albums.length===0?'아직 등록된 갤러리 앨범이 없습니다.':'이 분류에 등록된 앨범이 없습니다.'}</p>}
+    {loading && <LoadingText className="gallery-empty-state">갤러리를 불러오는 중입니다.</LoadingText>}
+    {!loading&&!loadError&&filtered.length===0&&previewPage===1&&<p className="gallery-empty-state">{albums.length===0?'아직 등록된 갤러리 앨범이 없습니다.':'이 분류에 등록된 앨범이 없습니다.'}</p>}
     <div className="gallery-album-grid">
-      {filtered.map(album => <button type="button" key={album.id}
+      {!loading&&!loadError&&shown.map(album => <button type="button" key={album.id}
         className="gallery-album-card"
         onClick={event => openAlbum(album, event)}
         aria-label={album.title + ', 사진 ' + album.photos.length + '장 전체보기'}>
@@ -213,10 +222,22 @@ export default function PhotoGallery({ canRegister }: { canRegister: boolean }) 
           <span className="gallery-album-action">{album.category} <span aria-hidden="true">·</span> 전체보기 <ArrowUpRight size={15} aria-hidden="true" /></span>
         </div>
       </button>)}
+      {!loading&&!loadError&&placeholders.map(index=><div className="gallery-album-card gallery-album-placeholder" aria-hidden="true" key={'empty-'+previewPage+'-'+index}>
+       <span>빈 갤러리</span>
+      </div>)}
     </div>
+    {!loading&&!loadError&&<nav className="gallery-pagebar" aria-label="갤러리 페이지 탐색 (미리보기)">
+     <button type="button" disabled={previewPage===1} onClick={()=>setPreviewPage(page=>Math.max(1,page-1))} aria-label="이전 페이지">‹</button>
+     {windowStart>1&&<><button type="button" onClick={()=>setPreviewPage(1)} aria-label="1페이지">1</button>{windowStart>2&&<span className="gallery-pagebar-ellipsis">…</span>}</>}
+     {displayedPages.map(page=><button key={page} type="button" aria-label={page+'페이지'} aria-current={previewPage===page?'page':undefined} onClick={()=>setPreviewPage(page)}>{page}</button>)}
+     {windowStart+4<DEMO_PAGE_COUNT&&<>{windowStart+4<DEMO_PAGE_COUNT-1&&<span className="gallery-pagebar-ellipsis">…</span>}<button type="button" onClick={()=>setPreviewPage(DEMO_PAGE_COUNT)} aria-label={DEMO_PAGE_COUNT+'페이지'}>{DEMO_PAGE_COUNT}</button></>}
+     <button type="button" disabled={previewPage===DEMO_PAGE_COUNT} onClick={()=>setPreviewPage(page=>Math.min(DEMO_PAGE_COUNT,page+1))} aria-label="다음 페이지">›</button>
+    </nav>}
+    {!loading&&!loadError&&<p className="gallery-pagination-preview-note">페이지 이동은 UI 미리보기입니다. 2~23페이지의 실제 앨범 조회는 아직 연결되지 않았습니다.</p>}
 
     {canRegister && uploadOpen && <GalleryUploadDialog onClose={() => setUploadOpen(false)} onCreated={album=>{
       setAlbums(previous=>[album,...previous]);
+      setPreviewPage(1);
       setUploadOpen(false);
       setMessage('갤러리 앨범을 등록했습니다. 이미지 업로드까지 시간이 걸릴 수 있습니다.');
     }} />}
