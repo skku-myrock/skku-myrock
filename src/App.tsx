@@ -22,6 +22,7 @@ import {DonationHistory,ExpenseHistory,FinanceLanding} from './FinancePages';
 import ExpenseManagement from './ExpenseManagement';
 import DonationManagement from './DonationManagement';
 import AboutManagement from './AboutManagement';
+import TimedBottomToast from './TimedBottomToast';
 import {purgeDonations} from './donationApi';
 import {purgeNotices,resetClubIntroduction,resetSiteAssets,purgeGallery} from './adminResets';
 import {invalidateAboutCache} from './aboutContent';
@@ -87,6 +88,7 @@ function App() {
   const [loginOpen,setLoginOpen] = useState(false);
   const [toast,setToast] = useState('');
   const [aboutSaveNotice,setAboutSaveNotice]=useState('');
+  const [loginNotice,setLoginNotice]=useState('');
   const leaveGuardRef=useRef<(()=>boolean)|null>(null);
   const registerEditorLeaveGuard=useCallback((guard:(()=>boolean)|null)=>{leaveGuardRef.current=guard;},[]);
   const canLeaveEditor=()=>leaveGuardRef.current?.()??true;
@@ -417,8 +419,9 @@ function App() {
         <p className="form-hint">완료될 때까지 창을 새로고침하거나 닫지 마세요.</p>
       </div>
     </div>}
-    {loginOpen&&<LoginDialog close={()=>setLoginOpen(false)} notify={notify}/>}
-    {aboutSaveNotice&&<div className="site-bottom-toast is-success" role="status" aria-live="polite"><span>{aboutSaveNotice}</span><button type="button" aria-label="알림 닫기" onClick={()=>setAboutSaveNotice('')}>닫기</button></div>}
+    {loginOpen&&<LoginDialog close={()=>setLoginOpen(false)} notify={message=>setLoginNotice(message??'')}/>}
+    {aboutSaveNotice&&<TimedBottomToast message={aboutSaveNotice} onClose={()=>setAboutSaveNotice('')}/>}
+    {loginNotice&&<TimedBottomToast message={loginNotice} onClose={()=>setLoginNotice('')}/>}
     {toast&&<div className="toast" role="status"><CircleHelp size={17}/><span>{toast}</span><button type="button" aria-label="알림 닫기" onClick={()=>setToast('')}><X size={15}/></button></div>}
   </div>;
 }

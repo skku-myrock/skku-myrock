@@ -22,7 +22,7 @@ test('both editors have dirty-state guarded navigation and preserve saved exits'
   assert.doesNotMatch(app,/window\.history\.pushState/);
   assert.match(app,/registerLeaveGuard=\{registerEditorLeaveGuard\}/);
   assert.match(app,/setAboutSaveNotice\(message\?\?'변경 사항을 저장했습니다/);
-  assert.match(app,/site-bottom-toast is-success/);
+  assert.match(app,/aboutSaveNotice&&<TimedBottomToast message=\{aboutSaveNotice\}/);
 });
 test('exact introduction/photo notices and no GitHub draft implementation detail',async()=>{
   const [about,composer]=await Promise.all([src('src/AboutManagement.tsx'),src('src/NoticeComposer.tsx')]);

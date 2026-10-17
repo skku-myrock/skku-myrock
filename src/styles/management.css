@@ -321,3 +321,25 @@ body:has([data-async-busy="true"]),body:has([data-async-busy="true"]) *{
 
 /* Placeholder keeps the portrait frame but centers its caption in both layouts. */
 .leader-item .leader-photo.placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center}
+
+/* Timed bottom notice variant: only login and introduction editor use this. */
+.site-bottom-toast.is-timed>button{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:28px;height:28px;min-width:28px;padding:0;
+  color:inherit;background:transparent;border:0;border-radius:0;
+}
+.site-bottom-toast.is-timed>button:hover{opacity:.65}
+.site-bottom-toast.is-timed>button:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+.site-bottom-toast.is-timed{animation:myrock-toast-arrive .22s ease-out both}
+.site-bottom-toast.is-timed.is-leaving{animation:myrock-toast-depart .25s ease-in both}
+@keyframes myrock-toast-arrive{
+  from{opacity:0;transform:translate(-50%,18px)}
+  to{opacity:1;transform:translate(-50%,0)}
+}
+@keyframes myrock-toast-depart{
+  from{opacity:1;transform:translate(-50%,0)}
+  to{opacity:0;transform:translate(-50%,calc(100% + 40px))}
+}
+@media(prefers-reduced-motion:reduce){
+  .site-bottom-toast.is-timed,.site-bottom-toast.is-timed.is-leaving{animation:none}
+}
