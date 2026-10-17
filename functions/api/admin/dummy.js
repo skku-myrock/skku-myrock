@@ -5,6 +5,7 @@ import {validateNotice} from '../../_lib/notices.js';
 import {normalizeDonation,donationFields} from '../../_lib/donations.js';
 import {normalizeTransaction} from '../../_lib/financeTransactions.js';
 import {listGalleryAlbums,validateGalleryAlbum} from '../../_lib/gallery.js';
+import {getDummyGalleryFixtures,ensureDummyGalleryFixtures} from '../../_lib/githubImages.js';
 
 export const DUMMY_CONFIRMATION='더미 데이터 생성';
 export const DUMMY_COUNTS={notices:100,donations:100,expenses:100,gallery:150};
@@ -64,8 +65,12 @@ export async function onRequestPost({request,env}){
   const end=Math.min(start+BATCH,DUMMY_COUNTS[stage]);
   let photos=null;
   if(stage==='gallery'){
-   const source=selectFixtureAlbum(await listGalleryAlbums(env));
-   photos=validateGalleryAlbum({category:source.category,title:source.title,photos:source.photos},env.MYROCK_IMAGES_PUBLIC_BASE_URL).photos;
+   photos=await getDummyGalleryFixtures(env);
+   if(!photos.length){
+    const source=selectFixtureAlbum(await listGalleryAlbums(env));
+    const original=validateGalleryAlbum({category:source.category,title:source.title,photos:source.photos},env.MYROCK_IMAGES_PUBLIC_BASE_URL).photos;
+    photos=await ensureDummyGalleryFixtures(env,original);
+   }
   }
   const writes=[];
   for(let index=start;index<end;index++){
