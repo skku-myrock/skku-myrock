@@ -1,0 +1,11 @@
+/* Every disabled button has one neutral visual state, regardless of page or variant. */
+button:disabled,button[aria-disabled="true"]{
+ background-color:#e4e9e5!important;border-color:#dbe1dc!important;
+ color:#929d95!important;opacity:1!important;filter:none!important;
+ box-shadow:none!important;cursor:default!important;
+}
+button:disabled *,button[aria-disabled="true"] *{color:inherit!important}
+body:has([data-async-busy="true"]) button,
+body:has([data-async-busy="true"]) button *,
+button.is-fetching,button.is-fetching *,
+button.is-fetching:disabled{cursor:wait!important}
