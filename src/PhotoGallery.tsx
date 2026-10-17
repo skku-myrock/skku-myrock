@@ -1,3 +1,4 @@
+import {useToastSignals} from './useToastSignals';
 import { useEffect, useRef, useState } from 'react';
 import type { KeyboardEvent as ReactKeyboardEvent, MouseEvent as ReactMouseEvent, TouchEvent as ReactTouchEvent } from 'react';
 import { ArrowLeft, ArrowRight, ArrowUpRight, Image as ImageIcon, MoreHorizontal, Plus, Trash2, Pencil, X } from 'lucide-react';
@@ -34,6 +35,7 @@ export default function PhotoGallery({ canRegister }: { canRegister: boolean }) 
   const [loading,setLoading]=useState(true);
   const [loadError,setLoadError]=useState('');
   const [message,setMessage]=useState('');
+  useToastSignals({error:manageError,message});
   const [filter, setFilter] = useState<Filter>('전체');
   const [previewPage,setPreviewPage]=useState(1);
   const [totalPages,setTotalPages]=useState(1);
@@ -255,7 +257,7 @@ export default function PhotoGallery({ canRegister }: { canRegister: boolean }) 
 
     {canRegister&&editingAlbum&&<GalleryUploadDialog initialAlbum={editingAlbum}
       onClose={closeEditor} onUpdated={onAlbumUpdated}/>}
-    {message&&<div className="site-bottom-toast is-success" role="status" aria-live="polite"><span>{message}</span><button type="button" aria-label="알림 닫기" onClick={()=>setMessage('')}>닫기</button></div>}
+    
     {activeAlbum && <div className="gallery-lightbox-backdrop" onMouseDown={event => {
       if (event.target === event.currentTarget) closeAlbum();
     }}>
@@ -283,7 +285,7 @@ export default function PhotoGallery({ canRegister }: { canRegister: boolean }) 
           </div>
         </header>
 
-        {manageError&&<p className="gallery-manage-error" role="alert">{manageError}</p>}
+        
         <div className="gallery-lightbox-layout">
           <div className="gallery-lightbox-left">
             <div className="gallery-photo-stage"
