@@ -117,15 +117,34 @@ export async function deleteGalleryAlbum(env,id,expectedTime){
   return {deleted:true};
 }
 
-/** Preview page: fetch just the 12 newest album metadata documents. */
-export async function listGalleryFirstPage(env){
- const query={structuredQuery:{
-  from:[{collectionId:'galleryAlbums'}],
-  orderBy:[{field:{fieldPath:'createdAt'},direction:'DESCENDING'}],
-  limit:12,
+/** Server-side bounded Firestore pagination; newest first with document-ID tie breaking. */
+export async function listGalleryPage(env,{page=1,category='전체'}={}){
+ if(!Number.isSafeInteger(page)||page<1||page>100000)reject('갤러리 페이지 번호가 올바르지 않습니다.');
+ if(category!=='전체'&&!categories.has(category))reject('갤러리 구분이 올바르지 않습니다.');
+ const where=category==='전체'?undefined:{fieldFilter:{field:{fieldPath:'category'},op:'EQUAL',value:{stringValue:category}}};
+ const from=[{collectionId:'galleryAlbums'}];
+ const orderBy=[
+  {field:{fieldPath:'createdAt'},direction:'DESCENDING'},
+  {field:{fieldPath:'__name__'},direction:'DESCENDING'},
+ ];
+ const countQuery={structuredAggregationQuery:{
+  structuredQuery:{from,...(where?{where}:{})},
+  aggregations:[{alias:'albumCount',count:{}}],
  }};
- const response=await googleRequest(env,FIRESTORE_ROOT+':runQuery',{method:'POST',body:query});
- if(!response.ok)throw Error('갤러리 첫 페이지 조회 실패 '+response.status);
- return (Array.isArray(response.data)?response.data:[])
-  .filter(row=>row.document).map(row=>galleryFromDoc(row.document)).slice(0,12);
+ const counted=await googleRequest(env,FIRESTORE_ROOT+':runAggregationQuery',{method:'POST',body:countQuery});
+ if(!counted.ok)throw Error('갤러리 앨범 수를 조회하지 못했습니다. '+counted.status);
+ const rows=Array.isArray(counted.data)?counted.data:[];
+ const total=Number(rows.find(row=>row.result?.aggregateFields?.albumCount)?.result.aggregateFields.albumCount.integerValue??0);
+ if(!Number.isSafeInteger(total)||total<0)throw Error('앨범 수 응답이 올바르지 않습니다.');
+ const pageSize=12,totalPages=Math.max(1,Math.ceil(total/pageSize));
+ if(page>totalPages)reject('존재하지 않는 갤러리 페이지입니다.',404);
+ if(!total)return {albums:[],page,total,totalPages,pageSize};
+ const query={structuredQuery:{
+  from,...(where?{where}:{}),orderBy,offset:(page-1)*pageSize,limit:pageSize,
+ }};
+ const result=await googleRequest(env,FIRESTORE_ROOT+':runQuery',{method:'POST',body:query});
+ if(!result.ok)throw Error('갤러리 목록 조회 실패 '+result.status);
+ const records=Array.isArray(result.data)?result.data:[];
+ const albums=records.filter(row=>row.document).map(row=>galleryFromDoc(row.document));
+ return {albums,page,total,totalPages,pageSize};
 }
