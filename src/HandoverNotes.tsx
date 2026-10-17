@@ -43,6 +43,7 @@ export default function HandoverNotesEditor({onBack}:{onBack:()=>void}){
   positions:[],name:'',generation:'',
  });
  const [error,setError]=useState('');
+ useToastSignals({error});
  const [ready,setReady]=useState(false);
  const [initialNotes,setInitialNotes]=useState<Record<string,HandoverNote>>({});
  useEffect(()=>{
@@ -172,7 +173,7 @@ export function HandoverNotesView({onBack}:{onBack:()=>void}){
     </div>
     <div className="handover-preview-notes">
      {noteLoading?<LoadingText className="is-compact">인수인계 내용을 불러오는 중입니다.</LoadingText>:
-      noteError?<p className="form-error" role="alert">{noteError}</p>:
+      noteError?<LoadingText className="is-compact">해당 인수인계 문서를 열 수 없습니다.</LoadingText>:
       notes.length===0?<p className="handover-archive-notice">현재 확인할 수 있는 인수인계 내용이 없습니다.</p>:
       notes.map(note=><section className="handover-preview-note" key={note.title}>
        <h3>{note.title}</h3><p>{note.content}</p>
