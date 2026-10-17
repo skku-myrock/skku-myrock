@@ -1,3 +1,4 @@
+import {useToastFeedback} from './toast';
 import LoadingText from './LoadingText';
 import {useEffect,useMemo,useRef,useState} from 'react';
 import type {PointerEvent as ReactPointerEvent} from 'react';
@@ -33,6 +34,9 @@ export default function ScheduleRoom({id,onBack,registerLeaveGuard}:{
  const [leaving,setLeaving]=useState(false);
  const [inviteFeedback,setInviteFeedback]=useState('');
  const [notice,setNotice]=useState(''),[selectedCell,setSelectedCell]=useState<Cell|null>(null);
+ useToastFeedback(notice,notice==='존재하지 않는 학번입니다.'?'warning':'success');
+ useToastFeedback(error,'error');
+ useToastFeedback(inviteFeedback,'warning');
  const stroke=useRef<Stroke|null>(null);
  async function refresh(){
   setLoading(true);setError('');
@@ -265,7 +269,7 @@ export default function ScheduleRoom({id,onBack,registerLeaveGuard}:{
      <button type="button" className="button button-primary" disabled={!dirty||saving} onClick={()=>void save()}>
       {saving?'저장 중…':'저장하기'}</button>
     </div>
-    {error&&<p role="alert" className="schedule-side-warning">{error}</p>}
+
    </>}
   </section>
   {rosterOpen&&schedule&&<div className="schedule-roster-backdrop" role="presentation"
@@ -304,9 +308,6 @@ export default function ScheduleRoom({id,onBack,registerLeaveGuard}:{
      <button type="button" className="outline-action" onClick={()=>setRosterOpen(false)}>닫기</button>
     </div>
    </div>
-  </div>}
-  {notice&&<div className={"toast schedule-invite-toast"+(notice==="존재하지 않는 학번입니다."?" schedule-invite-warning":"")} role={notice==="존재하지 않는 학번입니다."?"alert":"status"} aria-live={notice==="존재하지 않는 학번입니다."?"assertive":"polite"}>
-   {notice==="존재하지 않는 학번입니다."?<AlertTriangle size={17}/>:<Check size={17}/>}<span>{notice}</span><button type="button" aria-label="알림 닫기" onClick={()=>setNotice('')}><X size={15}/></button>
   </div>}
  </>;
 }
