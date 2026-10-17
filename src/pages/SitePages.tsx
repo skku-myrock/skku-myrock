@@ -100,7 +100,7 @@ export function About({ navigate, canEdit }: { navigate: Navigate;canEdit:boolea
       <SectionHeading title="운영진" aside={content.cohortLabel} />
       <div className="leadership-grid">
         {content.officers.map(officer => <article className="leader-item" key={officer.id}>
-          {officer.photoUrl?<ImageShimmer key={officer.photoUrl} className="leader-photo" src={officer.photoUrl} alt={officer.name+' 사진'}/>:contentLoaded?<Placeholder label="사진" className="leader-photo" />:<div className="leader-photo image-pending image-shimmer-frame is-image-loading" role="status" aria-label="운영진 사진을 불러오는 중"><span className="image-shimmer-band" aria-hidden="true"/></div>}
+          {officer.photoUrl?<ImageShimmer key={officer.photoUrl} className="leader-photo" src={officer.photoUrl} alt={officer.name+' 사진'} fetchPriority="low"/>:contentLoaded?<Placeholder label="사진" className="leader-photo" />:<div className="leader-photo image-pending image-shimmer-frame is-image-loading" role="status" aria-label="운영진 사진을 불러오는 중"><span className="image-shimmer-band" aria-hidden="true"/></div>}
           <div className="leader-description">
             <h3>{officer.name}</h3>
             <p>{officer.position}</p>
