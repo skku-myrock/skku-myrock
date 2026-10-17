@@ -7,7 +7,7 @@ import {auth,db,accountEmail} from '../firebase';
 import type {MemberProfile,Session} from '../firebase';
 import {
   ArrowRight,ArrowUpRight,CalendarDays,Check,ChevronDown,CircleHelp,ClipboardList,
-  ExternalLink,FileText,Instagram,Plus,Search,Users,X,UserRound,
+  ExternalLink,FileText,Instagram,Pencil,Plus,Search,Trash2,Users,X,UserRound,
 } from 'lucide-react';
 import logo from '../logo-transparent.png';
 import PasswordChange from '../PasswordChange';
@@ -198,7 +198,7 @@ export function NoticeDetail({ notice, canManage, backToList, onEdit, onDelete }
           <div className="notice-detail-byline"><time dateTime={notice.publishedAt}>{notice.date}</time>
             <span>작성자 {notice.author}</span>
           </div>
-          {canManage&&<div className="notice-manage-actions"><button type="button" className="outline-action" aria-expanded={manageOpen} onClick={()=>setManageOpen(x=>!x)}>관리 <ChevronDown size={15}/></button>{manageOpen&&<div className="notice-manage-menu"><button type="button" onClick={onEdit}>수정하기</button><button type="button" onClick={onDelete}>삭제하기</button></div>}</div>}
+          {canManage&&<div className="notice-manage-actions"><button type="button" className="outline-action content-manage-trigger" aria-expanded={manageOpen} aria-haspopup="true" onClick={()=>setManageOpen(x=>!x)}>관리 <ChevronDown size={15} aria-hidden="true"/></button>{manageOpen&&<div className="content-manage-menu notice-manage-menu" role="group" aria-label="공지사항 관리"><button type="button" onClick={onEdit}><Pencil size={15} aria-hidden="true"/> 수정하기</button><button type="button" className="content-manage-delete" onClick={onDelete}><Trash2 size={15} aria-hidden="true"/> 삭제하기</button></div>}</div>}
         </div>
       </header>
       <div className="notice-detail-content">
