@@ -4,6 +4,7 @@ import {PageHeading} from './pages/SitePages';
 import {getHandoverNote,getHandoverPositions,saveHandoverNote,getHandoverArchive} from './handoverNotesApi';
 import type {HandoverArchiveEntry,HandoverNote} from './handoverNotesApi';
 import LoadingText from './LoadingText';
+import {useToastSignals} from './useToastSignals';
 
 type Kind='role'|'common';
 function NoteEditor({kind,position,title,description,initial}:{kind:Kind;position:string;title:string;description:string;initial:HandoverNote}){
@@ -13,6 +14,7 @@ function NoteEditor({kind,position,title,description,initial}:{kind:Kind;positio
  const [saving,setSaving]=useState(false);
  const [message,setMessage]=useState('');
  const [error,setError]=useState('');
+ useToastSignals({error,message});
  const loading=false;
  const dirty=text!==original;
  async function save(){
@@ -69,7 +71,7 @@ export default function HandoverNotesEditor({onBack}:{onBack:()=>void}){
   </div>
   <section className="container section-block handover-editor-page">
    <button type="button" className="schedule-back-button" onClick={onBack}><ArrowLeft size={16}/> 인수인계로 돌아가기</button>
-   {error&&<p className="form-error" role="alert">{error}</p>}
+
    {!ready?<LoadingText>작성 권한을 확인하는 중입니다</LoadingText>:!error&&<>
     {positions.length===0&&<p className="handover-editor-help">등록된 직책이 없습니다. 운영진에게 직책 정보를 확인해 주세요.</p>}
     {positions.map(position=><NoteEditor key={'role-'+position} kind="role" position={position}
