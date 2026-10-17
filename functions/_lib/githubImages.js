@@ -147,7 +147,17 @@ export async function deleteUnusedEquipmentImages(env,obsoleteUrls){
  }
  if(!candidates.size)return {deleted:0};
  const items=await listEquipment(env);
- const referenced=new Set(items.map(item=>item.imageUrl).filter(Boolean));
+ const about=await getAbout(env);
+ const galleries=await listGalleryAlbums(env);
+ const notices=await listNotices(env);
+ if(notices.length>=1000)throw Error('공지사항 참조 검사가 제한에 도달해 장비 사진 정리를 연기했습니다.');
+ const referenced=new Set([
+  ...items.map(item=>item.imageUrl),
+  about.content.homeImage,about.content.heroImage,...about.content.officers.map(person=>person.photoUrl),
+  ...galleries.flatMap(album=>album.photos),
+  ...notices.flatMap(notice=>(notice.blocks??[]).flatMap(block=>
+   block.kind==='image'?[block.url]:block.kind==='gallery'?(block.images??[]).map(photo=>photo.url):[])),
+ ].filter(Boolean));
  for(const [path,url] of candidates)if(referenced.has(url))candidates.delete(path);
  if(!candidates.size)return {deleted:0};
  for(let attempt=0;attempt<3;attempt++){
