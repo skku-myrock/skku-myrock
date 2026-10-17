@@ -191,10 +191,8 @@ test('anonymous roster save reports errors and success in a fixed bottom popup',
   assert.match(persist,/setPeopleError\(reason instanceof Error/);
   assert.doesNotMatch(persist,/setError\(|setMessage\(/);
   const footer=manager.slice(manager.indexOf('<div className="finance-manager-people-save">'));
-  assert.match(footer,/익명자 명단 저장<\/button>/);
-  assert.match(footer,/site-bottom-toast/);
-  assert.match(footer,/role=\{peopleError\?'alert':'status'\}/);
-  assert.match(footer,/onClick=\{\(\)=>\{setPeopleError\(''\);setPeopleMessage\(''\);\}\}/);
+   assert.match(manager,/useToastFeedback\(peopleError,'error'\)/);
+   assert.match(manager,/useToastFeedback\(peopleMessage,'success'\)/);
   assert.match(styles,/\.site-bottom-toast\{position:fixed/);
   assert.doesNotMatch(footer,/finance-manager-people-feedback/);
 });
