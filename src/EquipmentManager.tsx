@@ -1,3 +1,4 @@
+import {useToastFeedback} from './toast';
 import LoadingText from './LoadingText';
 import {useEffect,useState} from 'react';
 import type {FormEvent} from 'react';
@@ -29,6 +30,9 @@ export default function EquipmentManager({items,busy,loading,error,onRefresh,onM
   return()=>URL.revokeObjectURL(url);
  },[imageFile]);
  const [feedback,setFeedback]=useState(''),[localError,setLocalError]=useState('');
+ useToastFeedback(feedback,'success');
+ useToastFeedback(localError,'error');
+ useToastFeedback(error,'error');
  const pending=items.filter(item=>item.status==='대여 승인 대기중');
  const returning=items.filter(item=>item.status==='반납 확인중');
  const borrowed=items.filter(item=>item.status==='대여중');
@@ -94,7 +98,7 @@ export default function EquipmentManager({items,busy,loading,error,onRefresh,onM
     <div><Package size={18}/><span>반납 확인중</span><strong>{returning.length}</strong></div>
    </div>
    <div className="equipment-manage-refresh"><button className="outline-action" type="button" onClick={onRefresh} disabled={busy||loading}>새로고침</button></div>
-   {error&&<p className="form-error" role="alert">{error}</p>}
+ 
    {loading&&<p role="status">장비 현황을 불러오는 중입니다.</p>}
    <section className="equipment-manage-section" aria-labelledby="equipment-pending-title">
     <div className="equipment-manage-heading"><div><h2 id="equipment-pending-title">승인 대기 목록</h2><p>대여 신청은 먼저 신청한 부원부터 승인됩니다. 반납 확인도 이곳에서 처리합니다.</p></div></div>
@@ -116,7 +120,7 @@ export default function EquipmentManager({items,busy,loading,error,onRefresh,onM
      <button type="button" className="button button-primary" disabled={busy||saving} onClick={()=>begin()}><Plus size={16}/> 장비 추가</button>
     </div>
     {feedback&&<p className="equipment-manage-feedback" role="status">{feedback}</p>}
-    {localError&&<p className="form-error" role="alert">{localError}</p>}
+
     {(creating||editingId)&&<form className="equipment-manage-form" onSubmit={save}>
      <div className="equipment-manage-form-heading"><h3>{creating?'장비 추가':'장비 수정'}</h3><button type="button" aria-label="입력 취소" onClick={cancel}><X size={17}/></button></div>
      <div className="equipment-manage-fields">
