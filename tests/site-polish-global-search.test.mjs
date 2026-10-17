@@ -65,7 +65,7 @@ test('Ddrak launches in a new tab from desktop, mobile and footer activity links
  const [nav,app]=await Promise.all([read('src/app/siteNavigation.ts'),read('src/App.tsx')]);
  assert.match(nav,/\{id:'equipment',label:'장비 대여'\},\{id:'ddrak',label:'뜨락 바로가기',href:'https:\/\/ddrak.vercel.app\/'\}/);
  assert.equal((app.match(/target="_blank" rel="noopener noreferrer"/g)||[]).length>=3,true);
- assert.equal((app.match(/<ExternalLink size={13} strokeWidth={2} aria-hidden="true"\/>/g)||[]).length,3);
+ assert.equal(app.split('<ExternalLink size={13} strokeWidth={2} aria-hidden="true"/>').length-1,3);
 });
 test('site images retain shimmer after load errors, without retries, and feature placeholder shadows are kept',async()=>{
  const [img,pages,css]=await Promise.all([read('src/ImageShimmer.tsx'),read('src/pages/SitePages.tsx'),read('src/styles/management.css')]);
