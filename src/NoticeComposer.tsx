@@ -1,3 +1,4 @@
+import {useToastSignals} from './useToastSignals';
 import { useEffect, useRef, useState } from 'react';
 import type { ChangeEvent, DragEvent } from 'react';
 import { ArrowDown, ArrowLeft, ArrowUp, GripVertical, ImagePlus, Link, Link2Off, Plus, RotateCcw, Trash2 } from 'lucide-react';
@@ -25,6 +26,7 @@ export default function NoticeComposer({ onBack, onSaved, initial, registerLeave
   });
   const [preview, setPreview] = useState(false);
   const [error, setError] = useState('');
+  useToastSignals({error});
   const [busy,setBusy]=useState(false);
   const [dimensionDrafts,setDimensionDrafts]=useState<Record<string,string>>({});
   const [dimensionErrors,setDimensionErrors]=useState<Record<string,string>>({});
@@ -406,7 +408,7 @@ export default function NoticeComposer({ onBack, onSaved, initial, registerLeave
             </div>}
         </div>)}
       </div>}
-      {error && <p className="form-error" role="alert">{error}</p>}
+
       {newImagePickerOpen&&imagePicker()}
       <div className="notice-composer-actions">
         <button type="button" className="outline-action" onClick={addText}><Plus size={15}/> 본문 추가</button>
