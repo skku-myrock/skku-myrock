@@ -52,7 +52,7 @@ export function EmptyState({ icon, title, description }: { icon?: ReactNode; tit
 
 export function Home({ navigate, openNotice, notices, noticeLoading }: { navigate: Navigate; openNotice: (id: string) => void; notices: NoticePost[];noticeLoading:boolean }) {
   const [homeImage,setHomeImage]=useState<string|null>(()=>peekAboutCache()?.content.homeImage??null);
-  useEffect(()=>{let active=true;void getAbout().then(({content})=>{if(active)setHomeImage(content.homeImage??'');}).catch(()=>{});return()=>{active=false;};},[]);
+  useEffect(()=>{let active=true;void getAbout().then(({content})=>{if(active)setHomeImage(content.homeImage??'');}).catch(()=>{if(active)setHomeImage('');});return()=>{active=false;};},[]);
   return <>
     <section className="hero container">
       <div className="hero-copy">
@@ -85,7 +85,7 @@ export function About({ navigate, canEdit }: { navigate: Navigate;canEdit:boolea
   useEffect(()=>{
     let active=true;
     void getAbout().then(data=>{if(active){setContent(data.content);setContentLoaded(true);}})
-      .catch(()=>{if(active)setLoadError('최신 소개 정보를 불러오지 못해 기본 소개 내용을 표시합니다.');});
+      .catch(()=>{if(active){setContentLoaded(true);setLoadError('최신 소개 정보를 불러오지 못해 기본 소개 내용을 표시합니다.');}});
     return()=>{active=false;};
   },[]);
   return <><PageHeading tag="ABOUT MYROCK" title="모여락 소개" description="함께 음악을 만들고 무대에 서는 사람들, 모여락을 소개합니다." />
@@ -236,8 +236,8 @@ export function Equipment({items,canManage,onManage,loggedIn,onLogin,loading,err
     </div>
    </div>
    {error&&<p className="form-error" role="alert">{error}</p>}
-   {loading&&<p role="status">장비 목록을 불러오는 중입니다.</p>}
-   <div className="equipment-list">{items.map(g=><div className="equipment-row" key={g.id}>
+   {loading&&<LoadingText>장비 목록을 불러오는 중입니다.</LoadingText>}
+   <div className="equipment-list">{!loading&&items.map(g=><div className="equipment-row" key={g.id}>
     {g.imageUrl?<img className="equipment-photo" src={g.imageUrl} alt={g.name+" 장비 사진"} loading="lazy" decoding="async"/>:<Placeholder label="장비 사진" />}
     <div className="equipment-info"><h3>{g.name}</h3><p>{g.product}</p>
      <span className={"equipment-status equipment-status-"+equipmentStatusTone(g.status)}>{g.status}</span>
@@ -255,7 +255,7 @@ export function Equipment({items,canManage,onManage,loggedIn,onLogin,loading,err
    {!loading&&items.length===0&&<p className="equipment-manage-empty">등록된 장비가 없습니다.</p>}
    <section id="equipment-my-requests" className="equipment-my-requests">
     <h2 className="plain-h2">내 대여 내역</h2>
-    {!loggedIn?<p>대여 신청과 내역 조회는 로그인 후 이용할 수 있습니다.</p>:
+    {loading?<LoadingText className="is-compact">장비 목록을 불러오는 중입니다.</LoadingText>:!loggedIn?<p>대여 신청과 내역 조회는 로그인 후 이용할 수 있습니다.</p>:
      items.filter(item=>item.myPosition!==null||item.isBorrower).length===0?<p>대여 신청 또는 대여 중인 장비가 없습니다.</p>:
      <div>{items.filter(item=>item.myPosition!==null||item.isBorrower).map(item=>
       <p key={item.id}>{item.name} · {item.isBorrower?item.status:'승인 대기 '+item.myPosition+'순위'}</p>)}</div>}
