@@ -22,6 +22,7 @@ async function request<T>(path:string,body?:unknown):Promise<T>{
 export const getEquipment=(manage=false)=>request<{items:EquipmentItem[]}>(manage?'?manage=1':'');
 export type EquipmentAction = 'apply'|'cancel'|'return';
 export const equipmentAction=(id:string,action:EquipmentAction)=>request<{success:boolean}>('/action',{id,action});
-export type EquipmentManageAction = 'approve'|'confirm-return'|'add'|'edit'|'delete';
-export const manageEquipment=(action:EquipmentManageAction,input:{id?:string;name?:string;product?:string})=>
+export type EquipmentManageAction = 'approve'|'confirm-return'|'add'|'edit'|'delete'|'force-loan'|'force-return'|'force-available'|'force-request-return'|'cancel-return'|'add-request'|'clear-queue';
+export type EquipmentManageInput={id?:string;name?:string;product?:string;imageUrl?:string;studentId?:string};
+export const manageEquipment=(action:EquipmentManageAction,input:EquipmentManageInput)=>
  request<{success:boolean;id:string}>('/manage',{action,...input});

@@ -17,7 +17,7 @@ export async function uploadImages({request,env},{legacySingle=false}={}){
     const form=await request.formData();
     const folder=legacySingle?'site':(form.get('folder')??'site');
     if(legacySingle&&form.has('folder')&&form.get('folder')!=='site')reject('단일 이미지 API는 site 폴더에만 저장할 수 있습니다.',400);
-    if(folder!=='site'&&folder!=='notices'&&folder!=='gallery')reject('지원하지 않는 이미지 폴더입니다.',400);
+    if(folder!=='site'&&folder!=='notices'&&folder!=='gallery'&&folder!=='equipment')reject('지원하지 않는 이미지 폴더입니다.',400);
     // The two URLs share all type/size/signature checks and the same atomic Git commit.
     const files=legacySingle?[form.get('image')]:form.getAll('images');
     await assertAccess(request,env,folder==='site'?'staff':'part_leader');

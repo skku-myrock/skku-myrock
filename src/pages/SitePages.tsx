@@ -236,7 +236,7 @@ export function Equipment({items,canManage,onManage,loggedIn,onLogin,loading,err
    {error&&<p className="form-error" role="alert">{error}</p>}
    {loading&&<p role="status">장비 목록을 불러오는 중입니다.</p>}
    <div className="equipment-list">{items.map(g=><div className="equipment-row" key={g.id}>
-    <Placeholder label="장비 사진" />
+    {g.imageUrl?<img className="equipment-photo" src={g.imageUrl} alt={g.name+" 장비 사진"} loading="lazy" decoding="async"/>:<Placeholder label="장비 사진" />}
     <div className="equipment-info"><h3>{g.name}</h3><p>{g.product}</p>
      <span className={"equipment-status equipment-status-"+equipmentStatusTone(g.status)}>{g.status}</span>
      {g.myPosition!==null&&<small className="equipment-own-position">내 신청 대기 순번: {g.myPosition}순위</small>}

@@ -3,7 +3,7 @@ export type EquipmentStatus = typeof EQUIPMENT_STATUSES[number];
 export type EquipmentRequest = {uid:string;name:string;studentId:string;requestedAt:string};
 export type EquipmentBorrower = EquipmentRequest & {borrowedAt:string};
 export type EquipmentItem = {
- id:string;name:string;product:string;status:EquipmentStatus;
+ id:string;name:string;product:string;imageUrl?:string;status:EquipmentStatus;
  queueLength:number;myPosition:number|null;isBorrower:boolean;
  queue?:EquipmentRequest[];borrower?:EquipmentBorrower|null;returnRequestedAt?:string|null;
 };
