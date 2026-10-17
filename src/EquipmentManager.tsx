@@ -1,4 +1,5 @@
 import LoadingText from './LoadingText';
+import {useToastSignals} from './useToastSignals';
 import {useEffect,useState} from 'react';
 import type {FormEvent} from 'react';
 import {ArrowLeft,Check,ClipboardCheck,ImagePlus,Package,Plus,Save,Trash2,X} from 'lucide-react';
@@ -115,8 +116,8 @@ export default function EquipmentManager({items,busy,loading,error,onRefresh,onM
     <div className="equipment-manage-heading"><div><h2 id="equipment-inventory-title">보유 장비 목록</h2><p>장비 이름과 제품명을 수정할 수 있습니다. 관리자 정정 기능으로 대여자·대기열·반납 요청을 함께 변경할 수 있습니다.</p></div>
      <button type="button" className="button button-primary" disabled={busy||saving} onClick={()=>begin()}><Plus size={16}/> 장비 추가</button>
     </div>
-    {feedback&&<p className="equipment-manage-feedback" role="status">{feedback}</p>}
-    {localError&&<p className="form-error" role="alert">{localError}</p>}
+
+
     {(creating||editingId)&&<form className="equipment-manage-form" onSubmit={save}>
      <div className="equipment-manage-form-heading"><h3>{creating?'장비 추가':'장비 수정'}</h3><button type="button" aria-label="입력 취소" onClick={cancel}><X size={17}/></button></div>
      <div className="equipment-manage-fields">
