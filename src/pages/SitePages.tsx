@@ -203,7 +203,7 @@ export function News({ canWrite, onWrite, openNotice, notices, loading, error, h
           <span className="notice-author-cell">{post.author}</span>
         </button>)}
         {currentError&&<p role="alert" className="form-error">{currentError}</p>}
-        {currentLoading&&<LoadingText>{searching?'공지사항 제목을 검색하는 중입니다':'공지사항 목록을 불러오는 중입니다'}</LoadingText>}
+        {currentLoading&&<LoadingText>{searching?'검색 중입니다.':'공지사항 목록을 불러오는 중입니다'}</LoadingText>}
         {!currentLoading&&!currentError&&filtered.length===0&&<EmptyState title={searching?'검색 결과가 없습니다':'공지사항이 없습니다'} description={searching?'다른 제목으로 검색해 주세요.':'등록된 공지사항이 없습니다.'}/>}
       </div>
       {currentHasMore&&<div className="list-bottom notice-list-bottom"><button type="button"
