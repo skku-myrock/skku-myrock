@@ -234,8 +234,6 @@ export default function GalleryUploadDialog({ onClose,onCreated,initialAlbum,onU
       <input ref={inputRef} type="file" multiple accept="image/jpeg,image/png,image/webp"
         className="gallery-upload-file-input" disabled={busy} onChange={onFileChange} aria-label="갤러리 이미지 파일 선택" />
 
-}
-
       {photos.length > 0 && <div className="gallery-upload-selected" aria-label="선택한 사진 목록">
         <p>사진을 끌어서 순서를 변경하거나 화살표로 이동할 수 있습니다. 첫 번째 사진이 앨범 대표사진으로 사용됩니다.</p>
         <div className="gallery-upload-photo-grid">
