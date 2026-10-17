@@ -419,17 +419,11 @@
 
 .gallery-lightbox-header-actions{display:flex;align-items:flex-start;gap:9px;flex-shrink:0}
 .gallery-manage-wrapper{position:relative}
-.gallery-manage-trigger{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:35px;padding:0 10px;border:1px solid #d3dfd8;background:#fff;color:#3c5c4b;font-size:12px;font-weight:700;white-space:nowrap}
-.gallery-manage-trigger:hover,.gallery-manage-trigger[aria-expanded="true"]{background:#f3f8f4;border-color:#8bab98}
-.gallery-manage-menu{position:absolute;right:0;top:calc(100% + 6px);z-index:20;min-width:138px;padding:5px;background:#fff;border:1px solid #dae6de;box-shadow:0 8px 23px #15291c1f}
-.gallery-manage-menu button{width:100%;min-height:37px;display:flex;align-items:center;gap:9px;padding:8px 11px;border:0;background:#fff;color:#415d4a;text-align:left;font-size:12px;white-space:nowrap}
-.gallery-manage-menu button:hover{background:#f3f8f4}
-.gallery-manage-menu .gallery-manage-delete{color:#a54343}
-.gallery-manage-menu .gallery-manage-delete:hover{background:#fff2f2}
+/* Gallery and notices share .content-manage-trigger and .content-manage-menu. */
 .gallery-manage-error{margin:0;padding:10px 12px;border:1px solid #e5c1bf;background:#fff5f4;color:#a34440;font-size:12px}
 @media(max-width:680px){
   .gallery-lightbox-header-actions{gap:6px}
-  .gallery-manage-trigger{font-size:11px;min-height:31px;padding:0 7px}
+  .gallery-manage-wrapper .content-manage-trigger{font-size:11px;min-height:31px;padding:6px 8px}
 }
 
 /* Ten-number navigation blocks across twenty-three preview pages; real album fetching stays on page one. */
