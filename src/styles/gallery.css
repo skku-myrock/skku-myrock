@@ -434,8 +434,4 @@
 .gallery-pagebar>.gallery-page-jump{font-weight:700;background:#f6f8f7}
 .gallery-pagebar>.gallery-pagebar-ellipsis{font-size:12px;color:#889791;padding:0 4px}
 .gallery-pagination-preview-note{text-align:center;color:#9da7a4;font-size:11px;margin:12px 0 0}
-.gallery-album-placeholder{pointer-events:none;background:transparent;cursor:default}
-.gallery-album-placeholder-cover{display:flex;align-items:center;justify-content:center;background:#f4f7f5;border-color:#e3e9e6}
-.gallery-album-placeholder-details{height:40px}
-.gallery-album-placeholder span{font-size:12px;color:#adb8b3}
 @media(max-width:620px){.gallery-pagebar{gap:4px}.gallery-pagebar>button{min-width:31px;height:32px}}
