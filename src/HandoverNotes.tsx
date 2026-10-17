@@ -150,7 +150,7 @@ export function HandoverNotesView({onBack}:{onBack:()=>void}){
     </label>
     <button type="button" className="outline-action" disabled={loading} onClick={()=>setReloadIndex(index=>index+1)}>새로고침</button>
    </div>
-   {error&&<p className="form-error" role="alert">{error}</p>}
+   
    {loading?<LoadingText>인수인계 목록을 불러오는 중입니다.</LoadingText>:
     filtered.length===0?<p className="handover-archive-notice">{query.trim()?'검색 결과가 없습니다.':'저장된 인수인계가 없습니다.'}</p>:
     <div className="handover-archive-list" aria-label="저장된 인수인계 목록">
