@@ -26,7 +26,7 @@ import {showToast,classifyToast} from './toastBus';
 import {useToastSignals} from './useToastSignals';
 import type {ToastDetail} from './toastBus';
 import {purgeDonations} from './donationApi';
-import {purgeNotices,resetClubIntroduction,resetSiteAssets,purgeGallery,purgeSchedules,resetEquipmentLoans} from './adminResets';
+import {purgeNotices,resetClubIntroduction,resetSiteAssets,purgeGallery,purgeSchedules,resetEquipmentLoans,generateDummyBatch} from './adminResets';
 import {invalidateAboutCache} from './aboutContent';
 import {listNoticesPage,getNotice,deleteNotice} from './noticesData';
 import type {NoticePost} from './noticesData';
@@ -110,6 +110,8 @@ function App() {
   const [hasSystemClaim,setHasSystemClaim] = useState(false);
   const [resettingScope,setResettingScope]=useState<ResetScope|null>(null);
   const [resetStage,setResetStage]=useState('');
+  const [dummyGenerating,setDummyGenerating]=useState(false);
+  const [dummyProgress,setDummyProgress]=useState('');
   const [galleryRevision,setGalleryRevision]=useState(0);
   const [aboutRevision,setAboutRevision]=useState(0);
   const [financeRevision,setFinanceRevision] = useState(0);
@@ -166,7 +168,7 @@ function App() {
   const showLogin=()=>{setLoginOpen(true);setMenuOpen(false);setAccountOpen(false);};
   const logout=async()=>{if(!canLeaveEditor())return;try{await signOut(auth);leaveGuardRef.current=null;navigate('home');showToast('로그아웃되었습니다.','success');}catch{showToast('로그아웃하지 못했습니다. 잠시 후 다시 시도해 주세요.','error');}};
   async function resetCategory(scope:ResetScope){
-    if(resettingScope||!user||!profile?.superadmin||!hasSystemClaim)return;
+    if(resettingScope||dummyGenerating||!user||!profile?.superadmin||!hasSystemClaim)return;
     const descriptions:Record<ResetScope,string>={
       finance:'후원 기록, 익명자 명단, 회비 집행 내역을 삭제합니다. 계좌 정보는 유지합니다.',
       activity:'모든 합주 시간표·참여자·초대·초대 제한 기록을 삭제하고 장비 대여자·대기열·반납 요청을 비웁니다. 장비 정보와 사진은 유지합니다.',
@@ -207,6 +209,30 @@ function App() {
       if(failed&&(scope==='other'||scope==='all'))void listNoticesPage().then(result=>{setNotices(result.notices);setNoticeCursor(result.nextPageToken);}).catch(()=>{});
       setResetStage('');setResettingScope(null);
     }
+  }
+  async function createDummyData(){
+    if(resettingScope||dummyGenerating||!user||!profile?.superadmin||!hasSystemClaim)return;
+    if(!window.confirm('공지사항 100개, 후원 내역 100개, 회비 거래 100개, 갤러리 앨범 150개를 테스트용으로 생성합니다. 갤러리는 Youth on Tape 공연의 기존 WebP 사진을 공유하며, 실제 자료와 섞여 표시됩니다. 계속하시겠습니까?'))return;
+    setDummyGenerating(true);setDummyProgress('더미 데이터 생성 준비 중');setAccountOpen(false);setMenuOpen(false);
+    try{
+      const stages=[['gallery',150],['notices',100],['donations',100],['expenses',100]] as const;
+      let processed=0;
+      for(const [stage,total] of stages){
+        for(let start=0;start<total;start+=20){
+          setDummyProgress(stage+' '+Math.min(start+20,total)+' / '+total+'건 처리 중 · 전체 '+processed+' / 450건');
+          const result=await generateDummyBatch(stage,start);
+          if(result.next!==Math.min(start+20,total))throw Error('더미 생성 진행 상태가 일치하지 않습니다.');
+          processed+=result.processed;
+        }
+      }
+      setDummyProgress('목록 갱신 중');
+      const refreshed=await listNoticesPage();
+      setNotices(refreshed.notices);setNoticeCursor(refreshed.nextPageToken);
+      setGalleryRevision(v=>v+1);setFinanceRevision(v=>v+1);
+      showToast('더미 데이터 450건을 생성했습니다. 재실행하면 같은 테스트 데이터 ID를 갱신합니다.','success');
+    }catch(error){
+      showToast('더미 데이터 생성 중단: '+(error instanceof Error?error.message:'서버 오류')+' 동일한 메뉴를 다시 실행하면 남은 작업을 재시도할 수 있습니다.','error');
+    }finally{setDummyGenerating(false);setDummyProgress('');}
   }
   const isDeveloperSuperadmin=Boolean(user && profile?.superadmin && hasSystemClaim);
   const [equipmentItems,setEquipmentItems]=useState<EquipmentItem[]>([]);
@@ -303,7 +329,7 @@ function App() {
     'handover-write': authPending?<section className="container section-block"><EmptyState title="권한 확인 중" description="로그인 상태를 확인하고 있습니다."/></section>:user&&canHandover?<HandoverNotesEditor onBack={()=>navigate('handover')}/>:<section className="container section-block"><EmptyState title="접근 권한이 없습니다" description="인수인계 접근 권한이 필요합니다."/></section>,
     'members': (authPending?<section className="container section-block"><EmptyState title="권한 확인 중" description="로그인 상태를 확인하고 있습니다." /></section>:page==='members'&&canManage&&user?<><PageHeading tag="MEMBER MANAGEMENT" title="부원 관리" description="부원 명단 조회와 운영 권한에 따른 부원 정보 수정"/><MemberManager currentUid={user.uid} level={currentLevel!} notify={notify}/></>:page==='handover'&&canHandover?<Handover openView={()=>navigate('handover-view')} openWrite={()=>navigate('handover-write')} notify={notify}/>:<section className="container section-block"><EmptyState icon={<LockKeyhole size={26}/>} title="접근 권한이 없습니다" description="해당 메뉴에 접근할 수 있는 운영진 권한이 필요합니다." /></section>),
   };
-  return <div className="site-root" data-async-busy={resettingScope ? "true" : undefined}>
+  return <div className="site-root" data-async-busy={resettingScope||dummyGenerating ? "true" : undefined}>
     <header className="site-header"><div className="container header-inner">
       <button type="button" className="brand" onClick={()=>navigate('home')} aria-label="모여락 홈으로 이동"><img src={logo} alt="모여락 로고"/><span><strong>모여락</strong><small>MYROCK</small></span></button>
       <nav className="desktop-nav" aria-label="주 메뉴">{navGroups.map(group=><div className="more-wrapper nav-group" key={group.label} onMouseEnter={()=>setOpenGroup(group.label)} onMouseLeave={()=>setOpenGroup(null)}><button type="button" aria-expanded={openGroup===group.label} className={group.items.some(i=>i.id===page)?'active':''} onClick={()=>setOpenGroup(openGroup===group.label?null:group.label)}>{group.label} <ChevronDown size={13}/></button>{openGroup===group.label&&<div className="more-menu">{group.items.map(item=><button type="button" key={item.id} onClick={()=>navigate(item.id)}>{item.label}</button>)}</div>}</div>)}</nav>
@@ -315,10 +341,10 @@ function App() {
           onBlur={event => { if (!event.relatedTarget || !event.currentTarget.contains(event.relatedTarget as Node)) setAccountOpen(false); }}
         ><button className="login-button account-toggle" type="button"
           onClick={() => { if (!window.matchMedia('(hover: hover)').matches) setAccountOpen(previous => !previous); }}
-          aria-haspopup="menu" aria-expanded={accountOpen}><UserRound size={15}/>{profile?.name??'내 계정'}<ChevronDown size={13}/></button>{accountOpen&&<div className="more-menu account-menu"><button type="button" onClick={()=>navigate('profile')}>내 정보</button>{canManage&&<button type="button" onClick={()=>navigate('members')}>부원 관리</button>}{canHandover&&<button type="button" onClick={()=>navigate('handover')}>인수인계</button>}<button type="button" onClick={logout} disabled={Boolean(resettingScope)}>로그아웃</button>{isDeveloperSuperadmin && <><button type="button" className="developer-reset-action" disabled={Boolean(resettingScope)} onClick={()=>void resetCategory('finance')}>후원 회계 초기화</button><button type="button" className="developer-reset-action" disabled={Boolean(resettingScope)} onClick={()=>void resetCategory('activity')}>활동 초기화</button><button type="button" className="developer-reset-action" disabled={Boolean(resettingScope)} onClick={()=>void resetCategory('other')}>나머지 초기화</button><button type="button" className="developer-reset-action" disabled={Boolean(resettingScope)} onClick={()=>void resetCategory('all')}>완전 초기화</button></>}</div>}</div>}
+          aria-haspopup="menu" aria-expanded={accountOpen}><UserRound size={15}/>{profile?.name??'내 계정'}<ChevronDown size={13}/></button>{accountOpen&&<div className="more-menu account-menu"><button type="button" onClick={()=>navigate('profile')}>내 정보</button>{canManage&&<button type="button" onClick={()=>navigate('members')}>부원 관리</button>}{canHandover&&<button type="button" onClick={()=>navigate('handover')}>인수인계</button>}<button type="button" onClick={logout} disabled={Boolean(resettingScope||dummyGenerating)}>로그아웃</button>{isDeveloperSuperadmin && <><button type="button" className="developer-reset-action" disabled={Boolean(resettingScope||dummyGenerating)} onClick={()=>void resetCategory('finance')}>후원 회계 초기화</button><button type="button" className="developer-reset-action" disabled={Boolean(resettingScope||dummyGenerating)} onClick={()=>void resetCategory('activity')}>활동 초기화</button><button type="button" className="developer-reset-action" disabled={Boolean(resettingScope||dummyGenerating)} onClick={()=>void resetCategory('other')}>나머지 초기화</button><button type="button" className="developer-reset-action" disabled={Boolean(resettingScope||dummyGenerating)} onClick={()=>void resetCategory('all')}>완전 초기화</button><button type="button" className="developer-reset-action" disabled={Boolean(resettingScope||dummyGenerating)} onClick={()=>void createDummyData()}>더미 데이터 생성</button></>}</div>}</div>}
         <button type="button" className="mobile-menu-button" onClick={()=>setMenuOpen(!menuOpen)} aria-label={menuOpen?'메뉴 닫기':'메뉴 열기'} aria-expanded={menuOpen}>{menuOpen?<X size={22}/>:<Menu size={22}/>}</button>
       </div>
-    </div>{menuOpen&&<nav className="mobile-nav" aria-label="모바일 메뉴"><div className="container">{navGroups.map(group=><div className="mobile-group" key={group.label}><button type="button" aria-expanded={openGroup===group.label} onClick={()=>setOpenGroup(openGroup===group.label?null:group.label)}><strong>{group.label}</strong><ChevronDown size={16}/></button>{openGroup===group.label&&<div className="mobile-submenu">{group.items.map(item=><button type="button" key={item.id} onClick={()=>navigate(item.id)}>{item.label}</button>)}</div>}</div>)}{user&&<><button type="button" onClick={()=>navigate('profile')}>내 정보<ArrowRight size={16}/></button>{canManage&&<button type="button" onClick={()=>navigate('members')}>부원 관리<ArrowRight size={16}/></button>}{canHandover&&<button type="button" onClick={()=>navigate('handover')}>인수인계<ArrowRight size={16}/></button>}<button type="button" onClick={logout} disabled={Boolean(resettingScope)}>로그아웃<LogOut size={16}/></button>{isDeveloperSuperadmin && <><button type="button" className="developer-reset-action" disabled={Boolean(resettingScope)} onClick={()=>void resetCategory('finance')}>후원 회계 초기화<Trash2 size={15}/></button><button type="button" className="developer-reset-action" disabled={Boolean(resettingScope)} onClick={()=>void resetCategory('activity')}>활동 초기화<Trash2 size={15}/></button><button type="button" className="developer-reset-action" disabled={Boolean(resettingScope)} onClick={()=>void resetCategory('other')}>나머지 초기화<Trash2 size={15}/></button><button type="button" className="developer-reset-action" disabled={Boolean(resettingScope)} onClick={()=>void resetCategory('all')}>완전 초기화<Trash2 size={15}/></button></>}</>}</div></nav>}
+    </div>{menuOpen&&<nav className="mobile-nav" aria-label="모바일 메뉴"><div className="container">{navGroups.map(group=><div className="mobile-group" key={group.label}><button type="button" aria-expanded={openGroup===group.label} onClick={()=>setOpenGroup(openGroup===group.label?null:group.label)}><strong>{group.label}</strong><ChevronDown size={16}/></button>{openGroup===group.label&&<div className="mobile-submenu">{group.items.map(item=><button type="button" key={item.id} onClick={()=>navigate(item.id)}>{item.label}</button>)}</div>}</div>)}{user&&<><button type="button" onClick={()=>navigate('profile')}>내 정보<ArrowRight size={16}/></button>{canManage&&<button type="button" onClick={()=>navigate('members')}>부원 관리<ArrowRight size={16}/></button>}{canHandover&&<button type="button" onClick={()=>navigate('handover')}>인수인계<ArrowRight size={16}/></button>}<button type="button" onClick={logout} disabled={Boolean(resettingScope||dummyGenerating)}>로그아웃<LogOut size={16}/></button>{isDeveloperSuperadmin && <><button type="button" className="developer-reset-action" disabled={Boolean(resettingScope||dummyGenerating)} onClick={()=>void resetCategory('finance')}>후원 회계 초기화<Trash2 size={15}/></button><button type="button" className="developer-reset-action" disabled={Boolean(resettingScope||dummyGenerating)} onClick={()=>void resetCategory('activity')}>활동 초기화<Trash2 size={15}/></button><button type="button" className="developer-reset-action" disabled={Boolean(resettingScope||dummyGenerating)} onClick={()=>void resetCategory('other')}>나머지 초기화<Trash2 size={15}/></button><button type="button" className="developer-reset-action" disabled={Boolean(resettingScope||dummyGenerating)} onClick={()=>void resetCategory('all')}>완전 초기화<Trash2 size={15}/></button><button type="button" className="developer-reset-action" disabled={Boolean(resettingScope||dummyGenerating)} onClick={()=>void createDummyData()}>더미 데이터 생성<Trash2 size={15}/></button></>}</>}</div></nav>}
     </header>
     <main key={page}>
       <Routes>
@@ -361,7 +387,14 @@ function App() {
         <p className="form-hint">진행 중에는 페이지를 새로고침하거나 닫지 마세요. 중단되면 같은 초기화를 다시 실행할 수 있습니다.</p>
       </div>
     </div>}
-    {loginOpen&&<LoginDialog close={()=>setLoginOpen(false)} notify={message=>showToast(message??'','success')}/>}
+    {dummyGenerating&&<div className="modal-overlay roster-reset-overlay" aria-live="polite">
+       <div className="login-dialog roster-reset-dialog" role="status">
+         <div className="profile-title"><Trash2 size={20}/><h2>더미 데이터 생성 중</h2></div>
+         <p>{dummyProgress}</p>
+         <p className="form-hint">450개 테스트 문서를 저장하는 동안 창을 닫거나 새로고침하지 마세요.</p>
+       </div>
+     </div>}
+     {loginOpen&&<LoginDialog close={()=>setLoginOpen(false)} notify={message=>showToast(message??'','success')}/>}
     {bottomNotice&&<TimedBottomToast key={bottomNotice.id} message={bottomNotice.message} tone={bottomNotice.tone} onClose={()=>setBottomNotice(current=>current?.id===bottomNotice.id?null:current)}/>}
   </div>;
 }
