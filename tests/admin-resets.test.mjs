@@ -25,7 +25,7 @@ test('desktop and mobile menus expose exactly four composed reset actions',async
    assert.equal(app.split("resetCategory('"+scope+"')").length-1,2,scope);
  assert.doesNotMatch(app,/>명단 초기화|>에셋 초기화|>갤러리 초기화/);
  const start=app.indexOf('async function resetCategory(');
- const end=app.indexOf('const isDeveloperSuperadmin=',start);
+ const end=app.indexOf('async function createDummyData(',start);
  const section=app.slice(start,end);
  for(const step of ['purgeDonations','purgeSchedules','resetEquipmentLoans','purgeNotices','purgeGallery','resetSiteAssets','resetClubIntroduction'])
    assert.ok(section.includes(step),step);
@@ -164,7 +164,7 @@ test('composed reset confirmation is shown once and clients use signed requests'
  const app=await source('src/App.tsx');
  assert.doesNotMatch(app,/window\.prompt\(/);
  const start=app.indexOf('async function resetCategory(');
- const end=app.indexOf('const isDeveloperSuperadmin=',start);
+ const end=app.indexOf('async function createDummyData(',start);
  const block=app.slice(start,end);
  assert.equal((block.match(/window\.confirm\(/g)||[]).length,1);
  assert.match(block,/setResettingScope\(scope\)/);
