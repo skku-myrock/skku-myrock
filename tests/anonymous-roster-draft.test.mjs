@@ -55,6 +55,6 @@ test('anonymous roster save, strikeout, cursor and busy markers are wired to the
   for(const [name,source] of Object.entries({donations,expenses,finance,members,password,app})){
     assert.match(source,/data-async-busy=\{/,'missing busy marker in '+name);
   }
-  assert.match(app,/data-async-busy=\{rosterResetting\|\|financeResetting/);
+  assert.match(app,/data-async-busy=\{resettingScope/);
   assert.match(css,/button:disabled\{cursor:default!important\}/);
 });
