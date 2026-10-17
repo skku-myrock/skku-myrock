@@ -31,7 +31,9 @@ test('real gallery page number, category, count and date order use 12-record Fir
   assert.equal(q.where.fieldFilter.value.stringValue,'공연');
   assert.deepEqual(q.orderBy.map(x=>x.field.fieldPath),['createdAt','__name__']);
   assert.ok(q.orderBy.every(x=>x.direction==='DESCENDING'));
-  await assert.rejects(()=>mod.listGalleryPage({},{page:4}),/존재하지 않는 갤러리 페이지/);
+  const moved=await mod.listGalleryPage({},{page:4});
+  assert.equal(moved.page,3);
+  assert.equal(globalThis.__galleryQueries.at(-1).options.body.structuredQuery.offset,24);
   await assert.rejects(()=>mod.listGalleryPage({},{page:0}),/페이지 번호/);
  }finally{delete globalThis.__galleryQueries}
 });
