@@ -1,3 +1,4 @@
+import {useToastFeedback} from './toast';
 import {useMemo,useRef,useState} from 'react';
 import type {PointerEvent as ReactPointerEvent} from 'react';
 import {ArrowLeft,CalendarDays,ChevronDown,Clock3,Plus,Search,Trash2,X,Users} from 'lucide-react';
@@ -30,6 +31,7 @@ export default function ScheduleCreation({onBack,onCreated,teamMode=false}:{onBa
   }
   const [creating,setCreating]=useState(false);
   const [error,setError]=useState('');
+ useToastFeedback(error,'error');
   async function submit(input:ScheduleInput){
     if(creating)return;
     setCreating(true);setError('');
@@ -194,7 +196,7 @@ export default function ScheduleCreation({onBack,onCreated,teamMode=false}:{onBa
             disabled={!title.trim()||dates.size===0||creating||(teamMode&&teamMembers.length===0)}
             onClick={()=>void submit({title:title.trim(),dates:[...dates].sort(),startHour,endHour})}>{creating?'생성 중…':'시간표 생성'}</button>
         </div>
-        {error&&<p role="alert" className="schedule-side-warning">{error}</p>}
+  
       </div>
       {teamMode&&memberDialog&&<div className="schedule-team-dialog-backdrop" onMouseDown={event=>{if(event.target===event.currentTarget)setMemberDialog(false);}}>
         <section className="schedule-team-dialog" role="dialog" aria-modal="true" aria-label="구성팀 인원 추가">
