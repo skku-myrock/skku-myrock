@@ -135,8 +135,9 @@ export default function GalleryUploadDialog({ onClose,onCreated,initialAlbum,onU
     });
   }
 
+  const albumChanged=!initialAlbum||category!==initialAlbum.category||title.trim()!==initialAlbum.title||photos.length!==initialAlbum.photos.length||photos.some((photo,index)=>photo.file!==null||photo.url!==initialAlbum.photos[index]);
   async function saveAlbum(){
-    if(busyRef.current)return;
+    if(busyRef.current||!albumChanged)return;
     if(!title.trim()){setError('앨범 제목을 입력해 주세요.');return;}
     if(!photos.length){setError('사진을 한 장 이상 선택해 주세요.');return;}
     busyRef.current=true;setBusy(true);setError('');
@@ -265,7 +266,7 @@ export default function GalleryUploadDialog({ onClose,onCreated,initialAlbum,onU
       <p className="gallery-upload-pending-note">사진 등록 시 WebP로 압축해 GitHub에 업로드합니다. 이미지 배포까지 시간이 걸릴 수 있습니다.</p>
       <footer className="gallery-upload-footer">
         <button type="button" className="outline-action" disabled={busy} onClick={onClose}>취소</button>
-        <button type="button" className="button button-primary" disabled={busy||!title.trim()||photos.length===0} onClick={()=>void saveAlbum()}>{busy?'이미지 저장 중...':initialAlbum?'변경 사항 저장':'사진 등록'}</button>
+        <button type="button" className="button button-primary" disabled={busy||!albumChanged||!title.trim()||photos.length===0} onClick={()=>void saveAlbum()}>{busy?'이미지 저장 중...':initialAlbum?'변경 사항 저장':'사진 등록'}</button>
       </footer>
     </section>
   </div>;
