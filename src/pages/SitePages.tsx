@@ -267,6 +267,7 @@ export function Equipment({items,canManage,onManage,loggedIn,onLogin,loading,err
 }
 
 export function Handover({openView,openWrite,notify}:{openView:()=>void;openWrite:()=>void;notify:Notify}){
+ void notify; // Keep existing props while the missing-link warning uses the typed global toast.
  const [menuOpen,setMenuOpen]=useState(false);
  return <><PageHeading tag="HANDOVER" title="인수인계" description="운영진이 해마다 업무와 기록을 이어갈 수 있도록 마련한 공간입니다." />
   <section className="container section-block">
