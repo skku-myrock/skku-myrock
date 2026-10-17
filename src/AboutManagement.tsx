@@ -6,6 +6,8 @@ import {uploadImagesBatch} from './imageUpload';
 import {validateSourceImage} from './imageCompression';
 import {useEditorLeaveGuard} from './useEditorLeaveGuard';
 import TimedBottomToast from './TimedBottomToast';
+import LoadingText from './LoadingText';
+import ImageShimmer from './ImageShimmer';
 import type {AboutContent,Officer,HistoryEntry} from './aboutContent';
 
 type PhotoTarget={type:'home'}|{type:'hero'}|{type:'officer';id:string};
@@ -81,18 +83,18 @@ export default function AboutManagement({onBack,onSaved,registerLeaveGuard}:{onB
     <div className="container about-manage" data-async-busy={busy?'true':undefined}>
       <button className="finance-return-link" type="button" onClick={onBack}><ArrowLeft size={16}/> 소개 페이지로 돌아가기</button>
 
-      {loading?<p>소개 정보를 불러오는 중입니다.</p>:<>
+      <>
         <p className="image-compression-notice" role="note">이미지를 저장할 때 자동으로 압축·크기 조정할 수 있습니다. <strong>업로드된 이미지는 원본을 대체하지 못하므로 원본 사진을 별도로 보관해 주세요.</strong></p>
         <section className="about-manage-section">
           <h2>메인 페이지 사진</h2>
           <div className="about-manage-photo">
-            {content.homeImage?<img src={content.homeImage} alt="메인 페이지 사진 미리보기"/>:<div className="about-manage-photo-empty">등록된 메인 페이지 사진이 없습니다.</div>}
+            {loading?<div className="image-shimmer-frame is-image-loading" role="status" aria-label="메인 페이지 사진을 불러오는 중"><span className="image-shimmer-band" aria-hidden="true"/></div>:content.homeImage?<ImageShimmer key={content.homeImage} src={content.homeImage} alt="메인 페이지 사진 미리보기"/>:<div className="about-manage-photo-empty">등록된 메인 페이지 사진이 없습니다.</div>}
             <div className="about-manage-photo-controls">
-              <label>이미지 URL<input type="url" placeholder="https://..." value={content.homeImage} onChange={e=>{setContent(p=>({...p,homeImage:e.target.value}));setMessage('');}}/></label>
+              <label>이미지 URL<input type="url" disabled={loading||busy} placeholder="https://..." value={content.homeImage} onChange={e=>{setContent(p=>({...p,homeImage:e.target.value}));setMessage('');}}/></label>
               <label className="outline-action about-image-upload"><ImagePlus size={14}/> 파일 업로드
-                <input type="file" accept="image/png,image/jpeg,image/webp" disabled={busy} onChange={e=>void chooseImage(e,{type:'home'})}/>
+                <input type="file" accept="image/png,image/jpeg,image/webp" disabled={busy||loading} onChange={e=>void chooseImage(e,{type:'home'})}/>
               </label>
-              <button type="button" className="outline-action" disabled={busy||!content.homeImage} onClick={()=>setContent(p=>({...p,homeImage:''}))}>사진 제거</button>
+              <button type="button" className="outline-action" disabled={busy||loading||!content.homeImage} onClick={()=>setContent(p=>({...p,homeImage:''}))}>사진 제거</button>
             </div>
           </div>
           <p className="about-manage-hint">메인 페이지의 첫 화면에 표시되는 사진입니다. 외부 HTTPS 이미지 URL 또는 JPG/PNG/WebP 사진(원본 30MB 이하)을 사용할 수 있습니다.</p>
@@ -100,23 +102,23 @@ export default function AboutManagement({onBack,onSaved,registerLeaveGuard}:{onB
         <section className="about-manage-section">
           <h2>동아리 소개 사진</h2>
           <div className="about-manage-photo">
-            {content.heroImage?<img src={content.heroImage} alt="동아리 소개 사진 미리보기"/>:<div className="about-manage-photo-empty">등록된 동아리 소개 사진이 없습니다.</div>}
+            {loading?<div className="image-shimmer-frame is-image-loading" role="status" aria-label="동아리 소개 사진을 불러오는 중"><span className="image-shimmer-band" aria-hidden="true"/></div>:content.heroImage?<ImageShimmer key={content.heroImage} src={content.heroImage} alt="동아리 소개 사진 미리보기"/>:<div className="about-manage-photo-empty">등록된 동아리 소개 사진이 없습니다.</div>}
             <div className="about-manage-photo-controls">
-              <label>이미지 URL<input type="url" placeholder="https://..." value={content.heroImage} onChange={e=>{setContent(p=>({...p,heroImage:e.target.value}));setMessage('');}}/></label>
+              <label>이미지 URL<input type="url" disabled={loading||busy} placeholder="https://..." value={content.heroImage} onChange={e=>{setContent(p=>({...p,heroImage:e.target.value}));setMessage('');}}/></label>
               <label className="outline-action about-image-upload"><ImagePlus size={14}/> 파일 업로드
-                <input type="file" accept="image/png,image/jpeg,image/webp" disabled={busy} onChange={e=>void chooseImage(e,{type:'hero'})}/>
+                <input type="file" accept="image/png,image/jpeg,image/webp" disabled={busy||loading} onChange={e=>void chooseImage(e,{type:'hero'})}/>
               </label>
-              <button type="button" className="outline-action" disabled={busy||!content.heroImage} onClick={()=>setContent(p=>({...p,heroImage:''}))}>사진 제거</button>
+              <button type="button" className="outline-action" disabled={busy||loading||!content.heroImage} onClick={()=>setContent(p=>({...p,heroImage:''}))}>사진 제거</button>
             </div>
           </div>
           <p className="about-manage-hint">동아리 소개 페이지에 표시되는 사진입니다. 외부 HTTPS 이미지 URL 또는 JPG/PNG/WebP 사진(원본 30MB 이하)을 사용할 수 있습니다.</p>
         </section>
         <section className="about-manage-section">
-          <div className="about-manage-section-heading"><h2>운영진 명단</h2><button type="button" className="outline-action" disabled={busy||content.officers.length>=40} onClick={()=>{
+          <div className="about-manage-section-heading"><h2>운영진 명단</h2><button type="button" className="outline-action" disabled={busy||loading||content.officers.length>=40} onClick={()=>{
             setContent(p=>({...p,officers:[...p.officers,{id:crypto.randomUUID(),name:'',position:'',photoUrl:''}]}));setMessage('');
           }}><Plus size={15}/> 운영진 추가</button></div>
-          <label className="about-manage-label">소개 제목<input maxLength={80} value={content.cohortLabel} onChange={e=>setContent(p=>({...p,cohortLabel:e.target.value}))}/></label>
-          <div className="about-manage-items">
+          {!loading&&<label className="about-manage-label">소개 제목<input maxLength={80} value={content.cohortLabel} onChange={e=>setContent(p=>({...p,cohortLabel:e.target.value}))}/></label>}
+          {loading?<LoadingText>운영진 명단을 불러오는 중입니다</LoadingText>:<div className="about-manage-items">
             {content.officers.map((person,index)=><article className="about-manage-item" key={person.id}>
               <div className="about-manage-item-head"><strong>{index+1}번째 운영진</strong><div className="about-manage-actions">
                 <button type="button" disabled={busy||index===0} onClick={()=>reorder<Officer>('officers',index,-1)} aria-label="운영진 위로 이동"><ArrowUp size={15}/></button>
@@ -128,19 +130,19 @@ export default function AboutManagement({onBack,onSaved,registerLeaveGuard}:{onB
                 <label>사진 URL<input type="url" placeholder="https://..." value={person.photoUrl} onChange={e=>updateOfficer(person.id,'photoUrl',e.target.value)}/></label>
               </div>
               <div className="about-manage-officer-photo">
-                {person.photoUrl&&<img src={person.photoUrl} alt={person.name+' 사진 미리보기'}/>}
+                {person.photoUrl&&<ImageShimmer key={person.photoUrl} src={person.photoUrl} alt={person.name+' 사진 미리보기'}/>}
                 <label className="outline-action about-image-upload"><ImagePlus size={14}/> 사진 파일 업로드
-                  <input type="file" accept="image/png,image/jpeg,image/webp" disabled={busy} onChange={e=>void chooseImage(e,{type:'officer',id:person.id})}/>
+                  <input type="file" accept="image/png,image/jpeg,image/webp" disabled={busy||loading} onChange={e=>void chooseImage(e,{type:'officer',id:person.id})}/>
                 </label>
               </div>
             </article>)}
-          </div>
+          </div>}
         </section>
         <section className="about-manage-section">
-          <div className="about-manage-section-heading"><h2>연혁</h2><button type="button" className="outline-action" disabled={busy||content.history.length>=100} onClick={()=>{
+          <div className="about-manage-section-heading"><h2>연혁</h2><button type="button" className="outline-action" disabled={busy||loading||content.history.length>=100} onClick={()=>{
             setContent(p=>({...p,history:[...p.history,{id:crypto.randomUUID(),year:'',description:''}]}));setMessage('');
           }}><Plus size={15}/> 연혁 추가</button></div>
-          <div className="about-manage-items">
+          {loading?<LoadingText>연혁 정보를 불러오는 중입니다</LoadingText>:<div className="about-manage-items">
             {content.history.map((item,index)=><div className="about-manage-item" key={item.id}>
               <div className="about-manage-item-head"><strong>{index+1}번째 연혁</strong><div className="about-manage-actions">
                 <button type="button" disabled={busy||index===0} onClick={()=>reorder<HistoryEntry>('history',index,-1)} aria-label="연혁 위로 이동"><ArrowUp size={15}/></button>
@@ -152,10 +154,10 @@ export default function AboutManagement({onBack,onSaved,registerLeaveGuard}:{onB
                 <label>내용<input maxLength={250} value={item.description} onChange={e=>updateHistory(item.id,'description',e.target.value)}/></label>
               </div>
             </div>)}
-          </div>
+          </div>}
         </section>
-        <div className="about-manage-footer"><button type="button" className="button button-primary" disabled={busy} onClick={()=>void save()}><Save size={16}/> 변경 사항 저장</button></div>
-      </>}
+        <div className="about-manage-footer"><button type="button" className="button button-primary" disabled={busy||loading} onClick={()=>void save()}><Save size={16}/> 변경 사항 저장</button></div>
+      </>
     </div>
     {(error||message)&&<TimedBottomToast
       message={error||message} tone={error?'error':'success'}
