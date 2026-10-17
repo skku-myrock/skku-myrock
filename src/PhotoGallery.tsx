@@ -242,7 +242,7 @@ export default function PhotoGallery({ canRegister }: { canRegister: boolean }) 
     </nav>}
 
 
-    {canRegister && uploadOpen && <GalleryUploadDialog onClose={() => setUploadOpen(false)} onCreated={album=>{
+    {canRegister && uploadOpen && <GalleryUploadDialog onClose={() => setUploadOpen(false)} onCreated={()=>{
       setUploadOpen(false);
       setPreviewPage(1);
       reload();
