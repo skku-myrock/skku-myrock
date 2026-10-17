@@ -70,3 +70,13 @@ test('legacy R2 object reads are not part of the new image path',async()=>{
   assert.match(legacy,/onRequestPost/);
   assert.doesNotMatch(server,/key=about\\\//);
 });
+
+test('officer photo shimmer retains portrait dimensions in the editor',async()=>{
+ const loadingCss=await readFile(new URL('../src/styles/loading-ui.css',import.meta.url),'utf8');
+ assert.match(loadingCss,/\.about-manage-officer-photo \.image-shimmer-frame\{width:70px;height:92px;flex:0 0 70px;object-fit:cover\}/);
+});
+test('about change-save is disabled until the loaded snapshot actually differs',()=>{
+ assert.match(editor,/const hasUnsavedChanges=!loading&&savedSnapshot\.current!==null&&JSON\.stringify\(content\)!==savedSnapshot\.current/);
+ assert.match(editor,/if\(busy\|\|loading\|\|!hasUnsavedChanges\)return/);
+ assert.match(editor,/disabled=\{busy\|\|loading\|\|!hasUnsavedChanges\} onClick=\{\(\)=>void save\(\)\}/);
+});
