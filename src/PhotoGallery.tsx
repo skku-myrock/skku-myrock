@@ -36,6 +36,7 @@ export default function PhotoGallery({ canRegister }: { canRegister: boolean }) 
   const [loadError,setLoadError]=useState('');
   const [message,setMessage]=useState('');
   useToastSignals({error:manageError,message});
+  useToastSignals({error:loadError});
   const [filter, setFilter] = useState<Filter>('전체');
   const [previewPage,setPreviewPage]=useState(1);
   const [totalPages,setTotalPages]=useState(1);
