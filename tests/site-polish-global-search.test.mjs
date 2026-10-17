@@ -63,8 +63,9 @@ test('search input changes do not issue requests until submit; manual pagination
 });
 test('Ddrak launches in a new tab from desktop, mobile and footer activity links',async()=>{
  const [nav,app]=await Promise.all([read('src/app/siteNavigation.ts'),read('src/App.tsx')]);
- assert.match(nav,/\{id:'equipment',label:'장비 대여'\},\{id:'ddrak',label:'뜨락',href:'https:\/\/ddrak.vercel.app\/'\}/);
+ assert.match(nav,/\{id:'equipment',label:'장비 대여'\},\{id:'ddrak',label:'뜨락 바로가기',href:'https:\/\/ddrak.vercel.app\/'\}/);
  assert.equal((app.match(/target="_blank" rel="noopener noreferrer"/g)||[]).length>=3,true);
+ assert.equal((app.match(/<ExternalLink size={13} strokeWidth={2} aria-hidden="true"\/>/g)||[]).length,3);
 });
 test('site images retain shimmer after load errors, without retries, and feature placeholder shadows are kept',async()=>{
  const [img,pages,css]=await Promise.all([read('src/ImageShimmer.tsx'),read('src/pages/SitePages.tsx'),read('src/styles/management.css')]);
@@ -95,4 +96,13 @@ test('supporting copy and finance more buttons are consistent',async()=>{
  assert.match(page,/합주와 공연, 그리고 함께한 순간들을 통해 모여락만의 이야기를 만들어 갑니다/);
  assert.equal((finance.match(/className="list-bottom finance-load-more"/g)||[]).length,2);
  assert.match(css,/\.finance-load-more\{justify-content:flex-end\}/);
+});
+
+test('notice writing action is centered vertically inside the existing heading margin',async()=>{
+ const [css,pages]=await Promise.all([read('src/styles/management.css'),read('src/pages/SitePages.tsx')]);
+ assert.match(css,/\.news-page\{position:relative\}/);
+ assert.match(css,/\.news-page \.news-write-row\{position:absolute;top:-70px;left:0;right:0;height:70px;display:flex;align-items:center;justify-content:flex-end/);
+ assert.match(css,/@media\(max-width:620px\)\{\.news-page \.news-write-row\{top:-45px;height:45px\}\}/);
+ assert.doesNotMatch(css,/\.news-page \.news-write-row\{[^}]*transform:translateY/);
+ assert.match(pages,/searching\?'검색 중입니다\.':'공지사항 목록을 불러오는 중입니다'/);
 });
