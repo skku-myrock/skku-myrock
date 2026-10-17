@@ -408,7 +408,7 @@ export default function NoticeComposer({ onBack, onSaved, initial, registerLeave
             </div>}
         </div>)}
       </div>}
-      {error && <p className="form-error" role="alert">{error}</p>}
+
       {newImagePickerOpen&&imagePicker()}
       <div className="notice-composer-actions">
         <button type="button" className="outline-action" onClick={addText}><Plus size={15}/> 본문 추가</button>
