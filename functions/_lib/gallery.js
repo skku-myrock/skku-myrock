@@ -156,6 +156,15 @@ async function readCategoryPageWithoutIndex(env,{page,pageSize,category}){
  return {albums,page:effectivePage,total,totalPages,pageSize};
 }
 
+/** Firestore may report a missing composite index as HTTP 400, with a
+ * code that differs across API responses. Do not conceal auth/server failures.
+ */
+function isFilterIndexFailure(result){
+ return result.status===400&&result.code!=='PERMISSION_DENIED'
+  ||result.code==='FAILED_PRECONDITION'
+  ||result.status===412&&/index/i.test(result.detail??'');
+}
+
 /** Read one real gallery page. Firestore performs ordering and offset pagination. */
 export async function readGalleryPage(env,{page=1,pageSize=12,category='전체'}={}){
  if(!Number.isSafeInteger(page)||page<1||page>10000)reject('갤러리 페이지 번호가 올바르지 않습니다.');
@@ -167,12 +176,13 @@ export async function readGalleryPage(env,{page=1,pageSize=12,category='전체'}
    structuredAggregationQuery:{structuredQuery:{from,...where},aggregations:[{alias:'total',count:{}}]}
  }});
  if(!count.ok){
-  if(category!=='전체'&&count.code==='FAILED_PRECONDITION')
+  if(category!=='전체'&&isFilterIndexFailure(count))
    return readCategoryPageWithoutIndex(env,{page,pageSize,category});
   throw Error('갤러리 페이지 수 조회 실패 '+count.status);
  }
  const countRows=Array.isArray(count.data)?count.data:[];
  const total=Math.max(0,Number(countRows[0]?.result?.aggregateFields?.total?.integerValue??0));
+ if(total===0)return {albums:[],page:1,total:0,totalPages:1,pageSize};
  const totalPages=Math.max(1,Math.ceil(total/pageSize));
  const effectivePage=Math.min(page,totalPages);
  const query={structuredQuery:{
@@ -181,7 +191,7 @@ export async function readGalleryPage(env,{page=1,pageSize=12,category='전체'}
  }};
  const rows=await googleRequest(env,FIRESTORE_ROOT+':runQuery',{method:'POST',body:query});
  if(!rows.ok){
-  if(category!=='전체'&&rows.code==='FAILED_PRECONDITION')
+  if(category!=='전체'&&isFilterIndexFailure(rows))
    return readCategoryPageWithoutIndex(env,{page,pageSize,category});
   throw Error('갤러리 목록 조회 실패 '+rows.status);
  }
