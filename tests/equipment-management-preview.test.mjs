@@ -37,6 +37,7 @@ test('equipment management uses protected server mutations instead of preview-on
  assert.match(api,/\/api\/equipment/);
  assert.match(backend,/callerForEquipment\(request,env,\{manager:true\}\)/);
  assert.doesNotMatch(manager,/setItems\(/);
- assert.match(fixtures,/status:'대여 가능'/);
+ assert.match(fixtures,/export const EQUIPMENT_STATUSES/);
+ assert.doesNotMatch(fixtures,/demo-guitar|demo-mic|demo-di|demo-stand/);
  assert.match(css,/@media\(max-width:620px\)/);
 });
