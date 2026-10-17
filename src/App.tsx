@@ -24,6 +24,7 @@ import DonationManagement from './DonationManagement';
 import AboutManagement from './AboutManagement';
 import TimedBottomToast from './TimedBottomToast';
 import {showToast,classifyToast} from './toastBus';
+import {useToastSignals} from './useToastSignals';
 import type {ToastDetail} from './toastBus';
 import {purgeDonations} from './donationApi';
 import {purgeNotices,resetClubIntroduction,resetSiteAssets,purgeGallery} from './adminResets';
@@ -282,6 +283,10 @@ function App() {
   const [equipmentLoading,setEquipmentLoading]=useState(true);
   const [equipmentError,setEquipmentError]=useState('');
   const [equipmentBusyId,setEquipmentBusyId]=useState<string|null>(null);
+  useToastSignals({error:noticeError});
+  useToastSignals({error:noticeDetailError});
+  useToastSignals({error:equipmentError});
+  useToastSignals({error:profileError});
   const loadEquipment=useCallback(async(manage:boolean,showLoading=false)=>{
     if(showLoading)setEquipmentLoading(true);
     try{
