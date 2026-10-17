@@ -19,6 +19,7 @@ export default function ExpenseManagement({onBack}:{onBack:()=>void}){
   const [editing,setEditing]=useState<EditState|null>(null);
   const [csvRows,setCsvRows]=useState<FinanceTransactionInput[]>([]);
   const csvRange=transactionCsvDateRange(csvRows);
+  const editingChanged=Boolean(editing&&records.some(row=>row.id===editing.id&&JSON.stringify(editing.record)!==JSON.stringify({dateTime:row.dateTime,type:row.type,amount:row.amount,balance:row.balance,description:row.description})));
   useEffect(()=>{
     let active=true;
     void readExpensesForManagement().then(data=>{if(active)setRecords(data.records);})
@@ -32,7 +33,7 @@ export default function ExpenseManagement({onBack}:{onBack:()=>void}){
   }
   async function save(adding=false){
     const target=adding?add:editing;
-    if(!target||busy)return;
+    if(!target||busy||(!adding&&!editingChanged))return;
     setError('');setMessage('');
     try {
       const record=validateTransaction(target.record);
@@ -138,7 +139,7 @@ export default function ExpenseManagement({onBack}:{onBack:()=>void}){
                     <td><input aria-label="거래금액 수정" required inputMode="numeric" value={editing.record.amount} disabled={busy} onChange={e=>change('amount',e.target.value)}/></td>
                     <td><input aria-label="거래 후 잔액 수정" required inputMode="numeric" value={editing.record.balance} disabled={busy} onChange={e=>change('balance',e.target.value)}/></td>
                     <td><input aria-label="거래내용 수정" required maxLength={240} value={editing.record.description} disabled={busy} onChange={e=>change('description',e.target.value)}/></td>
-                    <td className="finance-row-actions"><button type="button" className="outline-action" disabled={busy} onClick={()=>void save(false)}><Save size={13}/> 저장</button>
+                    <td className="finance-row-actions"><button type="button" className="outline-action" disabled={busy||!editingChanged} onClick={()=>void save(false)}><Save size={13}/> 저장</button>
                       <button type="button" className="outline-action" disabled={busy} onClick={()=>setEditing(null)}>취소</button></td>
                   </tr>:
                   <tr key={record.id}><td>{formatTransactionDate(record.dateTime)}</td><td>{record.type}</td><td>{formatWon(record.amount)}</td>

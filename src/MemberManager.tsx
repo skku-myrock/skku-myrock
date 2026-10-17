@@ -49,6 +49,17 @@ export default function MemberManager({ currentUid, level, notify }: { currentUi
   const [editing, setEditing] = useState<MemberRecord | null>(null);
   const [editMode, setEditMode] = useState<EditMode>('sessions');
   const [positionText, setPositionText] = useState('');
+  const originalEditingMember=members.find(member=>member.uid===editing?.uid);
+  const memberEditChanged=Boolean(editing&&originalEditingMember&&(
+    editMode==='sessions'
+      ? [...editing.sessions].sort().join('|')!==[...originalEditingMember.sessions].sort().join('|')
+      : editMode==='details'
+      ? editing.name.trim()!==originalEditingMember.name||editing.studentId!==originalEditingMember.studentId||
+        editing.generation.trim()!==originalEditingMember.generation||
+        JSON.stringify(splitMemberValues(positionText))!==JSON.stringify(originalEditingMember.positions)
+      : editing.role!==originalEditingMember.role||
+        (editing.role==='member'&&editing.handoverAccess!==originalEditingMember.handoverAccess)
+  ));
 
   async function refresh() {
     if (loadingPageRef.current) return;
@@ -168,7 +179,7 @@ export default function MemberManager({ currentUid, level, notify }: { currentUi
 
   async function saveEdit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!editing || busy) return;
+    if (!editing || busy || !memberEditChanged) return;
     setBusy(true); setError(''); setMessage('');
     try {
       const updated = { ...editing, positions: splitMemberValues(positionText) };
@@ -276,7 +287,7 @@ export default function MemberManager({ currentUid, level, notify }: { currentUi
                   <p className="form-hint">본인과 시스템 관리자 계정의 권한은 변경할 수 없습니다.</p>
                 </>}
                 <div className="member-edit-actions">
-                  <button type="submit" className="button button-primary" disabled={busy || (editMode === 'sessions' && editing.sessions.length === 0)}>{busy ? '저장 중...' : '변경 사항 저장'} <Check size={16}/></button>
+                  <button type="submit" className="button button-primary" disabled={busy || !memberEditChanged || (editMode === 'sessions' && editing.sessions.length === 0)}>{busy ? '저장 중...' : '변경 사항 저장'} <Check size={16}/></button>
                   <button type="button" className="outline-action" disabled={busy} onClick={() => setEditing(null)}>취소</button>
                 </div>
               </form>}

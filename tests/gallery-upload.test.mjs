@@ -36,6 +36,6 @@ test('reuses introduction image warning and JPG PNG WebP source validation, then
   assert.match(dialog,/await updateGalleryAlbum\(initialAlbum,category,title\.trim\(\),urls\)/);
   assert.match(dialog,/initialAlbum\?\.photos\.map/);
   assert.match(dialog,/await publishGalleryAlbum\(category,title\.trim\(\),urls\)/);
-  assert.match(dialog,/disabled=\{busy\|\|!title\.trim\(\)\|\|photos\.length===0\}/);
+  assert.match(dialog,/disabled=\{busy\|\|!albumChanged\|\|!title\.trim\(\)\|\|photos\.length===0\}/);
   assert.match(dialog,/busyRef\.current/);
 });

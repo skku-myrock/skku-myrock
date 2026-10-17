@@ -27,7 +27,7 @@ function NoteEditor({kind,position,title,description,initial}:{kind:Kind;positio
   }catch(e){setError(e instanceof Error?e.message:'저장에 실패했습니다.');}
   finally{setSaving(false);}
  }
- return <section className="handover-editor-panel">
+ return <section className="handover-editor-panel" data-async-busy={saving?"true":undefined}>
   <div className="handover-editor-heading"><div><h2>{title}</h2><p>{description}</p></div></div>
   {kind==='role'&&!position?<p className="handover-editor-help">연결된 직책이 없어 직책별 인수인계를 작성할 수 없습니다.</p>:
    <>

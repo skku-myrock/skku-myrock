@@ -104,7 +104,7 @@ export default function ScheduleCreation({onBack,onCreated,teamMode=false}:{onBa
       <h1>합주 시간표 만들기</h1>
       <p>함께 합주할 날짜와 시간대를 설정해 보세요.</p>
     </div>
-    <section className="container section-block schedule-create-page">
+    <section className="container section-block schedule-create-page" data-async-busy={creating?"true":undefined}>
       <button type="button" className="schedule-back-button" onClick={onBack}>
         <ArrowLeft size={16} aria-hidden="true"/> 합주 시간 조율로 돌아가기
       </button>

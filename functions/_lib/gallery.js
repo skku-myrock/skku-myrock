@@ -22,7 +22,7 @@ export function validateGalleryAlbum(input,publicBase){
     if(typeof photo!=='string'||photo.length>1500)reject('사진 URL이 올바르지 않습니다.');
     let url;try{url=new URL(photo);}catch{reject('사진 URL이 올바르지 않습니다.');}
     if(url.origin!==origin||url.username||url.password||url.search||url.hash||
-      !/^\/gallery\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.webp$/i.test(url.pathname))reject('갤러리 저장소에 업로드한 WebP 사진만 등록할 수 있습니다.');
+      !/^\/(?:gallery|fixtures\/gallery)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.webp$/i.test(url.pathname))reject('갤러리 저장소에 업로드한 WebP 사진만 등록할 수 있습니다.');
     return url.href;
   });
   if(new Set(photos).size!==photos.length)reject('중복 사진을 등록할 수 없습니다.');
