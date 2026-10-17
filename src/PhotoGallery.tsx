@@ -211,7 +211,7 @@ export default function PhotoGallery({ canRegister }: { canRegister: boolean }) 
       </button>}
     </div>
 
-    {loadError && <p className="gallery-load-error" role="alert">{loadError} <button type="button" onClick={()=>void reload()}>다시 시도</button></p>}
+    {loadError && <p className="gallery-load-error"><button type="button" onClick={()=>void reload()}>갤러리 다시 불러오기</button></p>}
     {loading && <LoadingText className="gallery-empty-state">갤러리를 불러오는 중입니다.</LoadingText>}
     {!loading&&!loadError&&shown.length===0&&previewPage===1&&<p className="gallery-empty-state">{albums.length===0?'아직 등록된 갤러리 앨범이 없습니다.':'이 분류에 등록된 앨범이 없습니다.'}</p>}
     <div className="gallery-album-grid">
