@@ -35,6 +35,7 @@ export default function EquipmentManager({items,busy,loading,error,onRefresh,onM
  const pending=items.filter(item=>item.status==='대여 승인 대기중');
  const returning=items.filter(item=>item.status==='반납 확인중');
  const borrowed=items.filter(item=>item.status==='대여중');
+ const equipmentChanged=creating||Boolean(editingId&&items.some(item=>item.id===editingId&&(name.trim()!==item.name||product.trim()!==item.product||imageUrl.trim()!==(item.imageUrl??'')||imageFile!==null)));
  const begin=(item?:EquipmentItem)=>{
   setCreating(!item);setEditingId(item?.id??null);setCorrectingId(null);
   setName(item?.name??'');setProduct(item?.product??'');setImageUrl(item?.imageUrl??'');setImageFile(null);
@@ -47,7 +48,7 @@ export default function EquipmentManager({items,busy,loading,error,onRefresh,onM
   catch(e){setLocalError(e instanceof Error?e.message:'장비 관리 요청에 실패했습니다.');return false;}
  }
  async function save(event:FormEvent<HTMLFormElement>){
-  event.preventDefault();if(busy||saving||!name.trim()||!product.trim())return;
+  event.preventDefault();if(busy||saving||!name.trim()||!product.trim()||!equipmentChanged)return;
   setSaving(true);setLocalError('');setFeedback('');
   try{
    const uploaded=imageFile?await uploadImagesBatch([imageFile],'equipment'):null;
@@ -88,7 +89,7 @@ export default function EquipmentManager({items,busy,loading,error,onRefresh,onM
  </div>;
  return <>
   <PageHeading tag="EQUIPMENT MANAGEMENT" title="장비 관리" description="장비별 대여 현황, 승인 대기열 및 반납 요청을 관리합니다."/>
-  <section className="container section-block equipment-manage-page">
+  <section className="container section-block equipment-manage-page" data-async-busy={busy||saving?"true":undefined}>
    <button type="button" className="schedule-back-button" onClick={onBack}><ArrowLeft size={16}/> 장비 목록으로 돌아가기</button>
    <div className="equipment-stats" aria-label="장비 현황">
     <div><Package size={18}/><span>전체 장비</span><strong>{items.length}</strong></div>
@@ -143,7 +144,7 @@ export default function EquipmentManager({items,busy,loading,error,onRefresh,onM
        <small>JPG·PNG·WebP, 원본 30MB 이하. 저장 시 WebP로 변환하여 업로드합니다.</small>
       </div>
      </div>
-     <div className="equipment-manage-form-actions"><button type="button" className="outline-action" onClick={cancel} disabled={saving||busy}>취소</button><button type="submit" className="button button-primary" disabled={busy||saving}><Save size={15}/> {saving?'저장 중…':creating?'추가하기':'저장하기'}</button></div>
+     <div className="equipment-manage-form-actions"><button type="button" className="outline-action" onClick={cancel} disabled={saving||busy}>취소</button><button type="submit" className="button button-primary" disabled={busy||saving||!equipmentChanged}><Save size={15}/> {saving?'저장 중…':creating?'추가하기':'저장하기'}</button></div>
     </form>}
     {loading?<LoadingText>장비 현황을 불러오는 중입니다.</LoadingText>:items.length===0?<p className="equipment-manage-empty">등록된 장비가 없습니다.</p>:
      <div className="equipment-manage-list">{items.map(item=><div className="equipment-manage-item" key={item.id}>
