@@ -1,3 +1,4 @@
+import {useToastFeedback} from './toast';
 import { useEffect, useRef, useState } from 'react';
 import type { ChangeEvent, DragEvent } from 'react';
 import { ArrowDown, ArrowLeft, ArrowUp, GripVertical, ImagePlus, Link, Link2Off, Plus, RotateCcw, Trash2 } from 'lucide-react';
@@ -25,6 +26,7 @@ export default function NoticeComposer({ onBack, onSaved, initial, registerLeave
   });
   const [preview, setPreview] = useState(false);
   const [error, setError] = useState('');
+  useToastFeedback(error,'error');
   const [busy,setBusy]=useState(false);
   const [dimensionDrafts,setDimensionDrafts]=useState<Record<string,string>>({});
   const [dimensionErrors,setDimensionErrors]=useState<Record<string,string>>({});
