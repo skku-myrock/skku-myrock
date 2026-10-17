@@ -1,3 +1,4 @@
+import {useToastFeedback,showToast} from '../toast';
 import {useEffect,useState} from 'react';
 import type {FormEvent,ReactNode} from 'react';
 import type {User} from 'firebase/auth';
@@ -292,6 +293,7 @@ export function LoginDialog({ close, notify }: { close: () => void; notify: Noti
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  useToastFeedback(error,'error');
   useEffect(() => { const onKey = (e: KeyboardEvent) => { if(e.key === 'Escape') close(); }; window.addEventListener('keydown',onKey); return ()=>window.removeEventListener('keydown',onKey); },[close]);
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -319,7 +321,7 @@ export function LoginDialog({ close, notify }: { close: () => void; notify: Noti
       <form onSubmit={submit}>
         <label>학번<input type="text" inputMode="numeric" maxLength={10} autoComplete="username" placeholder="학번 10자리" value={studentId} onChange={event=>setStudentId(event.target.value.replace(/\D/g,''))} required /></label>
         <label>비밀번호<input type="password" autoComplete="current-password" placeholder="비밀번호" value={password} onChange={event=>setPassword(event.target.value)} required /></label>
-        {error && <p className="form-error" role="alert">{error}</p>}
+
         <button type="submit" className="button button-primary" disabled={busy}>{busy?'로그인 중...':'로그인'} <ArrowRight size={17}/></button>
       </form>
       <p className="login-note"><CircleHelp size={15}/> 로그인에 문제가 있거나 비밀번호를 잊었다면 운영진에게 문의해 주세요. 로그인 후 내 정보에서 비밀번호를 변경할 수 있습니다.</p>
@@ -337,7 +339,7 @@ export function Profile({ user, profile, pending, error, notify, onSaved }: {use
   const toggle = (item: Session) => setSelected(prev=>prev.includes(item)?prev.filter(x=>x!==item):[...prev,item]);
   async function save() {
     if (!profile || !user) return;
-    if (selected.length === 0) {notify('세션을 적어도 하나 선택해 주세요.');return;}
+    if (selected.length === 0) {showToast('세션을 적어도 하나 선택해 주세요.','warning');return;}
     setSaving(true);
     try {
       await updateDoc(doc(db,'users',user.uid),{sessions:selected,updatedAt:serverTimestamp()});
@@ -345,7 +347,7 @@ export function Profile({ user, profile, pending, error, notify, onSaved }: {use
       notify('세션 정보가 저장되었습니다.');
     } catch (err) {
       console.error('프로필 변경 오류',err);
-      notify('저장하지 못했습니다. Firestore 보안 규칙과 네트워크를 확인해 주세요.');
+      showToast('저장하지 못했습니다. Firestore 보안 규칙과 네트워크를 확인해 주세요.','error');
     } finally {setSaving(false);}
   }
   return <><PageHeading tag="MY PROFILE" title="내 정보" description="등록된 회원 정보를 확인하고, 세션과 비밀번호를 변경할 수 있습니다."/>
