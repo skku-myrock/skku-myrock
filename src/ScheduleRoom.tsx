@@ -289,7 +289,7 @@ export default function ScheduleRoom({id,onBack,registerLeaveGuard}:{
       pattern="[0-9]{10}" value={studentId} onChange={e=>{setStudentId(e.target.value);setInviteFeedback('');}}
       placeholder="학번을 입력하세요"/>
       <button type="submit" className={inviteBusy?"button button-primary is-fetching":"button button-primary"} disabled={inviteBusy||!/^[0-9]{10}$/.test(studentId)}>초대하기</button></div>
-     {inviteFeedback&&<p className="schedule-roster-invalid-id" role="status">{inviteFeedback}</p>}
+     
     </form>
     <section className="schedule-roster-pending" aria-label="초대 대기 명단">
      <h3>초대 요청 명단 ({pendingInvites.length})</h3>
