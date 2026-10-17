@@ -279,7 +279,7 @@ export default function PhotoGallery({ canRegister }: { canRegister: boolean }) 
           </div>
         </header>
 
-        {manageError&&<p className="gallery-manage-error" role="alert">{manageError}</p>}
+        
         <div className="gallery-lightbox-layout">
           <div className="gallery-lightbox-left">
             <div className="gallery-photo-stage"
