@@ -1,5 +1,5 @@
+import {useToastFeedback} from './toast';
 import { useEffect, useState } from 'react';
-import TimedBottomToast from './TimedBottomToast';
 import type { FormEvent } from 'react';
 import { getOwnDonations, getPublicDonations } from './donationApi';
 import { displayAmount, displayDate, sumDonationAmounts } from './donationData';
@@ -31,6 +31,8 @@ export function FinanceLanding({ onDonations, onExpenses, canEditAccount, logged
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState('');
   const [accountMessage,setAccountMessage]=useState('');
+  useToastFeedback(error,'error');
+  useToastFeedback(accountMessage,'success');
   const accountChanged=Boolean(editing&&account&&(editing.bank.trim()!==account.bank||editing.number.trim()!==account.number||editing.holder.trim()!==account.holder));
   useEffect(()=>{
     let active=true;
@@ -71,7 +73,7 @@ export function FinanceLanding({ onDonations, onExpenses, canEditAccount, logged
     <FinanceHeading eyebrow="SUPPORT & FINANCE" title="후원 · 회계"
       description="모여락의 다음 무대를 함께 만들어 주시는 모든 분께 감사드립니다." />
 
-    {accountMessage&&<TimedBottomToast tone="warning" message={accountMessage} onClose={()=>setAccountMessage('')}/>}
+
 
     <section className="container section-block finance-support-intro">
       <span className="eyebrow">SUPPORT MYROCK</span>
