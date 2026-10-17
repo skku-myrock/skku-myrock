@@ -6,7 +6,7 @@ import {doc,getDoc} from 'firebase/firestore';
 import {useBlocker,useLocation,useNavigate as useRouterNavigate,Route,Routes,Navigate as RouterRedirect} from 'react-router-dom';
 import {auth,db} from './firebase';
 import type {MemberProfile} from './firebase';
-import {ArrowRight,ChevronDown,Trash2,CircleHelp,LockKeyhole,Mail,Menu,X,UserRound,LogOut} from 'lucide-react';
+import {ArrowRight,ChevronDown,Trash2,LockKeyhole,Mail,Menu,X,UserRound,LogOut} from 'lucide-react';
 import logo from './logo-transparent.png';
 import MemberManager from './MemberManager';
 import EquipmentManager from './EquipmentManager';
