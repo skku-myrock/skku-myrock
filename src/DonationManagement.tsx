@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import LoadingText from './LoadingText';
 import type { ChangeEvent } from 'react';
 import { ArrowLeft, Download, Plus, Save, Upload } from 'lucide-react';
 import { getDonationManagement, importDonations, saveDonation, saveAnonymousPeople } from './donationApi';
@@ -120,7 +121,18 @@ export default function DonationManagement({onBack}:{onBack:()=>void}) {
       <button type="button" className="finance-return-link" onClick={onBack}><ArrowLeft size={16}/> 후원 내역으로 돌아가기</button>
       {error&&<p role="alert" className="form-error">{error}</p>}
       {message&&<p role="status" className="finance-manager-success">{message}</p>}
-      {loading?<p>후원 기록을 불러오고 있습니다.</p>:!data?<p>후원 기록을 불러오지 못했습니다. 새로고침해 주세요.</p>:<>
+      {loading?<div className="finance-manager-loading-panels">
+        <section className="finance-manager-section">
+         <div className="finance-manager-heading"><div><h2>후원 기록</h2><p>내부 기록에는 익명 처리된 후원자의 원본 이름과 학번도 보관됩니다.</p></div></div>
+         <div className="finance-manager-table-wrap"><table className="finance-manager-table finance-donations-admin">
+          <thead><tr><th>후원일</th><th>후원자명</th><th>학번</th><th>후원금액</th><th>익명</th><th>관리</th></tr></thead>
+          <tbody><tr><td colSpan={6}><LoadingText className="is-inline">후원 기록을 불러오고 있습니다.</LoadingText></td></tr></tbody>
+         </table></div>
+        </section>
+        <section className="finance-manager-section"><div className="finance-manager-heading"><div><h2>익명자 명단 관리</h2><p>이름과 학번을 등록해 익명 처리할 수 있습니다.</p></div></div>
+         <div className="finance-manager-anonymous-list"><LoadingText className="is-compact">익명자 명단을 불러오는 중입니다</LoadingText></div>
+        </section>
+       </div>:!data?<p>후원 기록을 불러오지 못했습니다. 새로고침해 주세요.</p>:<>
         <section className="finance-manager-section">
           <div className="finance-manager-heading"><div><h2>후원 기록</h2><p>내부 기록에는 익명 처리된 후원자의 원본 이름과 학번도 보관됩니다.</p></div>
             <div className="finance-manager-actions">
