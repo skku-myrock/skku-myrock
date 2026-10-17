@@ -11,6 +11,7 @@ import { initialImageDimensions, MAX_IMAGE_DIMENSION, resizeImageDimensions, res
 import { reorderGalleryImages, shiftGalleryImage } from './noticeGalleryOrder';
 import type { DimensionAxis } from './noticeImageSize';
 import NoticeImageCarousel from './NoticeImageCarousel';
+import ImageShimmer from './ImageShimmer';
 import type { NoticeSlide } from './NoticeImageCarousel';
 
 type ImageBlock = { id: number; kind: 'image'; url: string; name: string; width: number; height: number; ratioLocked: boolean; naturalWidth: number; naturalHeight: number };
@@ -313,7 +314,7 @@ export default function NoticeComposer({ onBack, onSaved, initial, registerLeave
           ? <NoticeImageCarousel key={block.id} label="작성 중인 이미지 슬라이드 미리보기" slides={gallerySlides(block.images)}/>
           : <div key={block.id} className="notice-composer-preview-image"
               style={{ width: block.width || 320, aspectRatio: block.width && block.height ? `${block.width} / ${block.height}` : '4 / 3' }}>
-              <img className="notice-composer-resized-image" src={block.url} alt={block.name} onLoad={event => setNaturalSize(block.id, event.currentTarget.naturalWidth, event.currentTarget.naturalHeight)}/>
+              <ImageShimmer key={block.url} className="notice-composer-resized-image" src={block.url} alt={block.name} onLoad={(width,height)=>setNaturalSize(block.id,width,height)}/> 
             </div>)}
       </div> : <div className="notice-composer-blocks">
         {blocks.map((block, index) => <div key={block.id} className="notice-composer-block">
@@ -347,7 +348,7 @@ export default function NoticeComposer({ onBack, onSaved, initial, registerLeave
                       title="드래그해서 이미지 순서 변경" aria-label={(imageIndex + 1) + '번째 이미지 순서 드래그'}
                       onDragStart={event => startSlideDrag(event, block.id, image.id)}
                       onDragEnd={() => { draggingSlide.current = null; setDropTarget(null); }}><GripVertical size={17}/></button>
-                    <img className="notice-composer-gallery-thumb" src={image.url} alt="" draggable={false}/>
+                    <ImageShimmer key={image.url} className="notice-composer-gallery-thumb" src={image.url} alt={image.name+' 미리보기'} draggable={false}/>
                     <strong className="notice-composer-gallery-file-label">
                       <span className="notice-composer-gallery-image-number">{imageIndex + 1}번째 이미지</span>
                       <span className="notice-composer-gallery-filename" title={image.name}>{image.name}</span>
