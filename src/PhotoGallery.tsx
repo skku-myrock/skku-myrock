@@ -1,3 +1,4 @@
+import {useToastFeedback} from './toast';
 import { useEffect, useRef, useState } from 'react';
 import type { KeyboardEvent as ReactKeyboardEvent, MouseEvent as ReactMouseEvent, TouchEvent as ReactTouchEvent } from 'react';
 import { ArrowLeft, ArrowRight, ArrowUpRight, Image as ImageIcon, MoreHorizontal, Plus, Trash2, Pencil, X } from 'lucide-react';
@@ -35,6 +36,9 @@ export default function PhotoGallery({ canRegister }: { canRegister: boolean }) 
   const [reloadIndex,setReloadIndex]=useState(0);
   const [loadError,setLoadError]=useState('');
   const [message,setMessage]=useState('');
+  useToastFeedback(message,message.includes('지연')?'warning':'success');
+  useToastFeedback(loadError,'error');
+  useToastFeedback(manageError,'error');
   const [filter, setFilter] = useState<Filter>('전체');
   const [previewPage,setPreviewPage]=useState(1);
   const [activeAlbum, setActiveAlbum] = useState<PhotoAlbum | null>(null);
@@ -247,7 +251,7 @@ export default function PhotoGallery({ canRegister }: { canRegister: boolean }) 
 
     {canRegister&&editingAlbum&&<GalleryUploadDialog initialAlbum={editingAlbum}
       onClose={closeEditor} onUpdated={onAlbumUpdated}/>}
-    {message&&<div className="site-bottom-toast is-success" role="status" aria-live="polite"><span>{message}</span><button type="button" aria-label="알림 닫기" onClick={()=>setMessage('')}>닫기</button></div>}
+
     {activeAlbum && <div className="gallery-lightbox-backdrop" onMouseDown={event => {
       if (event.target === event.currentTarget) closeAlbum();
     }}>
