@@ -65,8 +65,9 @@ export async function onRequestPost({request,env}){
     item.borrower=null;item.returnRequestedAt='';item.queue=[];
    }else if(action==='force-loan'){
     if(item.borrower)reject('현재 대여를 종료한 뒤 새 대여자를 지정해 주세요.',409);
+    const existing=item.queue.find(q=>q.uid===member.uid);
     item.queue=item.queue.filter(q=>q.uid!==member.uid);
-    item.borrower={...member,requestedAt:time(),borrowedAt:time()};
+    item.borrower={...member,requestedAt:existing?.requestedAt??time(),borrowedAt:time()};
     item.returnRequestedAt='';
     // All other pending requests stay in their original order.
    }else if(action==='add-request'){
