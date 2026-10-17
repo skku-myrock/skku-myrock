@@ -182,10 +182,10 @@ function App() {
       const deleted = await purgeAllOtherMembers(setRosterResetDeleted);
       setRosterRevision(previous => previous + 1);
       navigate('members');
-      window.alert('명단 초기화가 완료되었습니다. 본인을 제외하고 삭제한 부원: ' + deleted + '명');
+      showToast('명단 초기화가 완료되었습니다. 본인을 제외하고 삭제한 부원: ' + deleted + '명');
     } catch (error) {
       const message = error instanceof Error ? error.message : '알 수 없는 서버 오류';
-      window.alert('명단 초기화가 중단되었습니다.\n' + message + '\n\nFirebase Auth 및 Firestore의 실제 상태를 확인한 뒤 다시 시도해 주세요.');
+      showToast('명단 초기화가 중단되었습니다.\n' + message + '\n\nFirebase Auth 및 Firestore의 실제 상태를 확인한 뒤 다시 시도해 주세요.');
       setRosterRevision(previous => previous + 1);
     } finally {
       setRosterResetting(false);
@@ -205,9 +205,9 @@ function App() {
       if(!complete)throw Error('초기화 허용 처리 횟수를 초과했습니다.');
       setFinanceRevision(prev=>prev+1);
       navigate('donations');
-      window.alert('후원 · 회계 초기화가 완료되었습니다. 삭제된 기록: '+removed+'건');
+      showToast('후원 · 회계 초기화가 완료되었습니다. 삭제된 기록: '+removed+'건');
     }catch(error) {
-      window.alert('후원 · 회계 초기화가 중단되었습니다. '+(error instanceof Error?error.message:'서버 오류')+'\n관리 화면에서 남은 데이터를 확인해 주세요.');
+      showToast('후원 · 회계 초기화가 중단되었습니다. '+(error instanceof Error?error.message:'서버 오류')+'\n관리 화면에서 남은 데이터를 확인해 주세요.');
       setFinanceRevision(prev=>prev+1);
     }finally{setFinanceResetting(false);}
   }
@@ -224,9 +224,9 @@ function App() {
       }
       if(!done)throw Error('초기화 요청 횟수를 초과했습니다.');
       setNotices([]);setNoticeCursor(null);setNoticeDetail(null);setNoticeError('');navigate('news');
-      window.alert('공지사항과 notices/ 사진 초기화가 완료되었습니다. 삭제된 공지사항: '+removed+'건');
+      showToast('공지사항과 notices/ 사진 초기화가 완료되었습니다. 삭제된 공지사항: '+removed+'건');
     }catch(error){
-      window.alert('공지사항 초기화가 중단되었습니다. 지금까지 삭제한 공지사항: '+removed+'건. '+(error instanceof Error?error.message:'서버 오류'));
+      showToast('공지사항 초기화가 중단되었습니다. 지금까지 삭제한 공지사항: '+removed+'건. '+(error instanceof Error?error.message:'서버 오류'));
       void listNoticesPage().then(result=>{setNotices(result.notices);setNoticeCursor(result.nextPageToken);}).catch(()=>{});
     }finally{setNoticeResetting(false);}
   }
@@ -239,9 +239,9 @@ function App() {
       invalidateAboutCache();
       setAboutRevision(v=>v+1);
       navigate('about');
-      window.alert('모여락 소개 내용이 28기 운영진과 1998년·2023년 연혁으로 초기화되었습니다. 메인·동아리 소개·운영진 사진 URL과 GitHub 파일은 그대로 유지됩니다.');
+      showToast('모여락 소개 내용이 28기 운영진과 1998년·2023년 연혁으로 초기화되었습니다. 메인·동아리 소개·운영진 사진 URL과 GitHub 파일은 그대로 유지됩니다.');
     }catch(error){
-      window.alert('모여락 소개 초기화에 실패했습니다. Firestore 상태를 확인해 주세요. '+(error instanceof Error?error.message:'서버 오류'));
+      showToast('모여락 소개 초기화에 실패했습니다. Firestore 상태를 확인해 주세요. '+(error instanceof Error?error.message:'서버 오류'));
     }finally{setAboutResetting(false);}
   }
   async function resetAssets(){
@@ -252,9 +252,9 @@ function App() {
       await resetSiteAssets();
       invalidateAboutCache();
       setAboutRevision(v=>v+1);
-      window.alert('site/ 에셋과 Firebase의 메인·동아리 소개·운영진 사진 URL이 초기화되었습니다. 기존 직접 이미지 URL은 Cloudflare 캐시에 잠시 남을 수 있습니다.');
+      showToast('site/ 에셋과 Firebase의 메인·동아리 소개·운영진 사진 URL이 초기화되었습니다. 기존 직접 이미지 URL은 Cloudflare 캐시에 잠시 남을 수 있습니다.');
     }catch(error){
-      window.alert('에셋 초기화가 완료되지 않았습니다. GitHub 파일 정리가 먼저 완료되었을 수도 있으니 저장소를 확인하고 다시 시도해 주세요. '+(error instanceof Error?error.message:'서버 오류'));
+      showToast('에셋 초기화가 완료되지 않았습니다. GitHub 파일 정리가 먼저 완료되었을 수도 있으니 저장소를 확인하고 다시 시도해 주세요. '+(error instanceof Error?error.message:'서버 오류'));
     }finally{setAssetResetting(false);}
   }
   async function resetGallery(){
@@ -271,10 +271,10 @@ function App() {
       }
       if(!done)throw Error('처리 한도를 초과했습니다. 초기화를 다시 실행해 주세요.');
       setGalleryRevision(value=>value+1);
-      window.alert('갤러리 초기화를 완료했습니다. 삭제한 앨범: '+deleted+'개. 이미지 repo gallery/ 파일도 정리했습니다.');
+      showToast('갤러리 초기화를 완료했습니다. 삭제한 앨범: '+deleted+'개. 이미지 repo gallery/ 파일도 정리했습니다.');
     }catch(error){
       setGalleryRevision(value=>value+1);
-      window.alert('갤러리 초기화가 중단되었습니다. 삭제한 앨범: '+deleted+'개. 다시 초기화를 실행하면 남은 데이터를 정리합니다. '+(error instanceof Error?error.message:'서버 오류'));
+      showToast('갤러리 초기화가 중단되었습니다. 삭제한 앨범: '+deleted+'개. 다시 초기화를 실행하면 남은 데이터를 정리합니다. '+(error instanceof Error?error.message:'서버 오류'));
     }finally{setGalleryResetting(false);}
   }
   const isDeveloperSuperadmin=Boolean(user && profile?.superadmin && hasSystemClaim);
