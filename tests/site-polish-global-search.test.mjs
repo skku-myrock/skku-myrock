@@ -80,7 +80,8 @@ test('temporary default equipment is removed from server and client, and other r
  const [equipment,api,client,app,defaults]=await Promise.all([
   read('functions/_lib/equipment.js'),read('functions/api/equipment/purge.js'),
   read('src/adminResets.ts'),read('src/App.tsx'),read('src/equipmentDemo.ts')]);
- assert.doesNotMatch(equipment,/DEFAULT_EQUIPMENT|defaultMap|demo-guitar/);
+ assert.doesNotMatch(equipment,/DEFAULT_EQUIPMENT|defaultMap/);
+ assert.match(equipment,/isRetiredSample/);
  assert.doesNotMatch(defaults,/demo-guitar|demo-mic|demo-di|demo-stand/);
  assert.match(api,/assertAccess\(request,env,'president'\)/);
  assert.match(api,/!caller.superadmin/);
