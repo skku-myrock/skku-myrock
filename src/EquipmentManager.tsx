@@ -39,8 +39,8 @@ export default function EquipmentManager({items,busy,loading,error,onRefresh,onM
  const cancel=()=>{setCreating(false);setEditingId(null);setImageFile(null);};
  async function perform(action:EquipmentManageAction,input:EquipmentManageInput,label:string){
   setLocalError('');setFeedback('');
-  try{await onMutate(action,input);setFeedback(label);if(['add','edit','delete'].includes(action))cancel();}
-  catch(e){setLocalError(e instanceof Error?e.message:'장비 관리 요청에 실패했습니다.');}
+  try{await onMutate(action,input);setFeedback(label);if(['add','edit','delete'].includes(action))cancel();return true;}
+  catch(e){setLocalError(e instanceof Error?e.message:'장비 관리 요청에 실패했습니다.');return false;}
  }
  async function save(event:FormEvent<HTMLFormElement>){
   event.preventDefault();if(busy||saving||!name.trim()||!product.trim())return;
@@ -70,8 +70,8 @@ export default function EquipmentManager({items,busy,loading,error,onRefresh,onM
   if(correctionAction==='force-loan'&&item.queueLength>0&&!window.confirm('대기열에 다른 신청자가 있어도 지정한 학번으로 대여 처리합니다. 다른 신청은 대기열에 유지됩니다. 계속하시겠습니까?'))return;
   setSaving(true);
   try{
-   await perform(correctionAction,{id:item.id,...(['force-loan','add-request'].includes(correctionAction)?{studentId}:{})},'장비 대여 상태와 관련 정보를 정정했습니다.');
-   setCorrectingId(null);setStudentId('');
+   const done=await perform(correctionAction,{id:item.id,...(['force-loan','add-request'].includes(correctionAction)?{studentId}:{})},'장비 대여 상태와 관련 정보를 정정했습니다.');
+   if(done){setCorrectingId(null);setStudentId('');}
   }finally{setSaving(false);}
  }
  const details=(item:EquipmentItem)=><div className="equipment-manage-item-info">
