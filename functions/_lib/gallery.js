@@ -137,14 +137,35 @@ export async function listGalleryPage(env,{page=1,category='전체'}={}){
  const total=Number(rows.find(row=>row.result?.aggregateFields?.albumCount)?.result.aggregateFields.albumCount.integerValue??0);
  if(!Number.isSafeInteger(total)||total<0)throw Error('앨범 수 응답이 올바르지 않습니다.');
  const pageSize=12,totalPages=Math.max(1,Math.ceil(total/pageSize));
- if(page>totalPages)reject('존재하지 않는 갤러리 페이지입니다.',404);
- if(!total)return {albums:[],page,total,totalPages,pageSize};
+ const resolvedPage=Math.min(page,totalPages);
+ if(!total)return {albums:[],page:resolvedPage,total,totalPages,pageSize};
  const query={structuredQuery:{
-  from,...(where?{where}:{}),orderBy,offset:(page-1)*pageSize,limit:pageSize,
+  from,...(where?{where}:{}),orderBy,offset:(resolvedPage-1)*pageSize,limit:pageSize,
  }};
  const result=await googleRequest(env,FIRESTORE_ROOT+':runQuery',{method:'POST',body:query});
- if(!result.ok)throw Error('갤러리 목록 조회 실패 '+result.status);
+ if(!result.ok){
+  // Firestore can require a composite index for category + createdAt. For
+  // sites without that index, scan ordered chunks and filter on the server;
+  // the browser still downloads only the twelve requested albums.
+  if(category!=='전체'&&(result.code==='FAILED_PRECONDITION'||result.detail?.includes('index'))){
+   const selected=[];let offset=0;
+   const stop=resolvedPage*pageSize;
+   for(let attempt=0;attempt<100&&selected.length<stop;attempt++){
+    const scanned=await googleRequest(env,FIRESTORE_ROOT+':runQuery',{
+     method:'POST',body:{structuredQuery:{from,orderBy,offset,limit:100}},
+    });
+    if(!scanned.ok)throw Error('갤러리 목록 조회 실패 '+scanned.status);
+    const docs=(Array.isArray(scanned.data)?scanned.data:[])
+      .filter(row=>row.document).map(row=>galleryFromDoc(row.document));
+    for(const album of docs)if(album.category===category)selected.push(album);
+    offset+=docs.length;
+    if(docs.length<100)break;
+   }
+   return {albums:selected.slice((resolvedPage-1)*pageSize,stop),page:resolvedPage,total,totalPages,pageSize};
+  }
+  throw Error('갤러리 목록 조회 실패 '+result.status);
+ }
  const records=Array.isArray(result.data)?result.data:[];
  const albums=records.filter(row=>row.document).map(row=>galleryFromDoc(row.document));
- return {albums,page,total,totalPages,pageSize};
+ return {albums,page:resolvedPage,total,totalPages,pageSize};
 }
