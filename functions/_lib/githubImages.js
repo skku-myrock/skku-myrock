@@ -2,6 +2,7 @@ import {reject} from './shared.js';
 import {getAbout} from './aboutContent.js';
 import {listNotices} from './notices.js';
 import {listGalleryAlbums} from './gallery.js';
+import {listEquipment} from './equipment.js';
 const REPO='https://api.github.com/repos/skku-myrock/myrock-images/';
 const FOLDERS=new Set(['site','notices','gallery']);
 async function github(env,path,method='GET',body){
@@ -124,4 +125,45 @@ export async function deleteUnusedGalleryImages(env,obsoleteUrls){
     }
   }
   return {deleted:0};
+}
+
+/** Remove obsolete equipment photos after Firestore has been saved.
+ * Only generated equipment/<uuid>.webp URLs can be deleted.
+ * Re-read equipment documents before deleting to avoid removing live assets.
+ */
+export async function deleteUnusedEquipmentImages(env,obsoleteUrls){
+ if(!Array.isArray(obsoleteUrls)||!obsoleteUrls.length)return {deleted:0};
+ if(!env.MYROCK_IMAGES_PUBLIC_BASE_URL)throw Error('이미지 공개 주소 설정이 없습니다.');
+ const base=new URL(env.MYROCK_IMAGES_PUBLIC_BASE_URL);
+ if(base.protocol!=='https:'||base.pathname!=='/'||base.search||base.hash)throw Error('이미지 공개 주소 설정이 올바르지 않습니다.');
+ const candidates=new Map();
+ for(const value of obsoleteUrls){
+  if(typeof value!=='string')continue;
+  let url;try{url=new URL(value);}catch{continue;}
+  const path=url.pathname.slice(1);
+  if(url.origin===base.origin&&!url.search&&!url.hash&&
+    /^equipment\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.webp$/i.test(path))
+   candidates.set(path,url.href);
+ }
+ if(!candidates.size)return {deleted:0};
+ const items=await listEquipment(env);
+ const referenced=new Set(items.map(item=>item.imageUrl).filter(Boolean));
+ for(const [path,url] of candidates)if(referenced.has(url))candidates.delete(path);
+ if(!candidates.size)return {deleted:0};
+ for(let attempt=0;attempt<3;attempt++){
+  const head=await github(env,'git/ref/heads/main');
+  const previous=await github(env,'git/commits/'+head.object.sha);
+  const treeListing=await github(env,'git/trees/'+previous.tree.sha+'?recursive=1');
+  if(treeListing.truncated)throw Error('이미지 저장소 목록이 불완전하여 정리를 연기했습니다.');
+  const names=new Set((treeListing.tree??[]).filter(entry=>entry.type==='blob').map(entry=>entry.path));
+  const entries=[...candidates.keys()].filter(path=>names.has(path)).map(path=>({path,mode:'100644',type:'blob',sha:null}));
+  if(!entries.length)return {deleted:0};
+  const tree=await github(env,'git/trees','POST',{base_tree:previous.tree.sha,tree:entries});
+  const commit=await github(env,'git/commits','POST',{message:'assets(equipment): remove '+entries.length+' replaced photos',tree:tree.sha,parents:[head.object.sha]});
+  try{
+   await github(env,'git/refs/heads/main','PATCH',{sha:commit.sha,force:false});
+   return {deleted:entries.length,commit:commit.sha};
+  }catch(error){if(error?.status!==409||attempt===2)throw error;}
+ }
+ return {deleted:0};
 }
