@@ -62,7 +62,7 @@ export function Home({ navigate, openNotice, notices, noticeLoading }: { navigat
         <p>성균관대학교 중앙 밴드 동아리 모여락입니다.<br />우리의 음악과 이야기를 이곳에 담습니다.</p>
         <TextLink onClick={() => navigate('about')}>동아리 소개</TextLink>
       </div>
-      <div className="hero-media">{homeImage?<ImageShimmer key={homeImage} className="home-hero-image" src={homeImage} alt="메인 페이지 사진" loading="eager" fetchPriority="high"/>:homeImage===null?<div className="home-hero-image image-pending image-shimmer-frame is-image-loading" role="status" aria-label="메인 페이지 사진을 불러오는 중"><span className="image-shimmer-band" aria-hidden="true"/></div>:<Placeholder label="메인 페이지 사진" />}</div>
+      <div className="hero-media">{homeImage?<ImageShimmer key={homeImage} className="home-hero-image" src={homeImage} alt="메인 페이지 사진" loading="eager" fetchPriority="high"/>:homeImage===null?<div className="home-hero-image image-pending image-shimmer-frame is-image-loading" role="status" aria-label="메인 페이지 사진을 불러오는 중"><span className="image-shimmer-band" aria-hidden="true"/></div>:<Placeholder label="메인 페이지 사진" className="home-hero-image"/>}</div>
     </section>
     <section className="container home-updates">
       <SectionHeading title="공지사항" aside="모여락의 새로운 소식" action="전체 보기" onAction={() => navigate('news')} />
@@ -94,8 +94,8 @@ export function About({ navigate, canEdit }: { navigate: Navigate;canEdit:boolea
       {canEdit&&<button type="button" className="admin-only-action" onClick={()=>navigate('about-manage')}>정보 수정</button>}
       {loadError&&<p role="status" className="about-load-error">{loadError}</p>}
     </section>
-    <section className="container about-intro section-block"><div className="about-description"><h2>음악을 좋아하는 사람들이<br />함께하는 공간</h2><p>보컬, 기타, 베이스, 드럼, 키보드. 서로 다른 소리로 모여 한 곡을 완성합니다. 이곳에는 동아리 소개와 활동 이야기가 정리될 예정입니다.</p><TextLink onClick={() => navigate('gallery')}>활동 사진 보러 가기</TextLink></div>
-      {content.heroImage?<ImageShimmer key={content.heroImage} className="about-hero-image" src={content.heroImage} alt="동아리 소개 사진" loading="eager" fetchPriority="high"/>:contentLoaded?<Placeholder label="동아리 대표 사진"/>:<div className="about-hero-image image-pending image-shimmer-frame is-image-loading" role="status" aria-label="동아리 소개 사진을 불러오는 중"><span className="image-shimmer-band" aria-hidden="true"/></div>}
+    <section className="container about-intro section-block"><div className="about-description"><h2>음악을 좋아하는 사람들이<br />함께하는 공간</h2><p>보컬, 기타, 베이스, 드럼, 키보드. 서로 다른 소리로 모여 한 곡을 완성합니다. 합주와 공연, 그리고 함께한 순간들을 통해 모여락만의 이야기를 만들어 갑니다.</p><TextLink onClick={() => navigate('gallery')}>활동 사진 보러 가기</TextLink></div>
+      {content.heroImage?<ImageShimmer key={content.heroImage} className="about-hero-image" src={content.heroImage} alt="동아리 소개 사진" loading="eager" fetchPriority="high"/>:contentLoaded?<Placeholder label="동아리 대표 사진" className="about-hero-image"/>:<div className="about-hero-image image-pending image-shimmer-frame is-image-loading" role="status" aria-label="동아리 소개 사진을 불러오는 중"><span className="image-shimmer-band" aria-hidden="true"/></div>}
     </section>
     <section className="container section-block" aria-label="28기 운영진 소개">
       <SectionHeading title="운영진" aside={content.cohortLabel} />
