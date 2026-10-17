@@ -41,6 +41,13 @@ function mockFirestore(){
   if(raw.startsWith('https://oauth2.googleapis.com/token'))return json({access_token:'equipment-mock-token',expires_in:3600});
   if(!raw.startsWith(root))throw Error('unexpected external call: '+raw);
   const body=init.body?JSON.parse(init.body):{};
+  if(path===root+':runQuery'&&method==='POST'){
+   const field=body.structuredQuery.where.fieldFilter;
+   const matches=[...documents.values()].filter(doc=>doc.name.startsWith(root+'/users/')&&!doc.name.slice((root+'/users/').length).includes('/'))
+    .filter(doc=>doc.fields?.[field.field.fieldPath]?.stringValue===field.value.stringValue)
+    .slice(0,body.structuredQuery.limit??2);
+   return json(matches.map(document=>({document})));
+  }
   if(path===root+':commit'&&method==='POST'){
    for(const write of body.writes){
     const name=write.update?.name??write.delete??write.verify;
@@ -157,5 +164,83 @@ test('manager can edit and delete only idle equipment, and cannot force statuses
   assert.equal(byId(await view(null),added.data.id).status,'대여 가능');
   assert.equal((await doManage('leader',added.data.id,'edit',{name:'앰프',product:'Fender Rumble 40',status:'대여중'})).status,200);
   assert.equal(byId(await view(null),added.data.id).status,'대여 가능');
+ }finally{mock.restore();}
+});
+
+
+test('manager corrective actions reconcile actual borrower, return flags and FIFO queue',async()=>{
+ const mock=mockFirestore();
+ try{
+  assert.equal((await doManage('alice',guitar,'force-loan',{studentId:users.bob.studentId})).status,403);
+  assert.equal((await doManage('leader',guitar,'force-loan',{studentId:'0000000000'})).status,409);
+  assert.equal((await doManage('leader',guitar,'add-request',{studentId:users.alice.studentId})).status,200);
+  assert.equal((await doManage('leader',guitar,'add-request',{studentId:users.bob.studentId})).status,200);
+  assert.equal(byId(await view(null)).status,'대여 승인 대기중');
+  assert.equal((await doManage('leader',guitar,'add-request',{studentId:users.bob.studentId})).status,409);
+  assert.equal((await doManage('leader',guitar,'force-loan',{studentId:users.bob.studentId})).status,200);
+  let item=byId(await view('leader',true));
+  assert.equal(item.status,'대여중');
+  assert.equal(item.borrower.uid,users.bob.uid);
+  assert.equal(item.borrower.name,'김하늘');
+  assert.equal(item.borrower.studentId,users.bob.studentId);
+  assert.deepEqual(item.queue.map(x=>x.uid),[users.alice.uid]);
+  assert.equal(byId(await view('bob')).isBorrower,true);
+  assert.equal((await doManage('leader',guitar,'force-request-return')).status,200);
+  assert.equal(byId(await view(null)).status,'반납 확인중');
+  assert.equal((await doManage('leader',guitar,'cancel-return')).status,200);
+  assert.equal(byId(await view(null)).status,'대여중');
+  assert.equal((await doManage('leader',guitar,'force-return')).status,200);
+  item=byId(await view('leader',true));
+  assert.equal(item.status,'대여 승인 대기중');
+  assert.equal(item.borrower,null);
+  assert.equal(item.returnRequestedAt,null);
+  assert.equal(item.queue[0].uid,users.alice.uid);
+  assert.equal((await doManage('leader',guitar,'force-return')).status,409);
+  assert.equal((await doManage('leader',guitar,'clear-queue')).status,200);
+  assert.equal(byId(await view(null)).status,'대여 가능');
+  assert.equal((await doManage('leader',guitar,'force-loan',{studentId:users.eve.studentId})).status,200);
+  assert.equal((await doManage('leader',guitar,'force-available')).status,200);
+  item=byId(await view('leader',true));
+  assert.equal(item.status,'대여 가능');
+  assert.equal(item.borrower,null);
+  assert.equal(item.queue.length,0);
+  assert.equal(item.returnRequestedAt,null);
+  assert.equal(byId(await view('eve')).isBorrower,false);
+  assert.equal((await doManage('leader',guitar,'force-available')).status,409);
+ }finally{mock.restore();}
+});
+
+test('manual clearing all requests and borrower is atomic and cannot be achieved by editing status',async()=>{
+ const mock=mockFirestore();
+ try{
+  assert.equal((await doAction('alice',guitar,'apply')).status,200);
+  assert.equal((await doAction('bob',guitar,'apply')).status,200);
+  assert.equal((await doManage('leader',guitar,'approve')).status,200);
+  assert.equal((await doAction('alice',guitar,'return')).status,200);
+  const before=mock.stats.writes;
+  assert.equal((await doManage('leader',guitar,'force-available')).status,200);
+  assert.equal(mock.stats.writes,before+1);
+  const item=byId(await view('leader',true));
+  assert.equal(item.status,'대여 가능');
+  assert.equal(item.queue.length,0);
+  assert.equal(item.borrower,null);
+  assert.equal(item.returnRequestedAt,null);
+  assert.equal((await doManage('leader',guitar,'edit',{name:'기타',product:'바커스',status:'대여중'})).status,200);
+  assert.equal(byId(await view(null)).status,'대여 가능');
+ }finally{mock.restore();}
+});
+
+test('manager stores equipment image urls, validates HTTPS and publishes image to public inventory',async()=>{
+ const mock=mockFirestore();
+ try{
+  assert.equal((await doManage('alice',guitar,'edit',{name:'기타',product:'바커스',imageUrl:'https://image.example/item.webp'})).status,403);
+  assert.equal((await doManage('leader',guitar,'edit',{name:'기타',product:'바커스',imageUrl:'javascript:alert(1)'})).status,400);
+  assert.equal((await doManage('leader',guitar,'edit',{name:'기타',product:'바커스',imageUrl:'https://image.example/item.webp'})).status,200);
+  assert.equal(byId(await view(null)).imageUrl,'https://image.example/item.webp');
+  assert.equal((await doManage('leader',guitar,'edit',{name:'기타',product:'바커스',imageUrl:''})).status,200);
+  assert.equal(byId(await view(null)).imageUrl,'');
+  const created=await doManage('leader',undefined,'add',{name:'키보드',product:'Nord Stage',imageUrl:'https://image.example/keyboard.webp'});
+  assert.equal(created.status,201);
+  assert.equal(byId(await view(null),created.data.id).imageUrl,'https://image.example/keyboard.webp');
  }finally{mock.restore();}
 });
