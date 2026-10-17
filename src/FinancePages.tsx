@@ -87,7 +87,7 @@ export function FinanceLanding({ onDonations, onExpenses, canEditAccount, logged
       <div className="finance-account-heading"><FinanceSectionTitle title="후원 계좌 안내" description="후원을 원하시는 분을 위한 계좌 안내입니다." />
         {loggedIn&&!authPending&&canEditAccount&&!editing&&account&&<button type="button" className="admin-only-action" disabled={busy} onClick={()=>void beginEdit()}>정보 수정</button>}
       </div>
-      {error&&<p className="form-error" role="alert">{error}</p>}
+
       <div className="finance-bank-card">
         <div className="finance-bank-card-header">
           <span className="finance-bank-eyebrow">DONATION ACCOUNT</span>
@@ -260,6 +260,7 @@ export function ExpenseHistory({ onBack, canManageExpenses, onManage }: {
   const [loadingMore,setLoadingMore]=useState(false);
   const [loading,setLoading]=useState(true);
   const [error,setError]=useState('');
+  useToastFeedback(error,'error');
   useEffect(()=>{
     let active=true;
     void readExpenses().then(data=>{if(active){setRows(data.records);setExpenseCursor(data.nextPageToken);}})
