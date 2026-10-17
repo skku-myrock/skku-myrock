@@ -1,3 +1,4 @@
+import {useToastFeedback} from './toast';
 import { useEffect,useState } from 'react';
 import type { ChangeEvent } from 'react';
 import { ArrowLeft,Download,Plus,Save,Upload } from 'lucide-react';
@@ -13,6 +14,8 @@ export default function ExpenseManagement({onBack}:{onBack:()=>void}){
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState('');
   const [message,setMessage]=useState('');
+  useToastFeedback(error,'error');
+  useToastFeedback(message,'success');
   const [add,setAdd]=useState<EditState|null>(null);
   const [editing,setEditing]=useState<EditState|null>(null);
   const [csvRows,setCsvRows]=useState<FinanceTransactionInput[]>([]);
@@ -90,8 +93,7 @@ export default function ExpenseManagement({onBack}:{onBack:()=>void}){
       <p>동아리 계좌의 입금과 출금을 포함한 모든 거래를 기록합니다.</p></div>
     <div className="container finance-details-content finance-manager" data-async-busy={busy ? "true" : undefined}>
       <button type="button" className="finance-return-link" onClick={onBack}><ArrowLeft size={16}/> 회비 집행 내역으로 돌아가기</button>
-      {error&&<p role="alert" className="form-error">{error}</p>}
-      {message&&<p role="status" className="finance-manager-success">{message}</p>}
+
       <section className="finance-manager-section">
         <div className="finance-manager-heading"><div><h2>거래 기록 관리</h2><p>거래일시·거래구분·거래금액·거래 후 잔액·거래내용을 관리합니다.</p></div>
           <div className="finance-manager-actions">
