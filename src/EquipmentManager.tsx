@@ -102,17 +102,17 @@ export default function EquipmentManager({items,busy,loading,error,onRefresh,onM
       {pending.map(item=><div className="equipment-manage-item" key={item.id}>
        {details(item)}
        <div className="equipment-manage-requests">{(item.queue??[]).map((person,index)=><span key={person.uid}>{index+1}순위 · {person.name}({person.studentId}) · {equipmentDate(person.requestedAt)} 신청</span>)}</div>
-       <button type="button" className="button button-primary" disabled={busy||loading} onClick={()=>void perform('approve',{id:item.id},'최선순위 신청자의 대여를 승인했습니다.')}><Check size={15}/> 승인</button>
+       <button type="button" className="button button-primary" disabled={busy||loading||saving} onClick={()=>void perform('approve',{id:item.id},'최선순위 신청자의 대여를 승인했습니다.')}><Check size={15}/> 승인</button>
       </div>)}
       {returning.map(item=><div className="equipment-manage-item" key={item.id}>
        {details(item)}
-       <button type="button" className="button button-primary" disabled={busy||loading} onClick={()=>void perform('confirm-return',{id:item.id},'반납을 확인했습니다.')}><Check size={15}/> 반납 확인</button>
+       <button type="button" className="button button-primary" disabled={busy||loading||saving} onClick={()=>void perform('confirm-return',{id:item.id},'반납을 확인했습니다.')}><Check size={15}/> 반납 확인</button>
       </div>)}
      </div>}
    </section>
    <section className="equipment-manage-section" aria-labelledby="equipment-inventory-title">
     <div className="equipment-manage-heading"><div><h2 id="equipment-inventory-title">보유 장비 목록</h2><p>장비 이름과 제품명을 수정할 수 있습니다. 관리자 정정 기능으로 대여자·대기열·반납 요청을 함께 변경할 수 있습니다.</p></div>
-     <button type="button" className="button button-primary" disabled={busy} onClick={()=>begin()}><Plus size={16}/> 장비 추가</button>
+     <button type="button" className="button button-primary" disabled={busy||saving} onClick={()=>begin()}><Plus size={16}/> 장비 추가</button>
     </div>
     {feedback&&<p className="equipment-manage-feedback" role="status">{feedback}</p>}
     {localError&&<p className="form-error" role="alert">{localError}</p>}
@@ -147,7 +147,7 @@ export default function EquipmentManager({items,busy,loading,error,onRefresh,onM
       <div className="equipment-manage-item-actions">
        <button type="button" className="outline-action" disabled={busy||loading||saving} onClick={()=>begin(item)}>수정</button>
        <button type="button" className="outline-action" disabled={busy||loading||saving} onClick={()=>beginCorrection(item)}>상태 정정</button>
-       <button type="button" className="outline-action equipment-manage-danger" disabled={busy||loading||item.queueLength>0||item.status==='대여중'||item.status==='반납 확인중'} title={item.queueLength>0||item.status!=='대여 가능'?'진행 중인 대여 신청이 있는 장비는 삭제할 수 없습니다.':undefined} onClick={()=>{
+       <button type="button" className="outline-action equipment-manage-danger" disabled={busy||loading||saving||item.queueLength>0||item.status==='대여중'||item.status==='반납 확인중'} title={item.queueLength>0||item.status!=='대여 가능'?'진행 중인 대여 신청이 있는 장비는 삭제할 수 없습니다.':undefined} onClick={()=>{
         if(!window.confirm(item.name+' 장비를 삭제하시겠습니까?'))return;
         void perform('delete',{id:item.id},'장비를 삭제했습니다.');
        }}><Trash2 size={14}/> 삭제</button>
