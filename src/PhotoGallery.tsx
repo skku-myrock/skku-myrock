@@ -33,6 +33,7 @@ export default function PhotoGallery({ canRegister }: { canRegister: boolean }) 
   const manageOpenRef=useRef(false);
   const [albums,setAlbums]=useState<PhotoAlbum[]>([]);
   const [loading,setLoading]=useState(true);
+  const [interactionPending,setInteractionPending]=useState(false);
   const [loadError,setLoadError]=useState('');
   const [message,setMessage]=useState('');
   useToastSignals({error:manageError,message});
@@ -55,7 +56,7 @@ export default function PhotoGallery({ canRegister }: { canRegister: boolean }) 
       setAlbums(result.albums);setTotalPages(result.totalPages);setTotalAlbums(result.total);
       if(result.page!==previewPage)setPreviewPage(result.page);
     }catch(error){setLoadError(error instanceof Error?error.message:'갤러리를 불러오지 못했습니다.');}
-    finally{setLoading(false);}
+    finally{setLoading(false);setInteractionPending(false);}
   }
   useEffect(()=>{
     let alive=true;
@@ -64,9 +65,17 @@ export default function PhotoGallery({ canRegister }: { canRegister: boolean }) 
       if(alive){setAlbums(result.albums);setTotalPages(result.totalPages);setTotalAlbums(result.total);
        if(result.page!==previewPage)setPreviewPage(result.page);}
     }).catch(error=>{if(alive)setLoadError(error instanceof Error?error.message:'갤러리 조회 실패');})
-      .finally(()=>{if(alive)setLoading(false);});
+      .finally(()=>{if(alive){setLoading(false);setInteractionPending(false);}});
     return ()=>{alive=false;};
   },[previewPage,filter]);
+  function changeCategory(category:Filter){
+    if(filter===category&&previewPage===1)return;
+    setInteractionPending(true);setFilter(category);setPreviewPage(1);
+  }
+  function changePage(next:number){
+    if(next===previewPage)return;
+    setInteractionPending(true);setPreviewPage(next);
+  }
   const shown=albums.slice(0,PAGE_SIZE);
   const PAGE_GROUP_SIZE=10;
   const windowStart=Math.floor((previewPage-1)/PAGE_GROUP_SIZE)*PAGE_GROUP_SIZE+1;
@@ -203,20 +212,20 @@ export default function PhotoGallery({ canRegister }: { canRegister: boolean }) 
     if (event.key === ' ' && event.target === dialogRef.current) event.preventDefault();
   }
 
-  return <section className="container section-block gallery-section" data-async-busy={loading||deleting?"true":undefined}>
+  return <section className="container section-block gallery-section" data-async-busy={deleting||interactionPending?"true":undefined}>
     <div className="toolbar toolbar-bottom gallery-toolbar">
       <div className="tabs gallery-tabs" aria-label="갤러리 분류">
         {categories.map(category => <button type="button" key={category}
           aria-pressed={filter === category}
           className={filter === category ? 'active' : ''}
-          onClick={() => {setFilter(category);setPreviewPage(1);}}>{category}</button>)}
+          onClick={() => changeCategory(category)}>{category}</button>)}
       </div>
       {canRegister && <button type="button" className="admin-only-action" onClick={() => setUploadOpen(true)}>
         <Plus size={16} aria-hidden="true" /> 사진 등록
       </button>}
     </div>
 
-    {loadError&&<button type="button" className="outline-action gallery-retry" onClick={()=>void reload()}>다시 시도</button>}
+    {loadError&&<button type="button" className="outline-action gallery-retry" onClick={()=>{setInteractionPending(true);void reload();}}>다시 시도</button>}
     {loading && <LoadingText className="gallery-empty-state">갤러리를 불러오는 중입니다.</LoadingText>}
     {!loading&&!loadError&&totalAlbums===0&&<p className="gallery-empty-state">{filter==='전체'?'아직 등록된 갤러리 앨범이 없습니다.':'이 분류에 등록된 앨범이 없습니다.'}</p>}
     <div className="gallery-album-grid">
@@ -235,11 +244,11 @@ export default function PhotoGallery({ canRegister }: { canRegister: boolean }) 
       </button>)}
     </div>
     {!loading&&!loadError&&<nav className="gallery-pagebar" aria-label="갤러리 페이지 탐색">
-     <button type="button" className="gallery-page-jump" disabled={windowStart===1} onClick={()=>setPreviewPage(Math.max(1,windowStart-PAGE_GROUP_SIZE))} aria-label="이전 10페이지 목록">«</button>
-     <button type="button" disabled={previewPage===1} onClick={()=>setPreviewPage(page=>Math.max(1,page-1))} aria-label="이전 페이지">‹</button>
-     {displayedPages.map(page=><button key={page} type="button" aria-label={page+'페이지'} aria-current={previewPage===page?'page':undefined} onClick={()=>setPreviewPage(page)}>{page}</button>)}
-     <button type="button" disabled={previewPage===totalPages} onClick={()=>setPreviewPage(page=>Math.min(totalPages,page+1))} aria-label="다음 페이지">›</button>
-     <button type="button" className="gallery-page-jump" disabled={windowStart+PAGE_GROUP_SIZE>totalPages} onClick={()=>setPreviewPage(Math.min(totalPages,windowStart+PAGE_GROUP_SIZE))} aria-label="다음 10페이지 목록">»</button>
+     <button type="button" className="gallery-page-jump" disabled={windowStart===1} onClick={()=>changePage(Math.max(1,windowStart-PAGE_GROUP_SIZE))} aria-label="이전 10페이지 목록">«</button>
+     <button type="button" disabled={previewPage===1} onClick={()=>changePage(Math.max(1,previewPage-1))} aria-label="이전 페이지">‹</button>
+     {displayedPages.map(page=><button key={page} type="button" aria-label={page+'페이지'} aria-current={previewPage===page?'page':undefined} onClick={()=>changePage(page)}>{page}</button>)}
+     <button type="button" disabled={previewPage===totalPages} onClick={()=>changePage(Math.min(totalPages,previewPage+1))} aria-label="다음 페이지">›</button>
+     <button type="button" className="gallery-page-jump" disabled={windowStart+PAGE_GROUP_SIZE>totalPages} onClick={()=>changePage(Math.min(totalPages,windowStart+PAGE_GROUP_SIZE))} aria-label="다음 10페이지 목록">»</button>
     </nav>}
     {!loading&&!loadError&&<p className="gallery-pagination-preview-note">전체 {totalAlbums}개 앨범 · {previewPage} / {totalPages}페이지</p>}
 

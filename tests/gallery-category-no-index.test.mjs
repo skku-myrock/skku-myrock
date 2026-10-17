@@ -83,6 +83,36 @@ test('missing count index uses fallback for empty categories without showing fal
  }finally{delete globalThis.__galleryCategoryRequest;}
 });
 
+test('Firestore HTTP 400 invalid-index responses also use safe category-only fallback',async()=>{
+ const calls=mock({noIndex:true,errorCode:'INVALID_ARGUMENT'});
+ try{
+  const result=await gallery.readGalleryPage({}, {page:3,category});
+  assert.equal(result.total,35);
+  assert.equal(result.page,3);
+  assert.deepEqual(result.albums.map(a=>a.title),Array.from({length:11},(_,i)=>'앨범 '+(10-i)));
+  assert.ok(calls.some(c=>c.body?.structuredQuery&&!c.body.structuredQuery.orderBy));
+ }finally{delete globalThis.__galleryCategoryRequest;}
+});
+
+test('empty filtered category avoids an unnecessary composite-index query',async()=>{
+ const calls=mock({rows:[]});
+ try{
+  const result=await gallery.readGalleryPage({}, {page:1,category:'일상'});
+  assert.deepEqual(result,{albums:[],page:1,total:0,totalPages:1,pageSize:12});
+  assert.equal(calls.filter(c=>c.url.endsWith(':runQuery')).length,0);
+ }finally{delete globalThis.__galleryCategoryRequest;}
+});
+
+test('gallery page load preserves normal cursor but active filter, pagination and deletes are busy',async()=>{
+ const source=await read('src/PhotoGallery.tsx');
+ assert.match(source,/const \[interactionPending,setInteractionPending\]=useState\(false\)/);
+ assert.match(source,/data-async-busy=\{deleting\|\|interactionPending\?"true":undefined\}/);
+ assert.doesNotMatch(source,/data-async-busy=\{loading\|\|deleting/);
+ assert.match(source,/function changeCategory\(category:Filter\)/);
+ assert.match(source,/function changePage\(next:number\)/);
+ assert.match(source,/setInteractionPending\(false\)/);
+});
+
 test('category filter does not hide unexpected Firestore errors with a fallback',async()=>{
  mock({noIndex:true,errorCode:'PERMISSION_DENIED'});
  try{
