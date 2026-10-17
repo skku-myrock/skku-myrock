@@ -272,7 +272,7 @@ export function Handover({openView,openWrite,notify}:{openView:()=>void;openWrit
   <section className="container section-block">
    <div className="section-heading handover-heading"><div><h2>인수인계 자료</h2><p>인수인계 자료를 작성하거나 확인할 수 있습니다.</p></div></div>
    <div className="handover-items"><button type="button" onClick={()=>setMenuOpen(true)}><FileText size={21}/><span><strong>직책별 인수인계 노트</strong><small>직책별 · 운영진 공통 인수인계</small></span><ArrowUpRight size={17}/></button>
-    <button type="button" onClick={()=>notify('연결된 링크가 없습니다')}><ExternalLink size={21}/><span><strong>인수인계 드라이브</strong><small>문서 및 업무 파일 링크</small></span><ArrowUpRight size={17}/></button>
+    <button type="button" onClick={()=>showToast('연결된 링크가 없습니다','warning')}><ExternalLink size={21}/><span><strong>인수인계 드라이브</strong><small>문서 및 업무 파일 링크</small></span><ArrowUpRight size={17}/></button>
    </div>
   </section>
   {menuOpen&&<div className="handover-choice-backdrop" onMouseDown={event=>{if(event.target===event.currentTarget)setMenuOpen(false);}}>
