@@ -1,3 +1,4 @@
+import {useToastFeedback,showToast} from './toast';
 import LoadingText from './LoadingText';
 import {useCallback,useEffect,useState} from 'react';
 import {ArrowRight,ArrowUpRight,CalendarDays,Mail,Plus,Users,X} from 'lucide-react';
@@ -13,6 +14,7 @@ export function ScheduleLanding({canCreateTeam,loggedIn,authPending,onLogin,onCr
  const [invitations,setInvitations]=useState<Invitation[]>([]);
  const [loading,setLoading]=useState(true);
  const [error,setError]=useState('');
+ useToastFeedback(error,'error');
  const [busy,setBusy]=useState<string|null>(null);
  const refresh=useCallback(async()=>{
   if(!loggedIn){setSchedules([]);setInvitations([]);setLoading(false);return;}
@@ -44,6 +46,7 @@ export function ScheduleLanding({canCreateTeam,loggedIn,authPending,onLogin,onCr
   try{
    await respondInvitation(id,action);
    await refresh();
+   showToast(action==='accept'?'시간표 초대를 수락했습니다.':'시간표 초대를 거절했습니다.','success');
   }catch(e){setError(e instanceof Error?e.message:'초대 처리에 실패했습니다.');}
   finally{setBusy(null);}
  }
@@ -73,7 +76,7 @@ export function ScheduleLanding({canCreateTeam,loggedIn,authPending,onLogin,onCr
      <Mail size={15} aria-hidden="true"/> 초대 {invitations.length}건
     </button>
    </div>
-   {error&&<p className="schedule-side-warning" role="alert">{error}</p>}
+
    {loading?<LoadingText>시간표를 불러오는 중입니다</LoadingText>:!loggedIn?<p>로그인하면 시간표와 받은 초대를 확인할 수 있습니다.</p>:
    schedules.length===0?<p className="schedule-draft-empty-roster">참여한 시간표가 없습니다.</p>:
    <div className="schedule-list" role="list">{schedules.map(schedule=><div className="schedule-list-item" role="listitem" key={schedule.id}>
