@@ -16,7 +16,9 @@ test('notices and gallery share centered icon edit and delete actions and downwa
   assert.match(source,/className="content-manage-delete"/);
  }
  assert.match(baseCss,/\.content-manage-menu button\{[^\n]*justify-content:center/);
- assert.match(baseCss,/padding:7px 8px;text-align:center/);
+ assert.match(baseCss,/\.content-manage-menu\{[^\n]*min-width:104px;gap:2px;padding:4px/);
+  assert.match(baseCss,/padding:7px 6px;text-align:center/);
+  assert.match(baseCss,/\.notice-manage-menu\{min-width:104px/);
  assert.match(baseCss,/\.content-manage-trigger\{[^\n]*justify-content:center/);
  assert.doesNotMatch(gallery,/MoreHorizontal/);
  assert.doesNotMatch(galleryCss,/\.gallery-manage-menu button\{/);
