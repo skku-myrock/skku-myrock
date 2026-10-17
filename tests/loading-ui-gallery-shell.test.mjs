@@ -13,8 +13,8 @@ test('shimmer respects loading and error state without any spinner',async()=>{
  const [image,style,home,about]=await Promise.all([read('src/ImageShimmer.tsx'),read('src/styles/loading-ui.css'),read('src/pages/SitePages.tsx'),read('src/AboutManagement.tsx')]);
  assert.match(style,/@keyframes shimmer/);
  assert.match(style,/@media\(prefers-reduced-motion:reduce\)/);
- assert.match(image,/setState\('ready'\)/);
- assert.match(image,/onError=\{\(\)=>setState\('pending'\)\}/);
+ assert.match(image,/setLoadedSrc\(src\)/);
+ assert.match(image,/onError=\{\(\)=>setLoadedSrc\(null\)\}/);
  assert.match(home,/ImageShimmer key=\{homeImage\}/);
  assert.match(home,/ImageShimmer key=\{content\.heroImage\}/);
  assert.match(home,/ImageShimmer key=\{officer\.photoUrl\}/);
