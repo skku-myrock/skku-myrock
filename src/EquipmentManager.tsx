@@ -1,3 +1,4 @@
+import LoadingText from './LoadingText';
 import {useEffect,useState} from 'react';
 import type {FormEvent} from 'react';
 import {ArrowLeft,Check,ClipboardCheck,ImagePlus,Package,Plus,Save,Trash2,X} from 'lucide-react';
@@ -97,7 +98,7 @@ export default function EquipmentManager({items,busy,loading,error,onRefresh,onM
    {loading&&<p role="status">장비 현황을 불러오는 중입니다.</p>}
    <section className="equipment-manage-section" aria-labelledby="equipment-pending-title">
     <div className="equipment-manage-heading"><div><h2 id="equipment-pending-title">승인 대기 목록</h2><p>대여 신청은 먼저 신청한 부원부터 승인됩니다. 반납 확인도 이곳에서 처리합니다.</p></div></div>
-    {pending.length===0&&returning.length===0?<p className="equipment-manage-empty">승인이나 반납 확인이 필요한 장비가 없습니다.</p>:
+    {loading?null:pending.length===0&&returning.length===0?<p className="equipment-manage-empty">승인이나 반납 확인이 필요한 장비가 없습니다.</p>:
      <div className="equipment-manage-list">
       {pending.map(item=><div className="equipment-manage-item" key={item.id}>
        {details(item)}
@@ -141,7 +142,7 @@ export default function EquipmentManager({items,busy,loading,error,onRefresh,onM
      </div>
      <div className="equipment-manage-form-actions"><button type="button" className="outline-action" onClick={cancel} disabled={saving||busy}>취소</button><button type="submit" className="button button-primary" disabled={busy||saving}><Save size={15}/> {saving?'저장 중…':creating?'추가하기':'저장하기'}</button></div>
     </form>}
-    {items.length===0&&!loading?<p className="equipment-manage-empty">등록된 장비가 없습니다.</p>:
+    {loading?<LoadingText>장비 현황을 불러오는 중입니다.</LoadingText>:items.length===0?<p className="equipment-manage-empty">등록된 장비가 없습니다.</p>:
      <div className="equipment-manage-list">{items.map(item=><div className="equipment-manage-item" key={item.id}>
       {details(item)}
       <div className="equipment-manage-item-actions">
