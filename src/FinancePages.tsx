@@ -173,6 +173,8 @@ export function DonationHistory({
   const [mine,setMine]=useState<OwnDonation[]>([]);
   const [allError,setAllError]=useState('');
   const [mineError,setMineError]=useState('');
+  useToastSignals({error:allError});
+  useToastSignals({error:mineError});
   const [loadingAll,setLoadingAll]=useState(true);
   const [allCursor,setAllCursor]=useState<string|null>(null);
   const [loadingMoreAll,setLoadingMoreAll]=useState(false);
@@ -259,6 +261,7 @@ export function ExpenseHistory({ onBack, canManageExpenses, onManage }: {
   const [loadingMore,setLoadingMore]=useState(false);
   const [loading,setLoading]=useState(true);
   const [error,setError]=useState('');
+  useToastSignals({error});
   useEffect(()=>{
     let active=true;
     void readExpenses().then(data=>{if(active){setRows(data.records);setExpenseCursor(data.nextPageToken);}})
