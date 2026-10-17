@@ -22,20 +22,18 @@ test('shimmer respects loading and error state without any spinner',async()=>{
  assert.match(about,/ImageShimmer key=\{content\.heroImage\}/);
  assert.doesNotMatch(style,/@keyframes spin|\.spinner/);
 });
-test('gallery fetches only twelve newest albums and pagination remains a UI preview',async()=>{
+test('gallery loads real paginated records instead of a 23-page preview',async()=>{
  const [gallery,api,server,db]=await Promise.all([read('src/PhotoGallery.tsx'),read('src/galleryApi.ts'),read('functions/api/gallery/albums.js'),read('functions/_lib/gallery.js')]);
- assert.match(api,/\/api\/gallery\/albums\?preview=first12/);
- assert.match(server,/listGalleryFirstPage\(env\)/);
- assert.match(db,/export async function listGalleryFirstPage\(env\)/);
- assert.match(db,/direction:'DESCENDING'/);
- assert.match(db,/limit:12/);
- assert.match(gallery,/const PAGE_SIZE=12;/);
- assert.match(gallery,/const DEMO_PAGE_COUNT=23;/);
- assert.match(gallery,/filtered\.slice\(0,PAGE_SIZE\)/);
+ assert.match(api,/listGalleryAlbums\(page=1,category/);
+ assert.match(server,/listGalleryPage\(env/);
+ assert.match(db,/runAggregationQuery/);
+ assert.match(db,/offset:\(page-1\)\*pageSize/);
+ assert.match(db,/limit:pageSize/);
+ assert.match(gallery,/const PAGE_SIZE=12/);
+ assert.match(gallery,/listGalleryAlbums\(previewPage,filter\)/);
  assert.match(gallery,/Array\.from\(\{length:PAGE_SIZE-shown\.length\}/);
  assert.match(gallery,/gallery-pagebar/);
- assert.match(gallery,/2~23페이지의 실제 앨범 조회는 아직 연결되지 않았습니다/);
- assert.doesNotMatch(gallery,/IntersectionObserver|loadMoreGalleryAlbums/);
+ assert.doesNotMatch(gallery,/DEMO_PAGE_COUNT|페이지 이동은 UI 미리보기/);
 });
 test('handover editor awaits all notes, A-type statuses cover key lists and busy buttons show wait cursor',async()=>{
  const [handover,notice,members,schedule,donations,expenses,css]=await Promise.all([
