@@ -35,10 +35,11 @@ test('unmigrated gallery, donations, finance and schedule notifications stay unt
   read('src/PhotoGallery.tsx'),read('src/DonationManagement.tsx'),
   read('src/FinancePages.tsx'),read('src/ScheduleRoom.tsx'),
  ]);
- for(const source of [gallery,donation,finance])assert.match(source,/site-bottom-toast/);
+ for(const source of [gallery,donation])assert.match(source,/site-bottom-toast/);
+ assert.match(finance,/TimedBottomToast tone="warning"/);
  assert.match(schedule,/toast schedule-invite-toast/);
  assert.doesNotMatch(gallery,/TimedBottomToast/);
  assert.doesNotMatch(donation,/TimedBottomToast/);
- assert.doesNotMatch(finance,/TimedBottomToast/);
+ assert.match(finance,/import TimedBottomToast/);
  assert.doesNotMatch(schedule,/TimedBottomToast/);
 });
