@@ -24,7 +24,7 @@ export default function AboutManagement({onBack,onSaved,registerLeaveGuard}:{onB
   const [error,setError]=useState('');
   const [message,setMessage]=useState('');
  useToastFeedback(error,'error');
- useToastFeedback(message,'success');
+ useToastFeedback(message,message.startsWith('선택한 사진은')?'warning':'success');
   const hasUnsavedChanges=!loading&&savedSnapshot.current!==null&&JSON.stringify(content)!==savedSnapshot.current;
   useEditorLeaveGuard(hasUnsavedChanges||busy,registerLeaveGuard);
   useEffect(()=>{
