@@ -23,6 +23,8 @@ import ExpenseManagement from './ExpenseManagement';
 import DonationManagement from './DonationManagement';
 import AboutManagement from './AboutManagement';
 import TimedBottomToast from './TimedBottomToast';
+import {showToast,classifyToast} from './toastBus';
+import type {ToastDetail} from './toastBus';
 import {purgeDonations} from './donationApi';
 import {purgeNotices,resetClubIntroduction,resetSiteAssets,purgeGallery} from './adminResets';
 import {invalidateAboutCache} from './aboutContent';
@@ -87,6 +89,12 @@ function App() {
   const [openGroup,setOpenGroup] = useState<string | null>(null);
   const [accountOpen,setAccountOpen] = useState(false);
   const [loginOpen,setLoginOpen] = useState(false);
+  const [bottomNotice,setBottomNotice]=useState<ToastDetail|null>(null);
+  useEffect(()=>{
+    const listener=(event:Event)=>setBottomNotice((event as CustomEvent<ToastDetail>).detail);
+    window.addEventListener('myrock:toast',listener);
+    return()=>window.removeEventListener('myrock:toast',listener);
+  },[]);
   const [toast,setToast] = useState('');
   const [aboutSaveNotice,setAboutSaveNotice]=useState('');
   const [loginNotice,setLoginNotice]=useState('');
@@ -159,9 +167,9 @@ function App() {
     catch(e){notify(e instanceof Error?e.message:'공지사항 삭제 실패');}
   };
   const openSchedule=(id:string)=>{routerNavigate(schedulePath(id));setOpenGroup(null);setAccountOpen(false);setMenuOpen(false);window.scrollTo({top:0,behavior:'instant'});};
-  const notify: Notify = (message='아직 연결되지 않은 기능입니다. 현재는 화면 구성 미리보기입니다.') => {setToast(message);window.setTimeout(()=>setToast(''),3500);};
+  const notify: Notify = (message='아직 연결되지 않은 기능입니다. 현재는 화면 구성 미리보기입니다.') => showToast(message,classifyToast(message));
   const showLogin=()=>{setLoginOpen(true);setMenuOpen(false);setAccountOpen(false);};
-  const logout=async()=>{if(!canLeaveEditor())return;try{await signOut(auth);leaveGuardRef.current=null;navigate('home');setLogoutNotice('로그아웃되었습니다.');}catch{setLogoutNotice('로그아웃하지 못했습니다. 잠시 후 다시 시도해 주세요.');}};
+  const logout=async()=>{if(!canLeaveEditor())return;try{await signOut(auth);leaveGuardRef.current=null;navigate('home');showToast('로그아웃되었습니다.','success');}catch{showToast('로그아웃하지 못했습니다. 잠시 후 다시 시도해 주세요.','error');}};
   async function resetRosterExceptMyself() {
     if (rosterResetting || financeResetting || noticeResetting || aboutResetting || assetResetting || !user || !profile?.superadmin || !hasSystemClaim) return;
     const confirmed = window.confirm(
@@ -421,11 +429,8 @@ function App() {
         <p className="form-hint">완료될 때까지 창을 새로고침하거나 닫지 마세요.</p>
       </div>
     </div>}
-    {loginOpen&&<LoginDialog close={()=>setLoginOpen(false)} notify={message=>setLoginNotice(message??'')}/>}
-    {aboutSaveNotice&&<TimedBottomToast message={aboutSaveNotice} onClose={()=>setAboutSaveNotice('')}/>}
-    {loginNotice&&<TimedBottomToast message={loginNotice} onClose={()=>setLoginNotice('')}/>}
-    {logoutNotice&&<TimedBottomToast tone="error" message={logoutNotice} onClose={()=>setLogoutNotice('')}/>}
-    {toast&&<div className="toast" role="status"><CircleHelp size={17}/><span>{toast}</span><button type="button" aria-label="알림 닫기" onClick={()=>setToast('')}><X size={15}/></button></div>}
+    {loginOpen&&<LoginDialog close={()=>setLoginOpen(false)} notify={message=>showToast(message??'','success')}/>}
+    {bottomNotice&&<TimedBottomToast key={bottomNotice.id} message={bottomNotice.message} tone={bottomNotice.tone} onClose={()=>setBottomNotice(current=>current?.id===bottomNotice.id?null:current)}/>}
   </div>;
 }
 export default App;
