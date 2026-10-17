@@ -1,3 +1,4 @@
+import {useToastSignals} from './useToastSignals';
 import { useEffect, useRef, useState } from 'react';
 import type { ChangeEvent, DragEvent } from 'react';
 import { ArrowDown, ArrowLeft, ArrowUp, GripVertical, ImagePlus, Link, Link2Off, Plus, RotateCcw, Trash2 } from 'lucide-react';
@@ -25,6 +26,7 @@ export default function NoticeComposer({ onBack, onSaved, initial, registerLeave
   });
   const [preview, setPreview] = useState(false);
   const [error, setError] = useState('');
+  useToastSignals({error});
   const [busy,setBusy]=useState(false);
   const [dimensionDrafts,setDimensionDrafts]=useState<Record<string,string>>({});
   const [dimensionErrors,setDimensionErrors]=useState<Record<string,string>>({});
@@ -289,7 +291,7 @@ export default function NoticeComposer({ onBack, onSaved, initial, registerLeave
     </div>
     <section className="container section-block notice-composer-page">
       <button type="button" className="notice-detail-back" onClick={back}><ArrowLeft size={16}/> 공지사항 목록</button>
-      <div className="notice-composer-info" role="note">이미지를 저장할 때 자동으로 압축·크기 조정할 수 있습니다. <strong>업로드된 이미지는 원본을 대체하지 못하므로 원본 사진을 별도로 보관해 주세요.</strong></div>
+      <div className="notice-composer-info image-compression-notice" role="note">이미지를 저장할 때 자동으로 압축·크기 조정할 수 있습니다. <strong>업로드된 이미지는 원본을 대체하지 못하므로 원본 사진을 별도로 보관해 주세요.</strong></div>
       <div className="notice-composer-fields">
         <label>분류
           <select value={category} onChange={event => setCategory(event.target.value as NoticeCategory)}>
@@ -406,7 +408,7 @@ export default function NoticeComposer({ onBack, onSaved, initial, registerLeave
             </div>}
         </div>)}
       </div>}
-      {error && <p className="form-error" role="alert">{error}</p>}
+
       {newImagePickerOpen&&imagePicker()}
       <div className="notice-composer-actions">
         <button type="button" className="outline-action" onClick={addText}><Plus size={15}/> 본문 추가</button>

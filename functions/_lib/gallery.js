@@ -129,3 +129,28 @@ export async function listGalleryFirstPage(env){
  return (Array.isArray(response.data)?response.data:[])
   .filter(row=>row.document).map(row=>galleryFromDoc(row.document)).slice(0,12);
 }
+
+/** Read one real gallery page. Firestore performs ordering and offset pagination. */
+export async function readGalleryPage(env,{page=1,pageSize=12,category='전체'}={}){
+ if(!Number.isSafeInteger(page)||page<1||page>10000)reject('갤러리 페이지 번호가 올바르지 않습니다.');
+ if(pageSize!==12)reject('갤러리 페이지 크기가 올바르지 않습니다.');
+ if(category!=='전체'&&!categories.has(category))reject('갤러리 구분이 올바르지 않습니다.');
+ const where=category==='전체'?{}:{where:{fieldFilter:{field:{fieldPath:'category'},op:'EQUAL',value:{stringValue:category}}}};
+ const from=[{collectionId:'galleryAlbums'}];
+ const count=await googleRequest(env,FIRESTORE_ROOT+':runAggregationQuery',{method:'POST',body:{
+   structuredAggregationQuery:{structuredQuery:{from,...where},aggregations:[{alias:'total',count:{}}]}
+ }});
+ if(!count.ok)throw Error('갤러리 페이지 수 조회 실패 '+count.status);
+ const countRows=Array.isArray(count.data)?count.data:[];
+ const total=Math.max(0,Number(countRows[0]?.result?.aggregateFields?.total?.integerValue??0));
+ const totalPages=Math.max(1,Math.ceil(total/pageSize));
+ const effectivePage=Math.min(page,totalPages);
+ const query={structuredQuery:{
+  from,...where,orderBy:[{field:{fieldPath:'createdAt'},direction:'DESCENDING'},{field:{fieldPath:'__name__'},direction:'DESCENDING'}],
+  offset:(effectivePage-1)*pageSize,limit:pageSize,
+ }};
+ const rows=await googleRequest(env,FIRESTORE_ROOT+':runQuery',{method:'POST',body:query});
+ if(!rows.ok)throw Error('갤러리 목록 조회 실패 '+rows.status);
+ const albums=(Array.isArray(rows.data)?rows.data:[]).filter(row=>row.document).map(row=>galleryFromDoc(row.document));
+ return {albums,page:effectivePage,total,totalPages,pageSize};
+}

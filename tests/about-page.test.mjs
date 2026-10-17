@@ -47,10 +47,9 @@ test('protected editor supports leader management, photo upload, history and sav
 
 test('about management save feedback is a bottom popup and the deploy-only R2 hint is hidden',async()=>{
   const editor=await readFile(new URL('../src/AboutManagement.tsx',import.meta.url),'utf8');
-  assert.match(editor,/import TimedBottomToast from '\.\/TimedBottomToast'/);
-  assert.match(editor,/\(error\|\|message\)&&<TimedBottomToast/);
-  assert.match(editor,/message=\{error\|\|message\} tone=\{error\?'error':'success'\}/);
-  assert.match(editor,/onClose=\{\(\)=>\{setError\(''\);setMessage\(''\);\}\}/);
+  assert.match(editor,/import \{useToastSignals\} from '\.\/useToastSignals'/);
+  assert.match(editor,/useToastSignals\(\{error,message\}\)/);
+  assert.doesNotMatch(editor,/site-bottom-toast|<TimedBottomToast/);
   assert.doesNotMatch(editor,/파일 업로드에는 Cloudflare R2 MYROCK_IMAGES 바인딩이 필요합니다/);
   assert.match(styles,/\.site-bottom-toast\{position:fixed/);
 });

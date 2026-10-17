@@ -1,6 +1,6 @@
 /* Notice compose preview: plain text blocks and locally selected images. */
 .notice-composer-page { max-width: 900px; }
-.notice-composer-info { border: 1px solid #dce8e1; background: #f5f9f6; color: #668071; padding: 15px 18px; font-size: 12px; line-height: 1.85; margin-bottom: 26px; }
+/* The shared image-compression-notice class supplies identical padding, border, palette and typography. */
 .notice-composer-fields { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 14px; margin-bottom: 36px; }
 .notice-composer-fields label { display: flex; flex-direction: column; gap: 9px; font-size: 12px; font-weight: 600; }
 .notice-composer-fields input,.notice-composer-fields select { width: 100%; box-sizing: border-box; height: 44px; padding: 0 12px; border: 1px solid #dce4e1; background: #fff; color: var(--ink); font-size: 13px; }

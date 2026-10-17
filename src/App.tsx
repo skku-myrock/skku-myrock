@@ -6,7 +6,7 @@ import {doc,getDoc} from 'firebase/firestore';
 import {useBlocker,useLocation,useNavigate as useRouterNavigate,Route,Routes,Navigate as RouterRedirect} from 'react-router-dom';
 import {auth,db} from './firebase';
 import type {MemberProfile} from './firebase';
-import {ArrowRight,ChevronDown,Trash2,CircleHelp,LockKeyhole,Mail,Menu,X,UserRound,LogOut} from 'lucide-react';
+import {ArrowRight,ChevronDown,Trash2,LockKeyhole,Mail,Menu,X,UserRound,LogOut} from 'lucide-react';
 import logo from './logo-transparent.png';
 import MemberManager from './MemberManager';
 import EquipmentManager from './EquipmentManager';
@@ -23,6 +23,9 @@ import ExpenseManagement from './ExpenseManagement';
 import DonationManagement from './DonationManagement';
 import AboutManagement from './AboutManagement';
 import TimedBottomToast from './TimedBottomToast';
+import {showToast,classifyToast} from './toastBus';
+import {useToastSignals} from './useToastSignals';
+import type {ToastDetail} from './toastBus';
 import {purgeDonations} from './donationApi';
 import {purgeNotices,resetClubIntroduction,resetSiteAssets,purgeGallery} from './adminResets';
 import {invalidateAboutCache} from './aboutContent';
@@ -87,10 +90,14 @@ function App() {
   const [openGroup,setOpenGroup] = useState<string | null>(null);
   const [accountOpen,setAccountOpen] = useState(false);
   const [loginOpen,setLoginOpen] = useState(false);
-  const [toast,setToast] = useState('');
-  const [aboutSaveNotice,setAboutSaveNotice]=useState('');
-  const [loginNotice,setLoginNotice]=useState('');
-  const [logoutNotice,setLogoutNotice]=useState('');
+  const [bottomNotice,setBottomNotice]=useState<ToastDetail|null>(null);
+  useEffect(()=>{
+    const listener=(event:Event)=>setBottomNotice((event as CustomEvent<ToastDetail>).detail);
+    window.addEventListener('myrock:toast',listener);
+    return()=>window.removeEventListener('myrock:toast',listener);
+  },[]);
+
+
   const leaveGuardRef=useRef<(()=>boolean)|null>(null);
   const registerEditorLeaveGuard=useCallback((guard:(()=>boolean)|null)=>{leaveGuardRef.current=guard;},[]);
   const canLeaveEditor=()=>leaveGuardRef.current?.()??true;
@@ -159,9 +166,9 @@ function App() {
     catch(e){notify(e instanceof Error?e.message:'공지사항 삭제 실패');}
   };
   const openSchedule=(id:string)=>{routerNavigate(schedulePath(id));setOpenGroup(null);setAccountOpen(false);setMenuOpen(false);window.scrollTo({top:0,behavior:'instant'});};
-  const notify: Notify = (message='아직 연결되지 않은 기능입니다. 현재는 화면 구성 미리보기입니다.') => {setToast(message);window.setTimeout(()=>setToast(''),3500);};
+  const notify: Notify = (message='아직 연결되지 않은 기능입니다. 현재는 화면 구성 미리보기입니다.') => showToast(message,classifyToast(message));
   const showLogin=()=>{setLoginOpen(true);setMenuOpen(false);setAccountOpen(false);};
-  const logout=async()=>{if(!canLeaveEditor())return;try{await signOut(auth);leaveGuardRef.current=null;navigate('home');setLogoutNotice('로그아웃되었습니다.');}catch{setLogoutNotice('로그아웃하지 못했습니다. 잠시 후 다시 시도해 주세요.');}};
+  const logout=async()=>{if(!canLeaveEditor())return;try{await signOut(auth);leaveGuardRef.current=null;navigate('home');showToast('로그아웃되었습니다.','success');}catch{showToast('로그아웃하지 못했습니다. 잠시 후 다시 시도해 주세요.','error');}};
   async function resetRosterExceptMyself() {
     if (rosterResetting || financeResetting || noticeResetting || aboutResetting || assetResetting || !user || !profile?.superadmin || !hasSystemClaim) return;
     const confirmed = window.confirm(
@@ -176,10 +183,10 @@ function App() {
       const deleted = await purgeAllOtherMembers(setRosterResetDeleted);
       setRosterRevision(previous => previous + 1);
       navigate('members');
-      window.alert('명단 초기화가 완료되었습니다. 본인을 제외하고 삭제한 부원: ' + deleted + '명');
+      notify('명단 초기화가 완료되었습니다. 본인을 제외하고 삭제한 부원: ' + deleted + '명');
     } catch (error) {
       const message = error instanceof Error ? error.message : '알 수 없는 서버 오류';
-      window.alert('명단 초기화가 중단되었습니다.\n' + message + '\n\nFirebase Auth 및 Firestore의 실제 상태를 확인한 뒤 다시 시도해 주세요.');
+      notify('명단 초기화가 중단되었습니다.\n' + message + '\n\nFirebase Auth 및 Firestore의 실제 상태를 확인한 뒤 다시 시도해 주세요.');
       setRosterRevision(previous => previous + 1);
     } finally {
       setRosterResetting(false);
@@ -199,9 +206,9 @@ function App() {
       if(!complete)throw Error('초기화 허용 처리 횟수를 초과했습니다.');
       setFinanceRevision(prev=>prev+1);
       navigate('donations');
-      window.alert('후원 · 회계 초기화가 완료되었습니다. 삭제된 기록: '+removed+'건');
+      notify('후원 · 회계 초기화가 완료되었습니다. 삭제된 기록: '+removed+'건');
     }catch(error) {
-      window.alert('후원 · 회계 초기화가 중단되었습니다. '+(error instanceof Error?error.message:'서버 오류')+'\n관리 화면에서 남은 데이터를 확인해 주세요.');
+      notify('후원 · 회계 초기화가 중단되었습니다. '+(error instanceof Error?error.message:'서버 오류')+'\n관리 화면에서 남은 데이터를 확인해 주세요.');
       setFinanceRevision(prev=>prev+1);
     }finally{setFinanceResetting(false);}
   }
@@ -218,9 +225,9 @@ function App() {
       }
       if(!done)throw Error('초기화 요청 횟수를 초과했습니다.');
       setNotices([]);setNoticeCursor(null);setNoticeDetail(null);setNoticeError('');navigate('news');
-      window.alert('공지사항과 notices/ 사진 초기화가 완료되었습니다. 삭제된 공지사항: '+removed+'건');
+      notify('공지사항과 notices/ 사진 초기화가 완료되었습니다. 삭제된 공지사항: '+removed+'건');
     }catch(error){
-      window.alert('공지사항 초기화가 중단되었습니다. 지금까지 삭제한 공지사항: '+removed+'건. '+(error instanceof Error?error.message:'서버 오류'));
+      notify('공지사항 초기화가 중단되었습니다. 지금까지 삭제한 공지사항: '+removed+'건. '+(error instanceof Error?error.message:'서버 오류'));
       void listNoticesPage().then(result=>{setNotices(result.notices);setNoticeCursor(result.nextPageToken);}).catch(()=>{});
     }finally{setNoticeResetting(false);}
   }
@@ -233,9 +240,9 @@ function App() {
       invalidateAboutCache();
       setAboutRevision(v=>v+1);
       navigate('about');
-      window.alert('모여락 소개 내용이 28기 운영진과 1998년·2023년 연혁으로 초기화되었습니다. 메인·동아리 소개·운영진 사진 URL과 GitHub 파일은 그대로 유지됩니다.');
+      notify('모여락 소개 내용이 28기 운영진과 1998년·2023년 연혁으로 초기화되었습니다. 메인·동아리 소개·운영진 사진 URL과 GitHub 파일은 그대로 유지됩니다.');
     }catch(error){
-      window.alert('모여락 소개 초기화에 실패했습니다. Firestore 상태를 확인해 주세요. '+(error instanceof Error?error.message:'서버 오류'));
+      notify('모여락 소개 초기화에 실패했습니다. Firestore 상태를 확인해 주세요. '+(error instanceof Error?error.message:'서버 오류'));
     }finally{setAboutResetting(false);}
   }
   async function resetAssets(){
@@ -246,9 +253,9 @@ function App() {
       await resetSiteAssets();
       invalidateAboutCache();
       setAboutRevision(v=>v+1);
-      window.alert('site/ 에셋과 Firebase의 메인·동아리 소개·운영진 사진 URL이 초기화되었습니다. 기존 직접 이미지 URL은 Cloudflare 캐시에 잠시 남을 수 있습니다.');
+      notify('site/ 에셋과 Firebase의 메인·동아리 소개·운영진 사진 URL이 초기화되었습니다. 기존 직접 이미지 URL은 Cloudflare 캐시에 잠시 남을 수 있습니다.');
     }catch(error){
-      window.alert('에셋 초기화가 완료되지 않았습니다. GitHub 파일 정리가 먼저 완료되었을 수도 있으니 저장소를 확인하고 다시 시도해 주세요. '+(error instanceof Error?error.message:'서버 오류'));
+      notify('에셋 초기화가 완료되지 않았습니다. GitHub 파일 정리가 먼저 완료되었을 수도 있으니 저장소를 확인하고 다시 시도해 주세요. '+(error instanceof Error?error.message:'서버 오류'));
     }finally{setAssetResetting(false);}
   }
   async function resetGallery(){
@@ -265,10 +272,10 @@ function App() {
       }
       if(!done)throw Error('처리 한도를 초과했습니다. 초기화를 다시 실행해 주세요.');
       setGalleryRevision(value=>value+1);
-      window.alert('갤러리 초기화를 완료했습니다. 삭제한 앨범: '+deleted+'개. 이미지 repo gallery/ 파일도 정리했습니다.');
+      notify('갤러리 초기화를 완료했습니다. 삭제한 앨범: '+deleted+'개. 이미지 repo gallery/ 파일도 정리했습니다.');
     }catch(error){
       setGalleryRevision(value=>value+1);
-      window.alert('갤러리 초기화가 중단되었습니다. 삭제한 앨범: '+deleted+'개. 다시 초기화를 실행하면 남은 데이터를 정리합니다. '+(error instanceof Error?error.message:'서버 오류'));
+      notify('갤러리 초기화가 중단되었습니다. 삭제한 앨범: '+deleted+'개. 다시 초기화를 실행하면 남은 데이터를 정리합니다. '+(error instanceof Error?error.message:'서버 오류'));
     }finally{setGalleryResetting(false);}
   }
   const isDeveloperSuperadmin=Boolean(user && profile?.superadmin && hasSystemClaim);
@@ -276,6 +283,10 @@ function App() {
   const [equipmentLoading,setEquipmentLoading]=useState(true);
   const [equipmentError,setEquipmentError]=useState('');
   const [equipmentBusyId,setEquipmentBusyId]=useState<string|null>(null);
+  useToastSignals({error:noticeError});
+  useToastSignals({error:noticeDetailError});
+  useToastSignals({error:equipmentError});
+  useToastSignals({error:profileError});
   const loadEquipment=useCallback(async(manage:boolean,showLoading=false)=>{
     if(showLoading)setEquipmentLoading(true);
     try{
@@ -322,7 +333,7 @@ function App() {
   const pageViews:Record<Page,ReactNode>={
     'home': <Home key={aboutRevision} navigate={navigate} openNotice={openNotice} notices={notices} noticeLoading={noticeLoading}/>,
     'about': <About key={aboutRevision} navigate={navigate} canEdit={Boolean(user&&!authPending&&canManageDonations)}/>,
-    'about-manage': (authPending?<section className="container section-block"><EmptyState title="권한 확인 중" description="로그인 상태를 확인하고 있습니다."/></section>:user&&canManageDonations?<AboutManagement onBack={()=>navigate('about')} registerLeaveGuard={registerEditorLeaveGuard} onSaved={message=>{navigate('about');setAboutSaveNotice(message??'변경 사항을 저장했습니다. 이미지 업로드까지 시간이 걸릴 수 있습니다.');}}/>:<section className="container section-block"><EmptyState icon={<LockKeyhole size={26}/>} title="접근 권한이 없습니다" description="동아리 소개 수정은 실무단 이상만 가능합니다."/></section>),
+    'about-manage': (authPending?<section className="container section-block"><EmptyState title="권한 확인 중" description="로그인 상태를 확인하고 있습니다."/></section>:user&&canManageDonations?<AboutManagement onBack={()=>navigate('about')} registerLeaveGuard={registerEditorLeaveGuard} onSaved={message=>{navigate('about');showToast(message??'변경 사항을 저장했습니다. 이미지 업로드까지 시간이 걸릴 수 있습니다.',message?'warning':'success');}}/>:<section className="container section-block"><EmptyState icon={<LockKeyhole size={26}/>} title="접근 권한이 없습니다" description="동아리 소개 수정은 실무단 이상만 가능합니다."/></section>),
     'news': <News canWrite={Boolean(user && !authPending && currentLevel)} onWrite={() => navigate('notice-compose')} openNotice={openNotice} notices={notices} loading={noticeLoading} error={noticeError} hasMore={Boolean(noticeCursor)} moreLoading={noticeMoreLoading} onLoadMore={()=>void loadMoreNotices()}/>,
     'notice-compose': (authPending ? <section className="container section-block"><EmptyState title="권한 확인 중" description="로그인 상태를 확인하고 있습니다." /></section> : user && currentLevel ? <NoticeComposer onBack={() => navigate('news')} onSaved={savedNotice} registerLeaveGuard={registerEditorLeaveGuard}/> : <section className="container section-block"><EmptyState icon={<LockKeyhole size={26}/>} title="접근 권한이 없습니다" description="공지사항 글쓰기는 파트장 이상 운영진만 사용할 수 있습니다." /></section>),
     'notice-edit': (authPending||noticeDetailLoading||(!noticeDetailError&&!activeFullNotice)?<section className="container section-block"><EmptyState title="공지사항 확인 중" description="공지사항과 로그인 상태를 확인하고 있습니다."/></section>:user&&currentLevel&&activeFullNotice?<NoticeComposer key={activeNoticeId} initial={activeFullNotice} onBack={()=>activeNoticeId?openNotice(activeNoticeId):navigate('news')} onSaved={savedNotice} registerLeaveGuard={registerEditorLeaveGuard}/>:<section className="container section-block"><EmptyState title="접근 권한이 없습니다" description="공지사항 수정은 파트장 이상만 가능합니다."/></section>),
@@ -421,11 +432,8 @@ function App() {
         <p className="form-hint">완료될 때까지 창을 새로고침하거나 닫지 마세요.</p>
       </div>
     </div>}
-    {loginOpen&&<LoginDialog close={()=>setLoginOpen(false)} notify={message=>setLoginNotice(message??'')}/>}
-    {aboutSaveNotice&&<TimedBottomToast message={aboutSaveNotice} onClose={()=>setAboutSaveNotice('')}/>}
-    {loginNotice&&<TimedBottomToast message={loginNotice} onClose={()=>setLoginNotice('')}/>}
-    {logoutNotice&&<TimedBottomToast tone="error" message={logoutNotice} onClose={()=>setLogoutNotice('')}/>}
-    {toast&&<div className="toast" role="status"><CircleHelp size={17}/><span>{toast}</span><button type="button" aria-label="알림 닫기" onClick={()=>setToast('')}><X size={15}/></button></div>}
+    {loginOpen&&<LoginDialog close={()=>setLoginOpen(false)} notify={message=>showToast(message??'','success')}/>}
+    {bottomNotice&&<TimedBottomToast key={bottomNotice.id} message={bottomNotice.message} tone={bottomNotice.tone} onClose={()=>setBottomNotice(current=>current?.id===bottomNotice.id?null:current)}/>}
   </div>;
 }
 export default App;

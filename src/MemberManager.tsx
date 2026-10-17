@@ -1,3 +1,4 @@
+import {useToastSignals} from './useToastSignals';
 import LoadingText from './LoadingText';
 import { useEffect, useRef, useState } from 'react';
 import type { ChangeEvent, FormEvent } from 'react';
@@ -34,6 +35,7 @@ export default function MemberManager({ currentUid, level, notify }: { currentUi
   const [query, setQuery] = useState('');
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  useToastSignals({error,message});
   const [fileName, setFileName] = useState('');
   const [preview, setPreview] = useState<NewMember[]>([]);
   const [csvStep, setCsvStep] = useState<'choose' | 'review' | 'complete'>('choose');
@@ -221,8 +223,7 @@ export default function MemberManager({ currentUid, level, notify }: { currentUi
         {isPresident && <button type="button" className={tab === 'add' ? 'active' : ''} onClick={() => {setEditing(null);setTab('add');}}>신입부원 등록</button>}
       </nav>
       <div className="member-panel">
-        {error && <p className="form-error member-feedback" role="alert">{error}</p>}
-        {message && <p className="member-success member-feedback" role="status">{message}</p>}
+
 
         {tab === 'list' && <>
           <div className="member-panel-top"><div><h2>부원 명단</h2><p>전체 가나다순을 유지하면서 스크롤 위치에 맞춰 30명씩 자동으로 불러옵니다. 권한에 따라 수정 가능한 항목이 다릅니다.</p></div>

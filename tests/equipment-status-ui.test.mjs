@@ -4,12 +4,12 @@ import {readFile} from 'node:fs/promises';
 
 const read=path=>readFile(new URL('../'+path,import.meta.url),'utf8');
 
-test('unknown student ID uses a yellow warning triangle without changing success notifications',async()=>{
- const [room,styles]=await Promise.all([read('src/ScheduleRoom.tsx'),read('src/styles/schedule.css')]);
+test('unknown student ID uses shared warning tone without changing saved success notifications',async()=>{
+ const [room,toast,styles]=await Promise.all([read('src/ScheduleRoom.tsx'),read('src/toastBus.ts'),read('src/styles/management.css')]);
  assert.match(room,/setNotice\('존재하지 않는 학번입니다\.'\)/);
- assert.ok(room.includes('notice==="존재하지 않는 학번입니다."?<AlertTriangle size={17}/>:<Check size={17}/>'));
- assert.ok(room.includes('role={notice==="존재하지 않는 학번입니다."?"alert":"status"}'));
- assert.match(styles,/\.schedule-invite-warning>svg:first-child\{color:#e6b54b\}/);
+ assert.match(room,/useToastSignals\(\{error,message:notice,warning:inviteFeedback\}\)/);
+ assert.match(toast,/존재하지 않는 학번|없습니다/);
+ assert.match(styles,/\.site-bottom-toast\.is-warning\{/);
 });
 
 test('equipment sample rows have concrete model names, compact spacing and accessible status dots',async()=>{

@@ -1,3 +1,4 @@
+import {useToastSignals} from './useToastSignals';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import type { User } from 'firebase/auth';
@@ -21,6 +22,7 @@ export default function PasswordChange({ user }: { user: User }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  useToastSignals({error,message:success});
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -45,8 +47,7 @@ export default function PasswordChange({ user }: { user: User }) {
       <label>현재 비밀번호<input type="password" autoComplete="current-password" value={current} onChange={event => setCurrent(event.target.value)} required/></label>
       <label>새 비밀번호<input type="password" autoComplete="new-password" value={next} onChange={event => setNext(event.target.value)} required/></label>
       <label>새 비밀번호 확인<input type="password" autoComplete="new-password" value={confirm} onChange={event => setConfirm(event.target.value)} required/></label>
-      {error && <p className="form-error" role="alert">{error}</p>}
-      {success && <p className="member-success" role="status">{success}</p>}
+
       <button type="submit" className="button button-primary" disabled={busy || !current || !next || !confirm}>{busy ? '변경 중...' : '비밀번호 변경'} <ArrowRight size={16}/></button>
     </form>
     <p className="form-hint">현재 비밀번호를 잊었거나 로그인에 문제가 생기면 운영진에게 문의해 주세요.</p>

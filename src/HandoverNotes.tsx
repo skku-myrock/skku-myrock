@@ -4,6 +4,7 @@ import {PageHeading} from './pages/SitePages';
 import {getHandoverNote,getHandoverPositions,saveHandoverNote,getHandoverArchive} from './handoverNotesApi';
 import type {HandoverArchiveEntry,HandoverNote} from './handoverNotesApi';
 import LoadingText from './LoadingText';
+import {useToastSignals} from './useToastSignals';
 
 type Kind='role'|'common';
 function NoteEditor({kind,position,title,description,initial}:{kind:Kind;position:string;title:string;description:string;initial:HandoverNote}){
@@ -13,6 +14,7 @@ function NoteEditor({kind,position,title,description,initial}:{kind:Kind;positio
  const [saving,setSaving]=useState(false);
  const [message,setMessage]=useState('');
  const [error,setError]=useState('');
+ useToastSignals({error,message});
  const loading=false;
  const dirty=text!==original;
  async function save(){
@@ -34,8 +36,6 @@ function NoteEditor({kind,position,title,description,initial}:{kind:Kind;positio
      <button type="button" className="button button-primary" disabled={loading||saving||!dirty} onClick={()=>void save()}><Save size={15}/>{saving?'저장 중…':'저장하기'}</button></div>
    </>
   }
-  {error&&<p className="form-error" role="alert">{error}</p>}
-  {message&&<p className="handover-save-notice" role="status">{message}</p>}
  </section>;
 }
 export default function HandoverNotesEditor({onBack}:{onBack:()=>void}){
@@ -43,6 +43,7 @@ export default function HandoverNotesEditor({onBack}:{onBack:()=>void}){
   positions:[],name:'',generation:'',
  });
  const [error,setError]=useState('');
+ useToastSignals({error});
  const [ready,setReady]=useState(false);
  const [initialNotes,setInitialNotes]=useState<Record<string,HandoverNote>>({});
  useEffect(()=>{
@@ -69,7 +70,7 @@ export default function HandoverNotesEditor({onBack}:{onBack:()=>void}){
   </div>
   <section className="container section-block handover-editor-page">
    <button type="button" className="schedule-back-button" onClick={onBack}><ArrowLeft size={16}/> 인수인계로 돌아가기</button>
-   {error&&<p className="form-error" role="alert">{error}</p>}
+
    {!ready?<LoadingText>작성 권한을 확인하는 중입니다</LoadingText>:!error&&<>
     {positions.length===0&&<p className="handover-editor-help">등록된 직책이 없습니다. 운영진에게 직책 정보를 확인해 주세요.</p>}
     {positions.map(position=><NoteEditor key={'role-'+position} kind="role" position={position}
@@ -95,6 +96,8 @@ export function HandoverNotesView({onBack}:{onBack:()=>void}){
  const [notes,setNotes]=useState<{title:string;content:string}[]>([]);
  const [noteLoading,setNoteLoading]=useState(false);
  const [noteError,setNoteError]=useState('');
+ useToastSignals({error});
+ useToastSignals({error:noteError});
  const [reloadIndex,setReloadIndex]=useState(0);
  useEffect(()=>{
   let active=true;
@@ -149,7 +152,7 @@ export function HandoverNotesView({onBack}:{onBack:()=>void}){
     </label>
     <button type="button" className="outline-action" disabled={loading} onClick={()=>setReloadIndex(index=>index+1)}>새로고침</button>
    </div>
-   {error&&<p className="form-error" role="alert">{error}</p>}
+   
    {loading?<LoadingText>인수인계 목록을 불러오는 중입니다.</LoadingText>:
     filtered.length===0?<p className="handover-archive-notice">{query.trim()?'검색 결과가 없습니다.':'저장된 인수인계가 없습니다.'}</p>:
     <div className="handover-archive-list" aria-label="저장된 인수인계 목록">
@@ -172,7 +175,7 @@ export function HandoverNotesView({onBack}:{onBack:()=>void}){
     </div>
     <div className="handover-preview-notes">
      {noteLoading?<LoadingText className="is-compact">인수인계 내용을 불러오는 중입니다.</LoadingText>:
-      noteError?<p className="form-error" role="alert">{noteError}</p>:
+      noteError?<LoadingText className="is-compact">해당 인수인계 문서를 열 수 없습니다.</LoadingText>:
       notes.length===0?<p className="handover-archive-notice">현재 확인할 수 있는 인수인계 내용이 없습니다.</p>:
       notes.map(note=><section className="handover-preview-note" key={note.title}>
        <h3>{note.title}</h3><p>{note.content}</p>
