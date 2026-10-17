@@ -17,3 +17,6 @@
 .about-intro>.image-shimmer-frame{width:100%;object-fit:cover}
 .leader-item>.image-shimmer-frame{object-fit:cover}
 @media(prefers-reduced-motion:reduce){.image-shimmer-band{animation:none;background:#eef2f0}}
+
+/* Disabled fetching actions still advertise waiting rather than an inert pointer. */
+button.is-fetching,button.is-fetching:disabled,button.is-fetching *{cursor:wait!important}
