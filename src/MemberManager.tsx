@@ -314,7 +314,7 @@ export default function MemberManager({ currentUid, level, notify }: { currentUi
                     <span>신규 등록 예상: {preview.filter(member => previewStatuses[member.studentId] === 'new').length}명</span>
                     <span>기존 계정: {preview.filter(member => previewStatuses[member.studentId] === 'existing').length}명</span>
                   </div>}
-                  <p className="form-hint">파일: {fileName} · 아래 회원을 모두 확인해 주세요. 이미 가입한 학번은 덮어쓰지 않고 건너뜁니다.</p>
+                  <p className="form-hint member-csv-preview-hint">파일: {fileName} · 아래 회원을 모두 확인해 주세요. 이미 가입한 학번은 덮어쓰지 않고 건너뜁니다.</p>
                   <div className="member-preview-scroll"><table><thead><tr><th>학번</th><th>이름</th><th>기수</th><th>세션</th><th>직책</th><th>등록 예상</th></tr></thead>
                     <tbody>{preview.map(member => <tr key={member.studentId}><td>{member.studentId}</td><td>{member.name}</td><td>{member.generation}</td><td>{formatMemberValues(member.sessions)}</td><td>{formatMemberValues(member.positions) || '—'}</td><td>{previewStatuses[member.studentId] === 'new' ? '신규 생성' : previewStatuses[member.studentId] === 'existing' ? '기존 계정' : '확인 중'}</td></tr>)}</tbody>
                   </table></div>

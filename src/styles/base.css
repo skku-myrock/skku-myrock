@@ -61,6 +61,7 @@
 .member-file-picker input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
 .member-upload-actions .outline-action{display:inline-flex;align-items:center;gap:8px}
 .member-preview{margin-top:25px}
+.member-csv-preview-hint{margin-bottom:16px}
 .member-preview h3,.member-single h3,.member-result h3{font-size:15px;letter-spacing:-.04em;margin:0 0 15px}
 .member-preview-scroll{max-height:310px;overflow:auto;border:1px solid var(--border);background:white;margin:0 0 15px}
 .member-preview table{border-collapse:collapse;width:100%;min-width:560px;text-align:left}
