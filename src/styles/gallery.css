@@ -432,11 +432,12 @@
   .gallery-manage-trigger{font-size:11px;min-height:31px;padding:0 7px}
 }
 
-/* Twenty-three-page pagination preview: actual album fetching stays on page one. */
+/* Ten-number navigation blocks across twenty-three preview pages; real album fetching stays on page one. */
 .gallery-pagebar{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;padding:25px 0 0}
 .gallery-pagebar>button{display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:34px;border:1px solid #dbe3df;background:#fff;color:#778681;font-size:12px;cursor:pointer}
 .gallery-pagebar>button[aria-current="page"]{color:#fff;border-color:var(--accent-dark);background:var(--accent-dark);font-weight:700}
 .gallery-pagebar>button:disabled{opacity:.3;cursor:not-allowed}
+.gallery-pagebar>.gallery-page-jump{font-weight:700;background:#f6f8f7}
 .gallery-pagebar>.gallery-pagebar-ellipsis{font-size:12px;color:#889791;padding:0 4px}
 .gallery-pagination-preview-note{text-align:center;color:#9da7a4;font-size:11px;margin:12px 0 0}
 .gallery-album-placeholder{pointer-events:none;background:transparent;cursor:default}
