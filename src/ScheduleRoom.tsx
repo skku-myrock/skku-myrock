@@ -1,3 +1,4 @@
+import {useToastSignals} from './useToastSignals';
 import LoadingText from './LoadingText';
 import {useEffect,useMemo,useRef,useState} from 'react';
 import type {PointerEvent as ReactPointerEvent} from 'react';
@@ -33,6 +34,7 @@ export default function ScheduleRoom({id,onBack,registerLeaveGuard}:{
  const [leaving,setLeaving]=useState(false);
  const [inviteFeedback,setInviteFeedback]=useState('');
  const [notice,setNotice]=useState(''),[selectedCell,setSelectedCell]=useState<Cell|null>(null);
+ useToastSignals({error,message:notice,warning:inviteFeedback});
  const stroke=useRef<Stroke|null>(null);
  async function refresh(){
   setLoading(true);setError('');
@@ -265,7 +267,7 @@ export default function ScheduleRoom({id,onBack,registerLeaveGuard}:{
      <button type="button" className="button button-primary" disabled={!dirty||saving} onClick={()=>void save()}>
       {saving?'저장 중…':'저장하기'}</button>
     </div>
-    {error&&<p role="alert" className="schedule-side-warning">{error}</p>}
+    
    </>}
   </section>
   {rosterOpen&&schedule&&<div className="schedule-roster-backdrop" role="presentation"
@@ -285,7 +287,7 @@ export default function ScheduleRoom({id,onBack,registerLeaveGuard}:{
       pattern="[0-9]{10}" value={studentId} onChange={e=>{setStudentId(e.target.value);setInviteFeedback('');}}
       placeholder="학번을 입력하세요"/>
       <button type="submit" className={inviteBusy?"button button-primary is-fetching":"button button-primary"} disabled={inviteBusy||!/^[0-9]{10}$/.test(studentId)}>초대하기</button></div>
-     {inviteFeedback&&<p className="schedule-roster-invalid-id" role="status">{inviteFeedback}</p>}
+     
     </form>
     <section className="schedule-roster-pending" aria-label="초대 대기 명단">
      <h3>초대 요청 명단 ({pendingInvites.length})</h3>
@@ -305,8 +307,6 @@ export default function ScheduleRoom({id,onBack,registerLeaveGuard}:{
     </div>
    </div>
   </div>}
-  {notice&&<div className={"toast schedule-invite-toast"+(notice==="존재하지 않는 학번입니다."?" schedule-invite-warning":"")} role={notice==="존재하지 않는 학번입니다."?"alert":"status"} aria-live={notice==="존재하지 않는 학번입니다."?"assertive":"polite"}>
-   {notice==="존재하지 않는 학번입니다."?<AlertTriangle size={17}/>:<Check size={17}/>}<span>{notice}</span><button type="button" aria-label="알림 닫기" onClick={()=>setNotice('')}><X size={15}/></button>
-  </div>}
+
  </>;
 }
