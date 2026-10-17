@@ -66,8 +66,8 @@ test('finance management uses separate protected route, not the public list', ()
   assert.doesNotMatch(app,/window\.addEventListener\('popstate'/);
   assert.match(app, /<FinanceLanding onDonations=\{\(\) => navigate\('donations'\)\} onExpenses=\{\(\) => navigate\('expenses'\)\} canEditAccount=/);
   assert.match(app, /<ExpenseHistory onBack=\{\(\) => navigate\('finance'\)\} canManageExpenses=/);
-  assert.match(app, /후원 · 회계 초기화/);
-  assert.match(app, /void resetDonationFinance\(\)/);
+  assert.match(app, /후원 회계 초기화/);
+  assert.match(app, /void resetCategory\('finance'\)/);
 });
 test('server-only sensitive ledger operations and accessible manager actions remain distinct', async () => {
   const manager=await readFile(new URL('../src/DonationManagement.tsx',import.meta.url),'utf8');
