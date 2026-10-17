@@ -23,6 +23,7 @@ export default function DonationManagement({onBack}:{onBack:()=>void}) {
   const [people,setPeople]=useState<AnonymousPerson[]>([]);
   const [pendingExclusions,setPendingExclusions]=useState<number[]>([]);
   const peopleChanged=Boolean(data && hasAnonymousRosterChanges(people,data.people,pendingExclusions));
+  const editingChanged=Boolean(editing&&(!editing.id||data?.records.some(record=>record.id===editing.id&&JSON.stringify(editing.row)!==JSON.stringify({date:record.date,donorName:record.donorName,studentId:record.studentId,amount:record.amount,anonymous:record.anonymous}))));
   const [peopleError,setPeopleError]=useState('');
   const [peopleMessage,setPeopleMessage]=useState('');
   useToastSignals({error,message});
@@ -51,7 +52,7 @@ export default function DonationManagement({onBack}:{onBack:()=>void}) {
     setEditing(previous=>previous?{...previous,row:{...previous.row,[field]:value}}:null);
   }
   async function persist() {
-    if(!editing||busy)return;
+    if(!editing||busy||(editing.id&&!editingChanged))return;
     setError('');setMessage('');
     try {
       const valid=validateDonation(editing.row);
@@ -103,7 +104,7 @@ export default function DonationManagement({onBack}:{onBack:()=>void}) {
     window.setTimeout(()=>URL.revokeObjectURL(url),1000);
   }
   async function persistPeople() {
-    if(busy||!data)return;
+    if(busy||!data||!peopleChanged)return;
     setPeopleError('');setPeopleMessage('');
     setBusy(true);
     try{
@@ -183,7 +184,7 @@ export default function DonationManagement({onBack}:{onBack:()=>void}) {
                       <option value="x">x</option><option value="o">o</option>
                     </select></td>
                     <td className="finance-row-actions"><div className="finance-inline-row-actions">
-                      <button type="button" className="outline-action" disabled={busy} onClick={()=>void persist()}><Save size={13}/> 저장</button>
+                      <button type="button" className="outline-action" disabled={busy||!editingChanged} onClick={()=>void persist()}><Save size={13}/> 저장</button>
                       <button type="button" className="outline-action" disabled={busy} onClick={()=>setEditing(null)}>취소</button>
                     </div></td>
                   </tr>:
