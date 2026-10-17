@@ -59,7 +59,7 @@ export default function AboutManagement({onBack,onSaved,registerLeaveGuard}:{onB
     setError('');setMessage('선택한 사진은 로컬 미리보기입니다. 변경 사항 저장 시 업로드됩니다.');
   }
   async function save(){
-    if(busy||loading)return;
+    if(busy||loading||!hasUnsavedChanges)return;
     setError('');setMessage('');setBusy(true);
     try{
       const sources=[content.homeImage,content.heroImage,...content.officers.map(o=>o.photoUrl)];
@@ -157,7 +157,7 @@ export default function AboutManagement({onBack,onSaved,registerLeaveGuard}:{onB
             </div>)}
           </div>}
         </section>
-        <div className="about-manage-footer"><button type="button" className="button button-primary" disabled={busy||loading} onClick={()=>void save()}><Save size={16}/> 변경 사항 저장</button></div>
+        <div className="about-manage-footer"><button type="button" className="button button-primary" disabled={busy||loading||!hasUnsavedChanges} onClick={()=>void save()}><Save size={16}/> 변경 사항 저장</button></div>
       </>
     </div>
 
