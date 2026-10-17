@@ -34,6 +34,7 @@ export function normalize(item){
   id:item.id,
   name:typeof item.name==='string'?item.name:'',
   product:typeof item.product==='string'?item.product:'',
+  imageUrl:typeof item.imageUrl==='string'?item.imageUrl:'',
   queue:Array.isArray(item.queue)?item.queue:[],
   borrower:item.borrower&&typeof item.borrower==='object'&&typeof item.borrower.uid==='string'?item.borrower:null,
   returnRequestedAt:typeof item.returnRequestedAt==='string'?item.returnRequestedAt:'',
@@ -71,7 +72,7 @@ export function renderItem(raw,caller,manager=false){
  const item=normalize(raw),mine=caller?.uid??'';
  const position=item.queue.findIndex(q=>q.uid===mine);
  return {
-  id:item.id,name:item.name,product:item.product,status:statusOf(item),
+  id:item.id,name:item.name,product:item.product,imageUrl:item.imageUrl,status:statusOf(item),
   queueLength:item.queue.length,
   myPosition:position<0?null:position+1,
   isBorrower:Boolean(mine&&item.borrower?.uid===mine),
@@ -104,7 +105,7 @@ export async function callerForEquipment(request,env,{required=false,manager=fal
 }
 export const itemWrite=(item,doc)=>({
  update:{name:firestoreResourceName(equipmentDoc(item.id)),fields:toFields({
-  name:item.name,product:item.product,queue:item.queue,borrower:item.borrower??{},
+  name:item.name,product:item.product,imageUrl:item.imageUrl??'',queue:item.queue,borrower:item.borrower??{},
   returnRequestedAt:item.returnRequestedAt||'',archived:item.archived===true,
  })},
  currentDocument:doc?{updateTime:doc.updateTime}:{exists:false}
@@ -129,3 +130,13 @@ export async function mutateEquipment(env,id,change,{retry=3}={}){
 }
 export const validateEquipmentName=value=>textField(value,'장비 이름',60);
 export const validateProduct=value=>textField(value,'제품명',100);
+
+export function validateEquipmentImageUrl(value){
+ if(value===undefined||value===null||value==='')return '';
+ if(typeof value!=='string'||value.length>2048)reject('장비 이미지 주소가 올바르지 않습니다.');
+ try{
+  const url=new URL(value);
+  if(url.protocol!=='https:'||url.username||url.password)throw Error('invalid');
+  return url.href;
+ }catch{reject('장비 이미지는 HTTPS 주소만 사용할 수 있습니다.');}
+}
