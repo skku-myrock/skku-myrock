@@ -22,6 +22,7 @@ type EditMode = 'sessions' | 'details' | 'permissions';
 type ManagementLevel = 'part_leader' | 'staff' | 'president';
 
 export default function MemberManager({ currentUid, level, notify }: { currentUid: string; level: ManagementLevel; notify: Notify }) {
+  void notify; // Kept as a compatibility prop while all feedback uses the shared notifier.
   const isPresident = level === 'president';
   const canEditDetails = level !== 'part_leader';
   const [tab, setTab] = useState<Tab>('list');
