@@ -41,8 +41,8 @@ test('account save button disabled for unchanged saved data, successful save sho
   assert.match(page,/if\(!editing\|\|busy\|\|!accountChanged\)return/);
   assert.match(page,/disabled=\{busy\|\|!accountChanged\}/);
   assert.match(page,/setAccountMessage\('저장을 완료했습니다.'\)/);
-  assert.match(page,/site-bottom-toast is-success/);
-  assert.match(page,/onClick=\{\(\)=>setAccountMessage\(''\)\}/);
+  assert.match(page,/accountMessage&&<TimedBottomToast tone="warning"/);
+  assert.match(page,/onClose=\{\(\)=>setAccountMessage\(''\)\}/);
 });
 test('file uploads reject GIF on client and server, while public GIF URL compatibility is unchanged',async()=>{
   const [compress,server]=await Promise.all([src('src/imageCompression.ts'),src('functions/api/images/batch.js')]);

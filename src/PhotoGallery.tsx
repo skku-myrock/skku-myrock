@@ -59,8 +59,9 @@ export default function PhotoGallery({ canRegister }: { canRegister: boolean }) 
   const filtered = filter === '전체' ? albums : albums.filter(album => album.category === filter);
   const shown=previewPage===1?filtered.slice(0,PAGE_SIZE):[];
   const placeholders=Array.from({length:PAGE_SIZE-shown.length},(_,index)=>index);
-  const windowStart=Math.max(1,Math.min(previewPage-2,DEMO_PAGE_COUNT-4));
-  const displayedPages=Array.from({length:5},(_,i)=>windowStart+i);
+  const PAGE_GROUP_SIZE=10;
+  const windowStart=Math.floor((previewPage-1)/PAGE_GROUP_SIZE)*PAGE_GROUP_SIZE+1;
+  const displayedPages=Array.from({length:Math.min(PAGE_GROUP_SIZE,DEMO_PAGE_COUNT-windowStart+1)},(_,i)=>windowStart+i);
   const count = activeAlbum?.photos.length ?? 0;
 
   function openAlbum(album: PhotoAlbum, event: ReactMouseEvent<HTMLButtonElement>) {
@@ -228,11 +229,11 @@ export default function PhotoGallery({ canRegister }: { canRegister: boolean }) 
       </div>)}
     </div>
     {!loading&&!loadError&&<nav className="gallery-pagebar" aria-label="갤러리 페이지 탐색 (미리보기)">
+     <button type="button" className="gallery-page-jump" disabled={windowStart===1} onClick={()=>setPreviewPage(Math.max(1,windowStart-PAGE_GROUP_SIZE))} aria-label="이전 10페이지 목록">«</button>
      <button type="button" disabled={previewPage===1} onClick={()=>setPreviewPage(page=>Math.max(1,page-1))} aria-label="이전 페이지">‹</button>
-     {windowStart>1&&<><button type="button" onClick={()=>setPreviewPage(1)} aria-label="1페이지">1</button>{windowStart>2&&<span className="gallery-pagebar-ellipsis">…</span>}</>}
      {displayedPages.map(page=><button key={page} type="button" aria-label={page+'페이지'} aria-current={previewPage===page?'page':undefined} onClick={()=>setPreviewPage(page)}>{page}</button>)}
-     {windowStart+4<DEMO_PAGE_COUNT&&<>{windowStart+4<DEMO_PAGE_COUNT-1&&<span className="gallery-pagebar-ellipsis">…</span>}<button type="button" onClick={()=>setPreviewPage(DEMO_PAGE_COUNT)} aria-label={DEMO_PAGE_COUNT+'페이지'}>{DEMO_PAGE_COUNT}</button></>}
      <button type="button" disabled={previewPage===DEMO_PAGE_COUNT} onClick={()=>setPreviewPage(page=>Math.min(DEMO_PAGE_COUNT,page+1))} aria-label="다음 페이지">›</button>
+     <button type="button" className="gallery-page-jump" disabled={windowStart+PAGE_GROUP_SIZE>DEMO_PAGE_COUNT} onClick={()=>setPreviewPage(Math.min(DEMO_PAGE_COUNT,windowStart+PAGE_GROUP_SIZE))} aria-label="다음 10페이지 목록">»</button>
     </nav>}
     {!loading&&!loadError&&<p className="gallery-pagination-preview-note">페이지 이동은 UI 미리보기입니다. 2~23페이지의 실제 앨범 조회는 아직 연결되지 않았습니다.</p>}
 

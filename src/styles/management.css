@@ -248,6 +248,7 @@ body:has([data-async-busy="true"]),body:has([data-async-busy="true"]) *{
   padding:14px 16px;box-shadow:0 7px 28px rgba(17,39,24,.16);
   font-size:12px;line-height:1.65;color:#315a40;background:#f1faf2;border:1px solid #acd5b5}
 .site-bottom-toast.is-error{color:#933636;background:#fff3f1;border-color:#e7b8b3}
+.site-bottom-toast.is-warning{color:#866424;background:#fff9ed;border-color:#e5d2a2}
 .site-bottom-toast>span{min-width:0;overflow-wrap:anywhere}
 .site-bottom-toast>button{flex:0 0 auto;border:1px solid currentColor;background:transparent;color:inherit;cursor:pointer;
   font:inherit;padding:5px 8px;border-radius:2px}

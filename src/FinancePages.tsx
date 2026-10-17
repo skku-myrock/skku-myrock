@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import TimedBottomToast from './TimedBottomToast';
 import type { FormEvent } from 'react';
 import { getOwnDonations, getPublicDonations } from './donationApi';
 import { displayAmount, displayDate, sumDonationAmounts } from './donationData';
@@ -70,7 +71,7 @@ export function FinanceLanding({ onDonations, onExpenses, canEditAccount, logged
     <FinanceHeading eyebrow="SUPPORT & FINANCE" title="후원 · 회계"
       description="모여락의 다음 무대를 함께 만들어 주시는 모든 분께 감사드립니다." />
 
-    {accountMessage&&<div className="site-bottom-toast is-success" role="status" aria-live="polite"><span>{accountMessage}</span><button type="button" aria-label="알림 닫기" onClick={()=>setAccountMessage('')}>닫기</button></div>}
+    {accountMessage&&<TimedBottomToast tone="warning" message={accountMessage} onClose={()=>setAccountMessage('')}/>}
 
     <section className="container section-block finance-support-intro">
       <span className="eyebrow">SUPPORT MYROCK</span>
