@@ -67,7 +67,6 @@ export default function PhotoGallery({ canRegister }: { canRegister: boolean }) 
       .finally(()=>{if(alive)setLoading(false);});
     return ()=>{alive=false;};
   },[previewPage,filter]);
-  const filtered=albums;
   const shown=albums.slice(0,PAGE_SIZE);
   const placeholders=Array.from({length:PAGE_SIZE-shown.length},(_,index)=>index);
   const PAGE_GROUP_SIZE=10;
@@ -249,7 +248,7 @@ export default function PhotoGallery({ canRegister }: { canRegister: boolean }) 
     </nav>}
     {!loading&&!loadError&&<p className="gallery-pagination-preview-note">전체 {totalAlbums}개 앨범 · {previewPage} / {totalPages}페이지</p>}
 
-    {canRegister && uploadOpen && <GalleryUploadDialog onClose={() => setUploadOpen(false)} onCreated={album=>{
+    {canRegister && uploadOpen && <GalleryUploadDialog onClose={() => setUploadOpen(false)} onCreated={()=>{
       setPreviewPage(1);
       void reload();
       setUploadOpen(false);
