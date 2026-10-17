@@ -26,7 +26,7 @@ test('public about screen loads persisted introduction and leaves social links i
   assert.match(pages,/content\.history\.map\(item/);
   assert.match(pages,/content\.cohortLabel/);
   assert.match(pages,/content\.heroImage\?<ImageShimmer/);
-  assert.match(pages,/officer\.photoUrl\?<img/);
+  assert.match(pages,/officer\.photoUrl\?<ImageShimmer/);
   assert.match(styles,/\.leader-item img\.leader-photo\{/);
   assert.match(pages,/href="https:\/\/www\.instagram\.com\/skku_m\.y\.rock\/"[^>]*target="_blank"[^>]*rel="noopener noreferrer"/);
   assert.match(pages,/href="https:\/\/www\.youtube\.com\/@SKKUMYRock"[^>]*target="_blank"[^>]*rel="noopener noreferrer"/);
