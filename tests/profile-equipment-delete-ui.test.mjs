@@ -22,7 +22,7 @@ test('privileged and OB members have visually disabled but warning-accessible de
  ]);
  assert.match(manager,/member\.role !== 'member' \|\| member\.handoverAccess \|\| member\.protected/);
  assert.match(manager,/aria-disabled=\{member\.role !== 'member' \|\| member\.handoverAccess/);
- assert.match(manager,/notify\('권한이 부여된 인원은 삭제할 수 없습니다\. 먼저 권한을 해제해주세요\.'\)/);
+ assert.match(manager,/showToast\('권한이 부여된 인원은 삭제할 수 없습니다\. 먼저 권한을 해제해주세요\.','warning'\)/);
  assert.match(manager,/onClick=\{\(\) => void removeMember\(member\)\}/);
  assert.match(app,/currentUid=\{user\.uid\} level=\{currentLevel!\} notify=\{notify\}/);
  assert.match(css,/\.member-danger\.member-danger-restricted/);
