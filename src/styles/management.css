@@ -330,7 +330,9 @@ body:has([data-async-busy="true"]),body:has([data-async-busy="true"]) *{
 }
 .site-bottom-toast.is-timed>button:hover{opacity:.65}
 .site-bottom-toast.is-timed>button:focus-visible{outline:2px solid currentColor;outline-offset:2px}
-.site-bottom-toast.is-timed{animation:myrock-toast-arrive .22s ease-out both}
+/* Leave optical space on the text side to balance the X icon's built-in 28px hit area. */
+.site-bottom-toast.is-timed{padding-left:28px;animation:myrock-toast-arrive .22s ease-out both}
+@media(max-width:700px){.site-bottom-toast.is-timed{padding-left:25px}}
 .site-bottom-toast.is-timed.is-leaving{animation:myrock-toast-depart .25s ease-in both}
 @keyframes myrock-toast-arrive{
   from{opacity:0;transform:translate(-50%,18px)}
