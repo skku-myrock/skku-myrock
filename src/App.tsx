@@ -11,7 +11,7 @@ import logo from './logo-transparent.png';
 import MemberManager from './MemberManager';
 import EquipmentManager from './EquipmentManager';
 import {equipmentAction,getEquipment,manageEquipment} from './equipmentApi';
-import type {EquipmentAction,EquipmentManageAction} from './equipmentApi';
+import type {EquipmentAction,EquipmentManageAction,EquipmentManageInput} from './equipmentApi';
 import type {EquipmentItem} from './equipmentDemo';
 import {purgeAllOtherMembers} from './memberAdmin';
 import {ScheduleLanding} from './SchedulePages';
@@ -304,7 +304,7 @@ function App() {
     }catch(error){notify(error instanceof Error?error.message:'장비 요청에 실패했습니다.');await loadEquipment(false,true);}
     finally{setEquipmentBusyId(null);}
   }
-  async function handleEquipmentManage(action:EquipmentManageAction,input:{id?:string;name?:string;product?:string}){
+  async function handleEquipmentManage(action:EquipmentManageAction,input:EquipmentManageInput){
     if(equipmentBusyId)throw new Error('이전 장비 요청을 처리하는 중입니다.');
     setEquipmentBusyId(input.id??'equipment-new');
     try{
