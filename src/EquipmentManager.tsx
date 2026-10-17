@@ -31,6 +31,7 @@ export default function EquipmentManager({items,busy,loading,error,onRefresh,onM
  },[imageFile]);
  const [feedback,setFeedback]=useState(''),[localError,setLocalError]=useState('');
  useToastSignals({error:localError,message:feedback});
+ useToastSignals({error});
  const pending=items.filter(item=>item.status==='대여 승인 대기중');
  const returning=items.filter(item=>item.status==='반납 확인중');
  const borrowed=items.filter(item=>item.status==='대여중');
