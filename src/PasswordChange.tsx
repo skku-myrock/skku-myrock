@@ -48,7 +48,6 @@ export default function PasswordChange({ user }: { user: User }) {
       <label>새 비밀번호<input type="password" autoComplete="new-password" value={next} onChange={event => setNext(event.target.value)} required/></label>
       <label>새 비밀번호 확인<input type="password" autoComplete="new-password" value={confirm} onChange={event => setConfirm(event.target.value)} required/></label>
 
-}
       <button type="submit" className="button button-primary" disabled={busy || !current || !next || !confirm}>{busy ? '변경 중...' : '비밀번호 변경'} <ArrowRight size={16}/></button>
     </form>
     <p className="form-hint">현재 비밀번호를 잊었거나 로그인에 문제가 생기면 운영진에게 문의해 주세요.</p>
