@@ -5,8 +5,22 @@
 
 /* Photo frame shimmer: reserve the native frame, then reveal only on image load. */
 .image-shimmer-frame{position:relative;display:block;overflow:hidden;background:#eef2f0}
-.image-shimmer-band{position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(100deg,#eef2f0 0%,#f9fbfa 46%,#eef2f0 100%);background-size:220% 100%;animation:shimmer 1.7s linear infinite}
-@keyframes shimmer{0%{background-position:170% 0}100%{background-position:-170% 0}}
+/* The gradient begins/ends with the same shade and tiles at precisely one
+   --shimmer-cycle. Translating by one tile keeps consecutive loops identical. */
+.image-shimmer-band{
+  --shimmer-cycle:clamp(380px,120vw,840px);
+  position:absolute;inset:0;z-index:1;pointer-events:none;
+  background-image:linear-gradient(90deg,
+    #eef2f0 0%,#eef2f0 32%,#f4f8f6 42%,#f9fbfa 50%,
+    #f4f8f6 58%,#eef2f0 68%,#eef2f0 100%);
+  background-size:var(--shimmer-cycle) 100%;
+  background-repeat:repeat-x;
+  animation:shimmer 3.2s linear infinite;
+}
+@keyframes shimmer{
+  from{background-position:0 0}
+  to{background-position:var(--shimmer-cycle) 0}
+}
 .image-shimmer-frame>.image-shimmer-content[hidden]{display:none!important}
 .image-shimmer-frame>.image-shimmer-content{display:block;width:100%;height:100%;object-fit:inherit}
 .image-shimmer-frame.is-image-loading>.image-shimmer-content{opacity:0}
