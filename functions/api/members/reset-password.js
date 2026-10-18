@@ -1,5 +1,5 @@
 import {
-  failure, initialPasswordForStudentId, parseBody, secureOrigin, success, validateUid,
+  failure, initialPasswordForStudentId, parseBody, secureOrigin, success, validateUid, docFields, reject,
 } from '../../_lib/shared.js';
 import {
   assertAccess, getFirestoreDocument, requireMutableTarget, updateAccount,
@@ -12,6 +12,8 @@ export async function onRequestPost({ request, env }) {
     const uid = validateUid((await parseBody(request))?.uid);
     const target = await getFirestoreDocument(env, uid);
     const data = requireMutableTarget(caller, target, uid, { protectSelf: true });
+    if(caller.role==='staff'&&!caller.superadmin&&['staff','president'].includes(data.role))
+      reject('실무단은 동급 또는 상위 운영진의 비밀번호를 초기화할 수 없습니다.',403);
     // "Reset" always sets the password to the student's current 10-digit ID.
     const password = initialPasswordForStudentId(data.studentId);
     const response = await updateAccount(env, uid, { password });
