@@ -45,6 +45,15 @@ test('mobile footer stays two-column while practical, then centers both rows',as
  assert.match(app,/className="footer-contact-people"/);
 });
 
+test('only stacked centered officer names adopt copyright typography',async()=>{
+ const css=await source('src/styles/finance.css');
+ const narrow=css.slice(css.lastIndexOf('@media(max-width:469px)'));
+ assert.match(narrow,/\.footer-contact-people span\{\s*color:#a0aaa6;\s*font-size:10px;\s*font-weight:400;\s*line-height:normal;/);
+ const officerRule=narrow.slice(narrow.indexOf('.footer-contact-people span{'));
+ assert.doesNotMatch(officerRule,/\.footer-bug-report\{[^}]*font-size:10px/);
+ assert.match(css,/@media\(min-width:470px\) and \(max-width:620px\)/);
+});
+
 test('notice author column truncates overlong names to an ellipsis',async()=>{
  const [css,ui]=await Promise.all([source('src/styles/notice-editor.css'),source('src/pages/SitePages.tsx')]);
  assert.match(css,/\.notice-table-row>\.notice-author-cell\{\s*display:block;\s*min-width:0;\s*max-width:100%;\s*overflow:hidden;\s*text-overflow:ellipsis;\s*white-space:nowrap/);
