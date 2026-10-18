@@ -20,8 +20,8 @@ test('success/error/warning share the same timed toast with distinct muted tones
 test('gallery shows max 10 numbered pages per real count and navigates across page groups',async()=>{
  const [gallery,api,db]=await Promise.all([read('src/PhotoGallery.tsx'),read('src/galleryApi.ts'),read('functions/_lib/gallery.js')]);
  assert.match(gallery,/const \[windowStart,setWindowStart\]=useState\(1\)/);
- assert.match(gallery,/const \[pageGroupSize,setPageGroupSize\]=useState\(10\)/);
- assert.match(gallery,/Math\.min\(pageGroupSize,totalPages-windowStart\+1\)/);
+ assert.match(gallery,/const PAGE_GROUP_SIZE=10;/);
+ assert.match(gallery,/Math\.min\(PAGE_GROUP_SIZE,totalPages-windowStart\+1\)/);
  assert.match(gallery,/function changePageGroup\(direction:-1\|1\)/);
  assert.match(gallery,/setWindowStart\(next\)/);
  assert.match(gallery,/onClick=\{\(\)=>changePageGroup\(-1\)\}/);
