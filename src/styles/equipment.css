@@ -70,3 +70,13 @@
 .equipment-correction-form>p{font-size:11px;color:var(--muted);line-height:1.7;flex-basis:100%;margin:0}
 .equipment-correction-form .equipment-manage-form-actions{width:100%;margin:0}
 @media(max-width:620px){.equipment-row>.equipment-photo{width:84px;min-width:84px;height:80px}.equipment-correction-form{padding:13px}.equipment-manage-description>img,.equipment-manage-description>.image-shimmer-frame,.equipment-manage-photo-empty{width:65px;min-width:65px;height:60px}}
+/* The mobile equipment controls form a right-aligned group, never space-between. */
+@media(max-width:620px){
+  .equipment-list-toolbar .toolbar-actions{
+    width:100%;
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+    gap:8px;
+  }
+}
