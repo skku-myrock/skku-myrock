@@ -2,6 +2,7 @@ import {failure,parseBody,reject,secureOrigin,success} from '../../_lib/shared.j
 import {assertAccess} from '../../_lib/google.js';
 import {listNotices} from '../../_lib/notices.js';
 import {listEquipment} from '../../_lib/equipment.js';
+import {listGalleryAlbums} from '../../_lib/gallery.js';
 import {clearImageFolder} from '../../_lib/githubImages.js';
 import {getAbout,saveAbout,withoutAboutPhotoUrls} from '../../_lib/aboutContent.js';
 
@@ -26,6 +27,11 @@ export async function onRequestPost({request,env}){
       return urls.some(url=>typeof url==='string'&&url.startsWith(legacyPrefix));
     });
     if(referenced)reject('공지사항에 아직 site/ 사진을 참조하는 글이 있습니다. 해당 사진을 notices/로 이전한 후 에셋을 초기화해 주세요.',409);
+    const albums=await listGalleryAlbums(env);
+    if(albums.some(album=>album.photos.some(url=>
+      typeof url==='string'&&url.startsWith(legacyPrefix))))
+      reject('갤러리에서 site/ 사진을 사용 중입니다. 연결된 사진을 먼저 정리해 주세요.',409);
+
     // Equipment photos now use site/ too. The composed "other/full reset"
     // purges the equipment documents first; the standalone site reset must
     // not silently break still-registered equipment photos.
