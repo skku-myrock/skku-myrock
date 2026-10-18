@@ -426,40 +426,20 @@
   .gallery-manage-wrapper .content-manage-trigger{font-size:11px;min-height:31px;padding:6px 8px}
 }
 
-/* Ten-number navigation blocks across twenty-three preview pages; real album fetching stays on page one. */
+/* Gallery paging: ten numbered pages and two smaller controls on each side.
+   One- and two-digit labels have equal widths; three-digit labels may grow. */
 .gallery-pagebar{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;padding:25px 0 0}
 .gallery-pagebar>button{display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:34px;border:1px solid #dbe3df;background:#fff;color:#778681;font-size:12px;cursor:pointer}
 .gallery-pagebar>button[aria-current="page"]{color:#fff;border-color:var(--accent-dark);background:var(--accent-dark);font-weight:700}
 .gallery-pagebar>button:disabled{opacity:.3;cursor:not-allowed}
 .gallery-pagebar>.gallery-page-jump{font-weight:700;background:#f6f8f7}
-.gallery-pagebar>.gallery-pagebar-ellipsis{font-size:12px;color:#889791;padding:0 4px}
 .gallery-pagination-preview-note{text-align:center;color:#9da7a4;font-size:11px;margin:12px 0 0}
-@media(max-width:620px){.gallery-pagebar{gap:4px}.gallery-pagebar>button{min-width:31px;height:32px}}
-/* Ten page numbers and four navigation controls fit even in a 320px viewport.
-   One- and two-digit pages share the same fixed width. */
-@media(max-width:620px){
-  .gallery-pagebar{gap:2px;flex-wrap:nowrap;max-width:100%;overflow:visible}
-  .gallery-pagebar>button{
-    flex:0 0 18px;
-    width:18px;
-    min-width:18px;
-    height:28px;
-    padding:0;
-    font-size:10px;
-    font-variant-numeric:tabular-nums;
-  }
-  .gallery-pagebar>button[data-digits="3"]{
-    flex:0 0 auto;
-    width:auto;
-    min-width:23px;
-    padding:0 2px;
-  }
-}
 /* Gallery category tabs must never form a tiny vertical scroll area. */
 .gallery-toolbar .gallery-tabs{overflow:hidden;overscroll-behavior:none}
 @media(max-width:620px){
   .gallery-pagebar{gap:2px;flex-wrap:nowrap;max-width:100%}
   .gallery-pagebar>button{
+    box-sizing:border-box;
     flex:0 0 24px;
     width:24px;
     min-width:24px;
@@ -468,10 +448,35 @@
     font-size:11px;
     font-variant-numeric:tabular-nums;
   }
+  .gallery-pagebar>button:is(:first-child,:nth-child(2),:nth-last-child(2),:last-child){
+    flex:0 0 20px;
+    width:20px;
+    min-width:20px;
+  }
   .gallery-pagebar>button[data-digits="3"]{
     flex:0 0 auto;
     width:auto;
     min-width:28px;
     padding:0 3px;
+  }
+}
+@media(max-width:389px){
+  .gallery-pagebar>button:not(:first-child):not(:nth-child(2)):not(:nth-last-child(2)):not(:last-child):not([data-digits="3"]){
+    flex-basis:22px;
+    width:22px;
+    min-width:22px;
+  }
+  .gallery-pagebar>button:is(:first-child,:nth-child(2),:nth-last-child(2),:last-child){
+    flex-basis:19px;
+    width:19px;
+    min-width:19px;
+  }
+}
+@media(max-width:359px){
+  .gallery-pagebar{gap:0}
+  .gallery-pagebar>button:not(:first-child):not(:nth-child(2)):not(:nth-last-child(2)):not(:last-child):not([data-digits="3"]){
+    flex-basis:20px;
+    width:20px;
+    min-width:20px;
   }
 }
