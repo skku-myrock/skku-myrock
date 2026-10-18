@@ -435,3 +435,23 @@
 .gallery-pagebar>.gallery-pagebar-ellipsis{font-size:12px;color:#889791;padding:0 4px}
 .gallery-pagination-preview-note{text-align:center;color:#9da7a4;font-size:11px;margin:12px 0 0}
 @media(max-width:620px){.gallery-pagebar{gap:4px}.gallery-pagebar>button{min-width:31px;height:32px}}
+/* Ten page numbers and four navigation controls fit even in a 320px viewport.
+   One- and two-digit pages share the same fixed width. */
+@media(max-width:620px){
+  .gallery-pagebar{gap:2px;flex-wrap:nowrap;max-width:100%;overflow:visible}
+  .gallery-pagebar>button{
+    flex:0 0 18px;
+    width:18px;
+    min-width:18px;
+    height:28px;
+    padding:0;
+    font-size:10px;
+    font-variant-numeric:tabular-nums;
+  }
+  .gallery-pagebar>button[data-digits="3"]{
+    flex:0 0 auto;
+    width:auto;
+    min-width:23px;
+    padding:0 2px;
+  }
+}
