@@ -107,6 +107,7 @@ test('site reset refuses to erase live equipment URLs and the composed other res
   read('src/App.tsx'),read('functions/_lib/githubImages.js')
  ]);
  assert.match(siteReset,/const equipment=await listEquipment\(env\)/);
+ assert.match(siteReset,/const albums=await listGalleryAlbums\(env\)/);
  assert.match(siteReset,/item\.imageUrl\.startsWith\(legacyPrefix\)/);
  assert.ok(siteReset.indexOf('listEquipment(env)')<siteReset.indexOf("clearImageFolder(env,'site')"));
  assert.doesNotMatch(equipmentPurge,/clearImageFolder\(env,'equipment'\)/);
