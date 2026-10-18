@@ -354,5 +354,9 @@
   .footer-contact-people span,.footer-bug-report{
     justify-content:center;
     text-align:center;
+    color:#a0aaa6;
+    font-size:10px;
+    font-weight:400;
+    line-height:normal;
   }
 }
