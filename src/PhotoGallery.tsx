@@ -41,8 +41,16 @@ export default function PhotoGallery({ canRegister }: { canRegister: boolean }) 
   useToastSignals({error:loadError});
   const [filter, setFilter] = useState<Filter>('전체');
   const [previewPage,setPreviewPage]=useState(1);
+  const [windowStart,setWindowStart]=useState(1);
+  const [pageGroupSize,setPageGroupSize]=useState(10);
   const [totalPages,setTotalPages]=useState(1);
   const [totalAlbums,setTotalAlbums]=useState(0);
+  useEffect(()=>{
+    const update=()=>setPageGroupSize(window.innerWidth<360?7:window.innerWidth<420?9:10);
+    update();
+    window.addEventListener('resize',update);
+    return()=>window.removeEventListener('resize',update);
+  },[]);
   const [activeAlbum, setActiveAlbum] = useState<PhotoAlbum | null>(null);
   const [photoIndex, setPhotoIndex] = useState(0);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -71,16 +79,20 @@ export default function PhotoGallery({ canRegister }: { canRegister: boolean }) 
   },[previewPage,filter]);
   function changeCategory(category:Filter){
     if(filter===category&&previewPage===1)return;
-    setInteractionPending(true);setFilter(category);setPreviewPage(1);
+    setInteractionPending(true);setFilter(category);setPreviewPage(1);setWindowStart(1);
   }
   function changePage(next:number){
     if(next===previewPage)return;
+    if(next<windowStart||next>=windowStart+pageGroupSize)
+      setWindowStart(Math.floor((next-1)/pageGroupSize)*pageGroupSize+1);
     setInteractionPending(true);setPreviewPage(next);
   }
+  function changePageGroup(direction:-1|1){
+    const next=Math.max(1,Math.min(totalPages,windowStart+direction*pageGroupSize));
+    setWindowStart(next);
+  }
   const shown=albums.slice(0,PAGE_SIZE);
-  const PAGE_GROUP_SIZE=10;
-  const windowStart=Math.floor((previewPage-1)/PAGE_GROUP_SIZE)*PAGE_GROUP_SIZE+1;
-  const displayedPages=Array.from({length:Math.min(PAGE_GROUP_SIZE,totalPages-windowStart+1)},(_,i)=>windowStart+i);
+  const displayedPages=Array.from({length:Math.max(0,Math.min(pageGroupSize,totalPages-windowStart+1))},(_,i)=>windowStart+i);
   const count = activeAlbum?.photos.length ?? 0;
 
   function openAlbum(album: PhotoAlbum, event: ReactMouseEvent<HTMLButtonElement>) {
@@ -245,11 +257,11 @@ export default function PhotoGallery({ canRegister }: { canRegister: boolean }) 
       </button>)}
     </div>
     {!loading&&!loadError&&<nav className="gallery-pagebar" aria-label="갤러리 페이지 탐색">
-     <button type="button" className="gallery-page-jump" disabled={windowStart===1} onClick={()=>changePage(Math.max(1,windowStart-PAGE_GROUP_SIZE))} aria-label="이전 10페이지 목록">«</button>
+     <button type="button" className="gallery-page-jump" disabled={windowStart===1} onClick={()=>changePageGroup(-1)} aria-label="이전 페이지 번호 목록">«</button>
      <button type="button" disabled={previewPage===1} onClick={()=>changePage(Math.max(1,previewPage-1))} aria-label="이전 페이지">‹</button>
      {displayedPages.map(page=><button key={page} type="button" aria-label={page+'페이지'} aria-current={previewPage===page?'page':undefined} data-digits={String(page).length} onClick={()=>changePage(page)}>{page}</button>)}
      <button type="button" disabled={previewPage===totalPages} onClick={()=>changePage(Math.min(totalPages,previewPage+1))} aria-label="다음 페이지">›</button>
-     <button type="button" className="gallery-page-jump" disabled={windowStart+PAGE_GROUP_SIZE>totalPages} onClick={()=>changePage(Math.min(totalPages,windowStart+PAGE_GROUP_SIZE))} aria-label="다음 10페이지 목록">»</button>
+     <button type="button" className="gallery-page-jump" disabled={windowStart+pageGroupSize>totalPages} onClick={()=>changePageGroup(1)} aria-label="다음 페이지 번호 목록">»</button>
     </nav>}
     {!loading&&!loadError&&<p className="gallery-pagination-preview-note">전체 {totalAlbums}개 앨범 · {previewPage} / {totalPages}페이지</p>}
 
