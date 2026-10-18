@@ -26,7 +26,7 @@ import {showToast,classifyToast} from './toastBus';
 import {useToastSignals} from './useToastSignals';
 import type {ToastDetail} from './toastBus';
 import {purgeDonations} from './donationApi';
-import {purgeNotices,resetClubIntroduction,resetSiteAssets,purgeGallery,purgeSchedules,resetEquipmentLoans,purgeEquipmentInventory,generateDummyBatch} from './adminResets';
+import {purgeNotices,resetClubIntroduction,resetSiteAssets,purgeGallery,purgeSchedules,resetEquipmentLoans,purgeEquipmentInventory,purgeHandoverNotes,generateDummyBatch} from './adminResets';
 import {invalidateAboutCache} from './aboutContent';
 import {listNoticesPage,getNotice,deleteNotice} from './noticesData';
 import type {NoticePost} from './noticesData';
@@ -173,7 +173,7 @@ function App() {
       finance:'후원 기록, 익명자 명단, 회비 집행 내역을 삭제합니다. 계좌 정보는 유지합니다.',
       activity:'모든 합주 시간표·참여자·초대·초대 제한 기록을 삭제하고 장비 대여자·대기열·반납 요청을 비웁니다. 장비 정보와 사진은 유지합니다.',
       other:'공지사항·갤러리 전체 및 관련 이미지를 삭제하고 동아리 소개를 복원합니다. 모든 등록 장비 문서와 GitHub equipment/ 사진도 삭제합니다.',
-      all:'위 세 초기화를 전부 실행합니다. 회원 명단·로그인 계정·인수인계·회비 계좌는 유지하며, 장비 목록과 사진도 삭제합니다.'
+      all:'후원·활동·나머지 초기화와 인수인계 기록 전체 삭제를 실행합니다. 회원 명단·로그인 계정·회비 계좌는 유지합니다.'
     };
     if(!window.confirm('경고: '+RESET_LABELS[scope]+'를 실행합니다.\n'+descriptions[scope]+'\n\n삭제한 데이터는 복구할 수 없으며 일부만 처리되면 같은 초기화를 다시 실행해야 합니다. 계속하시겠습니까?'))return;
     setResettingScope(scope);setResetStage('초기화를 준비하고 있습니다.');setAccountOpen(false);setMenuOpen(false);
@@ -199,6 +199,7 @@ function App() {
         await resetClubIntroduction();
         setNotices([]);setNoticeCursor(null);setNoticeDetail(null);setNoticeError('');
       }
+      if(scope==='all')await drain(purgeHandoverNotes,'인수인계 기록 초기화 중',1000);
       navigate('home');
       showToast(RESET_LABELS[scope]+'가 완료되었습니다.','success');
     }catch(error){

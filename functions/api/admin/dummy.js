@@ -23,7 +23,7 @@ function dummyNotice(index,caller){
   blocks:[{kind:'text',text:'페이지네이션 테스트를 위한 더미 공지사항 '+n+'입니다. 실제 동아리 공지가 아닙니다.'}]
  });
  return {...d,body:d.blocks[0].text,description:d.blocks[0].text,images:[],
-  author:'테스트 데이터',authorUid:caller.uid,publishedAt:timestamp(index),isDummy:true,dummyBatch:'pagination-v1'};
+  author:'테스트',authorUid:caller.uid,publishedAt:timestamp(index),isDummy:true,dummyBatch:'pagination-v1'};
 }
 function dummyDonation(index){
  const n=pad(index+1,3),record=normalizeDonation({date:date(index),donorName:'[테스트] 후원자 '+n,

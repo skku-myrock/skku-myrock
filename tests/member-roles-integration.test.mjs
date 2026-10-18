@@ -156,7 +156,10 @@ test('signed tokens enforce role hierarchy through real handlers and Auth/Firest
       uid,sessions:['보컬','기타'],expectedUpdateTime:original,
     }),env})).status,200);
     assert.deepEqual(docFields(docs.get(uid)).sessions,['보컬','기타']);
-    assert.equal((await resetPassword({request:post('staff','reset-password',{uid}),env})).status,403);
+    assert.equal((await resetPassword({request:post('part','reset-password',{uid}),env})).status,403);
+    assert.equal((await resetPassword({request:post('staff','reset-password',{uid}),env})).status,200);
+    assert.equal(lastResetPassword,'2026300001');
+    assert.equal((await resetPassword({request:post('staff','reset-password',{uid:actors.president.uid}),env})).status,403);
     assert.equal((await permissions({request:post('staff','permissions',{
       uid,role:'president',handoverAccess:false,expectedUpdateTime:docs.get(uid).updateTime,
     }),env})).status,403);

@@ -31,11 +31,13 @@ test('desktop and mobile menus expose exactly four composed reset actions',async
    assert.ok(section.includes(step),step);
  assert.ok(section.indexOf('purgeNotices')<section.indexOf('resetSiteAssets'));
  assert.ok(section.indexOf('resetSiteAssets')<section.indexOf('resetClubIntroduction'));
- assert.match(section,/회원 명단·로그인 계정·인수인계/);
+ assert.match(section,/회원 명단·로그인 계정·회비 계좌/);
+ assert.match(section,/if\(scope==='all'\)await drain\(purgeHandoverNotes/);
+ assert.doesNotMatch(section,/if\(scope==='other'\)await drain\(purgeHandoverNotes/);
 });
 
 test('all reset APIs enforce signed and stored superadmin flags',async()=>{
- const handlers=await Promise.all(['functions/api/about/reset.js','functions/api/notices/purge.js','functions/api/images/reset.js','functions/api/gallery/purge.js','functions/api/schedules/purge.js','functions/api/equipment/reset.js'].map(source));
+ const handlers=await Promise.all(['functions/api/about/reset.js','functions/api/notices/purge.js','functions/api/images/reset.js','functions/api/gallery/purge.js','functions/api/schedules/purge.js','functions/api/equipment/reset.js','functions/api/handover-notes/purge.js'].map(source));
  for(const code of handlers){
    assert.match(code,/assertAccess\(request,env,'president'\)/);
    assert.match(code,/if\(!caller.superadmin\)reject/);

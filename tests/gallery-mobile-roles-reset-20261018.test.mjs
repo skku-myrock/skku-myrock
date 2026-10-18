@@ -1,0 +1,64 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+const read=path=>readFile(new URL('../'+path,import.meta.url),'utf8');
+
+test('gallery tabs do not scroll vertically and page number buttons have mobile min width 24',async()=>{
+ const s=await read('src/styles/gallery.css');
+ assert.match(s,/\.gallery-toolbar \.gallery-tabs\{overflow:hidden;overscroll-behavior:none\}/);
+ assert.match(s,/\.gallery-pagebar>button\{\s*flex:0 0 24px;\s*width:24px;\s*min-width:24px;/);
+ assert.match(s,/\.gallery-pagebar>button\[data-digits="3"\]/);
+});
+test('page number grouping changes independently of selected gallery page',async()=>{
+ const s=await read('src/PhotoGallery.tsx');
+ assert.match(s,/function changePageGroup\(direction:-1\|1\)/);
+ const start=s.indexOf('function changePageGroup('),end=s.indexOf('const shown=',start);
+ const block=s.slice(start,end);
+ assert.match(block,/setWindowStart\(next\)/);
+ assert.doesNotMatch(block,/setPreviewPage|changePage\(/);
+ assert.match(s,/window\.innerWidth<360\?7:window\.innerWidth<390\?8:window\.innerWidth<420\?9:10/);
+ // At a 320px viewport the 7 numbers + 4 arrows take 11*24+10*2=284px,
+ // equal to the container width (320-36).
+ assert.ok(11*24+10*2<=320-36);
+});
+test('equipment action buttons are right aligned on mobile',async()=>{
+ const [page,style]=await Promise.all([read('src/pages/SitePages.tsx'),read('src/styles/equipment.css')]);
+ assert.match(page,/className="toolbar toolbar-bottom equipment-list-toolbar"/);
+ assert.match(style,/\.equipment-list-toolbar \.toolbar-actions\{\s*width:100%;\s*display:flex;\s*flex-wrap:wrap;\s*justify-content:flex-end;/);
+});
+test('large CSV tables scroll within fixed-width member registration panel',async()=>{
+ const [ui,css]=await Promise.all([read('src/MemberManager.tsx'),read('src/styles/base.css')]);
+ assert.match(ui,/<div className="member-preview-scroll"><table>/);
+ assert.match(css,/\.member-layout,\.member-panel,\.member-registration,\.member-upload,\.member-preview\{min-width:0;max-width:100%\}/);
+ assert.match(css,/\.member-preview-scroll\{display:block;width:100%;max-width:100%;min-width:0;overflow-x:auto;overflow-y:auto/);
+ assert.match(css,/\.member-preview-scroll>table\{width:max-content;min-width:560px;max-width:none\}/);
+});
+test('full reset alone deletes all archived and personal handover notes',async()=>{
+ const [app,api,client,archive]=await Promise.all([
+  read('src/App.tsx'),read('functions/api/handover-notes/purge.js'),
+  read('src/adminResets.ts'),read('functions/_lib/handoverNotes.js'),
+ ]);
+ assert.match(app,/if\(scope==='all'\)await drain\(purgeHandoverNotes/);
+ assert.match(api,/assertAccess\(request,env,'president'\)/);
+ assert.match(api,/!caller.superadmin/);
+ assert.match(api,/const COLLECTION=FIRESTORE_ROOT\+'\/handoverNotes'/);
+ assert.match(api,/currentDocument:\{updateTime:doc.updateTime\}/);
+ assert.match(api,/BATCH_SIZE=20/);
+ assert.match(client,/export const purgeHandoverNotes/);
+ assert.match(archive,/const NOTES=FIRESTORE_ROOT\+'\/handoverNotes'/);
+});
+test('staff can reset lower-rank passwords; own, protected and higher ranks are denied',async()=>{
+ const [handler,manager]=await Promise.all([
+  read('functions/api/members/reset-password.js'),read('src/MemberManager.tsx'),
+ ]);
+ assert.match(handler,/assertAccess\(request, env, 'staff'\)/);
+ assert.match(handler,/requireMutableTarget\(caller, target, uid, \{ protectSelf: true \}\)/);
+ assert.match(handler,/\['staff','president'\]\.includes\(data.role\)/);
+ assert.match(manager,/\{canEditDetails && <button[^\n]*resetPassword\(member\)/);
+ assert.match(manager,/level === 'staff' && \(member.role === 'staff' \|\| member.role === 'president'\)/);
+});
+test('dummy notice author is 테스트, without altering other kinds of demo data',async()=>{
+ const s=await read('functions/api/admin/dummy.js');
+ assert.match(s,/author:'테스트',authorUid:caller.uid,publishedAt/);
+ assert.match(s,/author:'테스트 데이터'/);
+});
