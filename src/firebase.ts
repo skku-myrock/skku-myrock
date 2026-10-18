@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { browserSessionPersistence,initializeAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
 const config = {
@@ -12,7 +12,9 @@ const config = {
 };
 
 export const firebaseApp = initializeApp(config);
-export const auth = getAuth(firebaseApp);
+// Keep credentials only in the current browser tab's session storage.
+// Existing LOCAL sessions are intentionally not restored after this change.
+export const auth = initializeAuth(firebaseApp,{persistence:browserSessionPersistence});
 export const db = getFirestore(firebaseApp);
 
 // Firebase Authentication uses email/password internally; the UI exposes only student IDs.
