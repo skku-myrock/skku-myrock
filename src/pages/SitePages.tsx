@@ -268,7 +268,6 @@ export function Equipment({items,canManage,onManage,loggedIn,onLogin,loading,err
   <section className="container section-block">
    <div className="toolbar toolbar-bottom equipment-list-toolbar"><div><h2 className="plain-h2">장비 목록</h2></div>
     <div className="toolbar-actions">{canManage&&<button type="button" className="button button-secondary" onClick={onManage}>장비 관리 <ArrowRight size={15}/></button>}
-     <button type="button" className="button button-secondary" onClick={()=>document.getElementById('equipment-my-requests')?.scrollIntoView({behavior:'smooth'})}><ClipboardList size={16}/> 내 대여 내역</button>
      <button type="button" className="outline-action" onClick={onRefresh} disabled={loading||busyId!==null}>새로고침</button>
     </div>
    </div>
