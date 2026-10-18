@@ -311,3 +311,48 @@
 @media(max-width:520px){.finance-account-locked{flex-wrap:wrap}.finance-account-locked .button{margin-left:auto}}
 /* Match right-aligned notice pagination controls. */
 .finance-load-more{justify-content:flex-end}
+/* Keep copyright left and vertically stacked officer contacts right while
+   both columns fit. Fall back to one centered stack only on narrow phones. */
+@media(min-width:470px) and (max-width:620px){
+  .site-footer .footer-lower{
+    grid-template-columns:minmax(0,1fr) max-content;
+    column-gap:12px;
+    row-gap:0;
+  }
+  .site-footer .footer-bottom{
+    grid-column:1;grid-row:1;
+    align-items:flex-start;
+    justify-content:flex-start;
+    text-align:left;
+  }
+  .site-footer .footer-contact-section{
+    grid-column:2;grid-row:1;
+    justify-self:end;
+    align-items:flex-end;
+    text-align:right;
+  }
+  .footer-contact-people{align-items:flex-end}
+}
+@media(max-width:469px){
+  .site-footer .footer-lower{grid-template-columns:minmax(0,1fr)}
+  .site-footer .footer-bottom{
+    grid-column:1;grid-row:1;
+    justify-content:center;
+    align-items:center;
+    text-align:center;
+  }
+  .site-footer .footer-contact-section{
+    grid-column:1;grid-row:2;
+    justify-self:center;
+    align-items:center;
+    text-align:center;
+  }
+  .footer-contact-people{
+    align-items:center;
+    justify-content:center;
+  }
+  .footer-contact-people span,.footer-bug-report{
+    justify-content:center;
+    text-align:center;
+  }
+}

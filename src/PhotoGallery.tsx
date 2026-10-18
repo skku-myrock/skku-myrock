@@ -247,7 +247,7 @@ export default function PhotoGallery({ canRegister }: { canRegister: boolean }) 
     {!loading&&!loadError&&<nav className="gallery-pagebar" aria-label="갤러리 페이지 탐색">
      <button type="button" className="gallery-page-jump" disabled={windowStart===1} onClick={()=>changePage(Math.max(1,windowStart-PAGE_GROUP_SIZE))} aria-label="이전 10페이지 목록">«</button>
      <button type="button" disabled={previewPage===1} onClick={()=>changePage(Math.max(1,previewPage-1))} aria-label="이전 페이지">‹</button>
-     {displayedPages.map(page=><button key={page} type="button" aria-label={page+'페이지'} aria-current={previewPage===page?'page':undefined} onClick={()=>changePage(page)}>{page}</button>)}
+     {displayedPages.map(page=><button key={page} type="button" aria-label={page+'페이지'} aria-current={previewPage===page?'page':undefined} data-digits={String(page).length} onClick={()=>changePage(page)}>{page}</button>)}
      <button type="button" disabled={previewPage===totalPages} onClick={()=>changePage(Math.min(totalPages,previewPage+1))} aria-label="다음 페이지">›</button>
      <button type="button" className="gallery-page-jump" disabled={windowStart+PAGE_GROUP_SIZE>totalPages} onClick={()=>changePage(Math.min(totalPages,windowStart+PAGE_GROUP_SIZE))} aria-label="다음 10페이지 목록">»</button>
     </nav>}

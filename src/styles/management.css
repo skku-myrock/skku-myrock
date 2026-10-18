@@ -366,4 +366,45 @@ body:has([data-async-busy="true"]),body:has([data-async-busy="true"]) *{
  .mobile-nav .mobile-submenu a{width:100%;display:flex;align-items:center;justify-content:flex-start;gap:7px;padding:11px 6px;border-bottom:1px solid var(--border);font-size:12px;color:#667673}
  .mobile-nav .mobile-submenu a:focus-visible{outline:2px solid var(--accent-dark)}
 }
-
+/* Small-screen officer rows: the 3:4 portrait must fit its grid track. */
+@media(max-width:620px){
+  .leadership-grid .leader-item{
+    display:grid;
+    grid-template-columns:72px minmax(0,1fr);
+    align-items:center;
+    column-gap:14px;
+    min-width:0;
+  }
+  .leadership-grid .leader-item>.leader-photo{
+    box-sizing:border-box;
+    display:block;
+    width:72px;
+    min-width:0;
+    max-width:72px;
+    height:96px;
+    min-height:96px;
+    max-height:96px;
+    flex:none;
+    aspect-ratio:3/4;
+    object-fit:cover;
+  }
+  .leadership-grid .leader-item>.leader-photo.placeholder{
+    display:flex;
+  }
+  .leadership-grid .leader-item>.leader-description{
+    min-width:0;
+    max-width:100%;
+    overflow-wrap:anywhere;
+  }
+}
+/* Account dropdown stays within the right edge of the mobile viewport. */
+@media(max-width:820px){
+  .header-actions .account-wrapper>.account-menu{
+    left:auto;
+    right:0;
+    box-sizing:border-box;
+    width:max-content;
+    min-width:170px;
+    max-width:calc(100vw - 36px);
+  }
+}
