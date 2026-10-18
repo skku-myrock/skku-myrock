@@ -253,7 +253,7 @@ export default function MemberManager({ currentUid, level, notify }: { currentUi
                 <div className="member-actions">
                   <button type="button" className="outline-action" disabled={busy || member.protected} onClick={() => startEdit(member,'sessions')}>세션 수정</button>
                   {canEditDetails && <button type="button" className="outline-action" disabled={busy || member.protected} onClick={() => startEdit(member,'details')}>정보 수정</button>}
-                  {canEditDetails && <button type="button" className="outline-action" disabled={busy || member.protected || member.uid === currentUid} onClick={() => void resetPassword(member)}><KeyRound size={13}/> 비밀번호 초기화</button>}
+                  {canEditDetails && <button type="button" className="outline-action" disabled={busy || member.protected || member.uid === currentUid || (level === 'staff' && (member.role === 'staff' || member.role === 'president'))} onClick={() => void resetPassword(member)}><KeyRound size={13}/> 비밀번호 초기화</button>}
                   {isPresident && <>
                     <button type="button" className="outline-action" disabled={busy || member.protected || member.uid === currentUid} onClick={() => startEdit(member,'permissions')}>권한 수정</button>
                     <button type="button" className={"outline-action member-danger"+(member.role !== 'member' || member.handoverAccess || member.protected ? " member-danger-restricted" : "")} aria-disabled={member.role !== 'member' || member.handoverAccess || member.protected || member.uid === currentUid} disabled={busy || (member.uid === currentUid && member.role === 'member' && !member.handoverAccess && !member.protected)} onClick={() => void removeMember(member)}><Trash2 size={13}/> 삭제</button>
