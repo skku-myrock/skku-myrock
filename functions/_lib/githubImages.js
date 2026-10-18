@@ -4,7 +4,7 @@ import {listNotices} from './notices.js';
 import {listGalleryAlbums} from './gallery.js';
 import {listEquipment} from './equipment.js';
 const REPO='https://api.github.com/repos/skku-myrock/myrock-images/';
-const FOLDERS=new Set(['site','notices','gallery','equipment']);
+const FOLDERS=new Set(['site','notices','gallery']);
 async function github(env,path,method='GET',body){
   if(!env.GITHUB_IMAGES_TOKEN)reject('GitHub 이미지 저장소 인증 Secret이 필요합니다.',503);
   const response=await fetch(REPO+path,{
