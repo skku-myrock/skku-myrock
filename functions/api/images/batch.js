@@ -36,6 +36,9 @@ export async function uploadImages({request,env},{legacySingle=false}={}){
       if(!validSignature(file.type,bytes))reject('올바르지 않은 이미지 파일입니다.');
       checked.push({bytes,type:file.type});
     }
+    // 'equipment' is a logical upload category for part leaders. All replaceable
+    // site assets, including equipment photos, share the physical site/ tree.
+    const storageFolder=folder==='equipment'?'site':folder;
     const token=env.GITHUB_IMAGES_TOKEN;
     const head=await github('git/ref/heads/main',token);
     const commit=await github('git/commits/'+head.object.sha,token);
@@ -44,13 +47,13 @@ export async function uploadImages({request,env},{legacySingle=false}={}){
     const paths=[];
     for(const image of checked){
       const blob=await github('git/blobs',token,'POST',{content:base64(image.bytes),encoding:'base64'});
-      const path=folder+'/'+crypto.randomUUID()+'.'+extensions[image.type];
+      const path=storageFolder+'/'+crypto.randomUUID()+'.'+extensions[image.type];
       entries.push({path,mode:'100644',type:'blob',sha:blob.sha});
       urls.push(new URL(path,publicBase).href);
       paths.push(path);
     }
     const tree=await github('git/trees',token,'POST',{base_tree:commit.tree.sha,tree:entries});
-    const next=await github('git/commits',token,'POST',{message:'assets('+folder+'): upload '+files.length+' images',tree:tree.sha,parents:[head.object.sha]});
+    const next=await github('git/commits',token,'POST',{message:'assets('+storageFolder+'): upload '+files.length+' images',tree:tree.sha,parents:[head.object.sha]});
     await github('git/refs/heads/main',token,'PATCH',{sha:next.sha,force:false});
     return success({urls,url:urls[0],path:paths[0],deployPending:true,commit:next.sha},201);
   }catch(error){return failure(error);}
