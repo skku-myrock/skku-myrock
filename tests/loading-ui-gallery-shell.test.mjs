@@ -33,7 +33,7 @@ test('gallery pages read 12 newest albums per page and use true count',async()=>
  assert.match(db,/offset:\(effectivePage-1\)\*pageSize,limit:pageSize/);
  assert.match(gallery,/const PAGE_SIZE=12;/);
  assert.match(gallery,/setTotalPages\(result.totalPages\)/);
- assert.match(gallery,/const \[pageGroupSize,setPageGroupSize\]=useState\(10\)/);
+ assert.match(gallery,/const PAGE_GROUP_SIZE=10;/);
   assert.match(gallery,/function changePageGroup\(direction:-1\|1\)/);
  assert.match(gallery,/gallery-pagebar/);
  assert.doesNotMatch(gallery,/DEMO_PAGE_COUNT|페이지 이동은 UI 미리보기입니다/);
