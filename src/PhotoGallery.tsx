@@ -46,7 +46,7 @@ export default function PhotoGallery({ canRegister }: { canRegister: boolean }) 
   const [totalPages,setTotalPages]=useState(1);
   const [totalAlbums,setTotalAlbums]=useState(0);
   useEffect(()=>{
-    const update=()=>setPageGroupSize(window.innerWidth<360?7:window.innerWidth<420?9:10);
+    const update=()=>setPageGroupSize(window.innerWidth<360?7:window.innerWidth<390?8:window.innerWidth<420?9:10);
     update();
     window.addEventListener('resize',update);
     return()=>window.removeEventListener('resize',update);
