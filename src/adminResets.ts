@@ -19,3 +19,4 @@ export const resetEquipmentLoans=()=>request<{updated:number;done:boolean}>('/ap
 export type DummyStage='gallery'|'notices'|'donations'|'expenses';
 export const generateDummyBatch=(stage:DummyStage,start:number)=>request<{stage:DummyStage;processed:number;next:number;done:boolean;total:number}>('/api/admin/dummy','더미 데이터 생성',{stage,start});
 export const purgeEquipmentInventory=()=>request<{deleted:number;done:boolean}>('/api/equipment/purge','나머지 초기화');
+export const purgeHandoverNotes=()=>request<{deleted:number;done:boolean}>('/api/handover-notes/purge','완전 초기화');
