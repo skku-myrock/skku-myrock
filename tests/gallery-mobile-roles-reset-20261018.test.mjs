@@ -6,7 +6,7 @@ const read=path=>readFile(new URL('../'+path,import.meta.url),'utf8');
 test('gallery tabs do not scroll vertically and page number buttons have mobile min width 24',async()=>{
  const s=await read('src/styles/gallery.css');
  assert.match(s,/\.gallery-toolbar \.gallery-tabs\{overflow:hidden;overscroll-behavior:none\}/);
- assert.match(s,/\.gallery-pagebar>button\{\s*flex:0 0 24px;\s*width:24px;\s*min-width:24px;/);
+ assert.match(s,/\.gallery-pagebar>button\{\s*box-sizing:border-box;\s*flex:0 0 24px;\s*width:24px;\s*min-width:24px;/);
  assert.match(s,/\.gallery-pagebar>button\[data-digits="3"\]/);
 });
 test('page number grouping changes independently of selected gallery page',async()=>{
@@ -16,14 +16,19 @@ test('page number grouping changes independently of selected gallery page',async
  const block=s.slice(start,end);
  assert.match(block,/setWindowStart\(next\)/);
  assert.doesNotMatch(block,/setPreviewPage|changePage\(/);
- assert.match(s,/window\.innerWidth<360\?7:window\.innerWidth<390\?8:window\.innerWidth<420\?9:10/);
- // At a 320px viewport the 7 numbers + 4 arrows take 11*24+10*2=284px,
- // equal to the container width (320-36).
- assert.ok(11*24+10*2<=320-36);
+ assert.match(s,/const PAGE_GROUP_SIZE=10;/);
+ assert.doesNotMatch(s,/setPageGroupSize|window\.innerWidth/);
+ // At 320px, ten 20px numbers + four 19px arrows fit a 284px container.
+ assert.ok(10*20+4*19<=320-36);
+ // At 360px, ten 22px numbers + four 19px arrows and 13 gaps fit.
+ assert.ok(10*22+4*19+13*2<=360-36);
+ // At 390px, ten 24px numbers + four 20px arrows and 13 gaps fit.
+ assert.ok(10*24+4*20+13*2<=390-36);
 });
 test('equipment action buttons are right aligned on mobile',async()=>{
  const [page,style]=await Promise.all([read('src/pages/SitePages.tsx'),read('src/styles/equipment.css')]);
  assert.match(page,/className="toolbar toolbar-bottom equipment-list-toolbar"/);
+ assert.doesNotMatch(page,/getElementById\('equipment-my-requests'\)\?\.scrollIntoView/);
  assert.match(style,/\.equipment-list-toolbar \.toolbar-actions\{\s*width:100%;\s*display:flex;\s*flex-wrap:wrap;\s*justify-content:flex-end;/);
 });
 test('large CSV tables scroll within fixed-width member registration panel',async()=>{
@@ -31,7 +36,8 @@ test('large CSV tables scroll within fixed-width member registration panel',asyn
  assert.match(ui,/<div className="member-preview-scroll"><table>/);
  assert.match(css,/\.member-layout,\.member-panel,\.member-registration,\.member-upload,\.member-preview\{min-width:0;max-width:100%\}/);
  assert.match(css,/\.member-preview-scroll\{display:block;width:100%;max-width:100%;min-width:0;overflow-x:auto;overflow-y:auto/);
- assert.match(css,/\.member-preview-scroll>table\{width:max-content;min-width:560px;max-width:none\}/);
+ assert.match(css,/\.member-preview-scroll>table\{width:100%;min-width:560px;max-width:none\}/);
+ assert.match(css,/@media\(max-width:820px\)\{\s*\.member-preview-scroll>table\{width:max-content;min-width:560px;max-width:none\}/);
 });
 test('full reset alone deletes all archived and personal handover notes',async()=>{
  const [app,api,client,archive]=await Promise.all([
