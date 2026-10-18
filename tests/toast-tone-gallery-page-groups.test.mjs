@@ -19,13 +19,14 @@ test('success/error/warning share the same timed toast with distinct muted tones
 });
 test('gallery shows max 10 numbered pages per real count and navigates across page groups',async()=>{
  const [gallery,api,db]=await Promise.all([read('src/PhotoGallery.tsx'),read('src/galleryApi.ts'),read('functions/_lib/gallery.js')]);
- assert.match(gallery,/PAGE_GROUP_SIZE=10/);
- assert.match(gallery,/Math\.floor\(\(previewPage-1\)\/PAGE_GROUP_SIZE\)/);
- assert.match(gallery,/Math\.min\(PAGE_GROUP_SIZE,totalPages-windowStart\+1\)/);
- assert.match(gallery,/aria-label="이전 10페이지 목록"/);
- assert.match(gallery,/aria-label="다음 10페이지 목록"/);
- assert.match(gallery,/windowStart-PAGE_GROUP_SIZE/);
- assert.match(gallery,/windowStart\+PAGE_GROUP_SIZE/);
+ assert.match(gallery,/const \[windowStart,setWindowStart\]=useState\(1\)/);
+ assert.match(gallery,/const \[pageGroupSize,setPageGroupSize\]=useState\(10\)/);
+ assert.match(gallery,/Math\.min\(pageGroupSize,totalPages-windowStart\+1\)/);
+ assert.match(gallery,/function changePageGroup\(direction:-1\|1\)/);
+ assert.match(gallery,/setWindowStart\(next\)/);
+ assert.match(gallery,/onClick=\{\(\)=>changePageGroup\(-1\)\}/);
+ assert.match(gallery,/onClick=\{\(\)=>changePageGroup\(1\)\}/);
+ assert.doesNotMatch(gallery,/onClick=\{\(\)=>changePage\(Math\.min\(totalPages,windowStart/);
  assert.match(gallery,/setTotalPages\(result\.totalPages\)/);
  assert.match(api,/getGalleryPage\(page:number/);
  assert.match(db,/runAggregationQuery/);
