@@ -2,13 +2,13 @@ import {
   failure, initialPasswordForStudentId, parseBody, secureOrigin, success, validateUid,
 } from '../../_lib/shared.js';
 import {
-  assertAdmin, getFirestoreDocument, requireMutableTarget, updateAccount,
+  assertAccess, getFirestoreDocument, requireMutableTarget, updateAccount,
 } from '../../_lib/google.js';
 
 export async function onRequestPost({ request, env }) {
   try {
     secureOrigin(request);
-    const caller = await assertAdmin(request, env);
+    const caller = await assertAccess(request, env, 'staff');
     const uid = validateUid((await parseBody(request))?.uid);
     const target = await getFirestoreDocument(env, uid);
     const data = requireMutableTarget(caller, target, uid, { protectSelf: true });
