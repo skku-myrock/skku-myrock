@@ -309,3 +309,11 @@
 
 .profile-details-panel{padding-bottom:18px}
 .profile-details-panel>.profile-help{margin:13px 0 0}
+/* Keep the CSV preview scroll isolated from the full member-management page. */
+.member-layout,.member-panel,.member-registration,.member-upload,.member-preview{min-width:0;max-width:100%}
+.member-preview-scroll{display:block;width:100%;max-width:100%;min-width:0;overflow-x:auto;overflow-y:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
+.member-preview-scroll>table{width:max-content;min-width:560px;max-width:none}
+@media(max-width:620px){
+  .member-panel{min-width:0}
+  .member-registration,.member-upload,.member-preview{min-width:0;max-width:100%}
+}
