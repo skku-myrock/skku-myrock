@@ -126,5 +126,13 @@
   .notice-composer-gallery-file-label{flex-direction:column;align-items:flex-start;gap:1px}
   .notice-composer-gallery-filename{flex:none;width:100%}
 }
-
-
+/* Keep author names on one line on desktop and narrow notice tables. */
+.notice-table-head .notice-author-cell,
+.notice-table-row>.notice-author-cell{
+  display:block;
+  min-width:0;
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
