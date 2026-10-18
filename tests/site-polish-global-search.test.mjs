@@ -86,7 +86,9 @@ test('temporary default equipment is removed from server and client, and other r
  assert.doesNotMatch(defaults,/demo-guitar|demo-mic|demo-di|demo-stand/);
  assert.match(api,/assertAccess\(request,env,'president'\)/);
  assert.match(api,/!caller.superadmin/);
- assert.match(api,/clearImageFolder\(env,'equipment'\)/);
+ assert.doesNotMatch(api,/clearImageFolder\(env,'equipment'\)/);
+ assert.match(api,/never clear site\/ here/);
+ assert.match(await read('functions/api/images/reset.js'),/listEquipment\(env\)/);
  assert.match(client,/purgeEquipmentInventory/);
  assert.match(app,/await drain\(purgeEquipmentInventory/);
  assert.match(app,/await drain\(resetEquipmentLoans/);

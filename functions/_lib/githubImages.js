@@ -4,7 +4,7 @@ import {listNotices} from './notices.js';
 import {listGalleryAlbums} from './gallery.js';
 import {listEquipment} from './equipment.js';
 const REPO='https://api.github.com/repos/skku-myrock/myrock-images/';
-const FOLDERS=new Set(['site','notices','gallery','equipment']);
+const FOLDERS=new Set(['site','notices','gallery']);
 async function github(env,path,method='GET',body){
   if(!env.GITHUB_IMAGES_TOKEN)reject('GitHub 이미지 저장소 인증 Secret이 필요합니다.',503);
   const response=await fetch(REPO+path,{
@@ -106,12 +106,20 @@ export async function deleteUnusedSiteImages(env,obsoleteUrls){
   const inUse=new Set([content.homeImage,content.heroImage,...content.officers.map(person=>person.photoUrl)]);
   for(const [path,url] of candidates)if(inUse.has(url))candidates.delete(path);
   if(!candidates.size)return {deleted:0};
-  const notices=await listNotices(env);
-  // listNotices has a 1,000-document scan limit; fail closed if the result could be incomplete.
+  // site/ also contains equipment uploads. Never remove a shared image while
+  // any live equipment, gallery, introduction or notice still refers to it.
+  const [notices,equipment,albums]=await Promise.all([
+    listNotices(env),listEquipment(env),listGalleryAlbums(env)
+  ]);
+  // listNotices has a 1,000-document scan limit; fail closed if incomplete.
   if(notices.length>=1000)throw Error('공지사항 참조 검사가 제한에 도달해 사진 정리를 건너뜁니다.');
-  const noticeUrls=new Set(notices.flatMap(notice=>(notice.blocks??[]).flatMap(block=>
-    block.kind==='image'?[block.url]:block.kind==='gallery'?(block.images??[]).map(photo=>photo.url):[])));
-  for(const [path,url] of candidates)if(noticeUrls.has(url))candidates.delete(path);
+  const references=new Set([
+    ...equipment.map(item=>item.imageUrl),
+    ...albums.flatMap(album=>album.photos),
+    ...notices.flatMap(notice=>(notice.blocks??[]).flatMap(block=>
+      block.kind==='image'?[block.url]:block.kind==='gallery'?(block.images??[]).map(photo=>photo.url):[]))
+  ].filter(Boolean));
+  for(const [path,url] of candidates)if(references.has(url))candidates.delete(path);
   if(!candidates.size)return {deleted:0};
   for(let attempt=0;attempt<3;attempt++){
     const head=await github(env,'git/ref/heads/main');
@@ -185,6 +193,12 @@ export async function deleteUnusedGalleryImages(env,obsoleteUrls){
  */
 export async function deleteUnusedEquipmentImages(env,obsoleteUrls){
  if(!Array.isArray(obsoleteUrls)||!obsoleteUrls.length)return {deleted:0};
+ // Current equipment uploads are site/<uuid>.webp. The shared site cleaner
+ // protects every living reference before deleting a replaced photo.
+ const siteCleanup=await deleteUnusedSiteImages(env,obsoleteUrls);
+ // Read and remove only historical equipment/<uuid>.webp URLs as compatibility.
+ // No new photos are written into equipment/.
+
  if(!env.MYROCK_IMAGES_PUBLIC_BASE_URL)throw Error('이미지 공개 주소 설정이 없습니다.');
  const base=new URL(env.MYROCK_IMAGES_PUBLIC_BASE_URL);
  if(base.protocol!=='https:'||base.pathname!=='/'||base.search||base.hash)throw Error('이미지 공개 주소 설정이 올바르지 않습니다.');
@@ -197,7 +211,7 @@ export async function deleteUnusedEquipmentImages(env,obsoleteUrls){
     /^equipment\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.webp$/i.test(path))
    candidates.set(path,url.href);
  }
- if(!candidates.size)return {deleted:0};
+ if(!candidates.size)return siteCleanup;
  const items=await listEquipment(env);
  const about=await getAbout(env);
  const galleries=await listGalleryAlbums(env);
@@ -211,7 +225,7 @@ export async function deleteUnusedEquipmentImages(env,obsoleteUrls){
    block.kind==='image'?[block.url]:block.kind==='gallery'?(block.images??[]).map(photo=>photo.url):[])),
  ].filter(Boolean));
  for(const [path,url] of candidates)if(referenced.has(url))candidates.delete(path);
- if(!candidates.size)return {deleted:0};
+ if(!candidates.size)return siteCleanup;
  for(let attempt=0;attempt<3;attempt++){
   const head=await github(env,'git/ref/heads/main');
   const previous=await github(env,'git/commits/'+head.object.sha);
@@ -219,13 +233,13 @@ export async function deleteUnusedEquipmentImages(env,obsoleteUrls){
   if(treeListing.truncated)throw Error('이미지 저장소 목록이 불완전하여 정리를 연기했습니다.');
   const names=new Set((treeListing.tree??[]).filter(entry=>entry.type==='blob').map(entry=>entry.path));
   const entries=[...candidates.keys()].filter(path=>names.has(path)).map(path=>({path,mode:'100644',type:'blob',sha:null}));
-  if(!entries.length)return {deleted:0};
+  if(!entries.length)return siteCleanup;
   const tree=await github(env,'git/trees','POST',{base_tree:previous.tree.sha,tree:entries});
   const commit=await github(env,'git/commits','POST',{message:'assets(equipment): remove '+entries.length+' replaced photos',tree:tree.sha,parents:[head.object.sha]});
   try{
    await github(env,'git/refs/heads/main','PATCH',{sha:commit.sha,force:false});
-   return {deleted:entries.length,commit:commit.sha};
+   return {deleted:siteCleanup.deleted+entries.length,commit:commit.sha};
   }catch(error){if(error?.status!==409||attempt===2)throw error;}
  }
- return {deleted:0};
+ return siteCleanup;
 }

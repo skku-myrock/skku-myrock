@@ -2,7 +2,7 @@ import {failure,parseBody,reject,secureOrigin,success} from '../../_lib/shared.j
 import {assertAccess,googleRequest} from '../../_lib/google.js';
 import {EQUIPMENT_ROOT} from '../../_lib/equipment.js';
 import {commit,firestoreResourceName} from '../../_lib/schedules.js';
-import {clearImageFolder} from '../../_lib/githubImages.js';
+
 
 export const PURGE_EQUIPMENT_CONFIRMATION='나머지 초기화';
 const BATCH_SIZE=20;
@@ -28,8 +28,8 @@ export async function onRequestPost({request,env}){
    await commit(env,writes);
    return success({deleted:writes.length,done:false});
   }
-  // All persisted equipment documents are gone; only now remove equipment assets.
-  await clearImageFolder(env,'equipment');
+  // The composed other/full reset clears site/ after equipment documents
+  // and other site references have been retired; never clear site/ here.
   return success({deleted:0,done:true});
  }catch(error){return failure(error);}
 }
