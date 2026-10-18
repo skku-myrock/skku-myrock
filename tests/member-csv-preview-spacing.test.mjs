@@ -12,4 +12,6 @@ test('CSV file confirmation text has bottom spacing before the member preview ta
  assert.match(component,/<div className="member-preview-scroll">/);
  assert.match(css,/\.member-csv-preview-hint\{margin-bottom:16px\}/);
  assert.match(css,/\.form-hint\{color:#9aa5a1;font-size:11px;margin:17px 0 0\}/);
+ assert.match(css,/\.member-preview-scroll>table\{width:100%;min-width:560px;max-width:none\}/);
+ assert.match(css,/@media\(max-width:820px\)\{\s*\.member-preview-scroll>table\{width:max-content;min-width:560px;max-width:none\}/);
 });

@@ -355,4 +355,11 @@
     justify-content:center;
     text-align:center;
   }
+  /* In centered mode, the president/vice president labels match copyright. */
+  .footer-contact-people span{
+    color:#a0aaa6;
+    font-size:10px;
+    font-weight:400;
+    line-height:normal;
+  }
 }

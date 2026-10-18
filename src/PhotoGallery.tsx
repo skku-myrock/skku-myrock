@@ -42,15 +42,9 @@ export default function PhotoGallery({ canRegister }: { canRegister: boolean }) 
   const [filter, setFilter] = useState<Filter>('전체');
   const [previewPage,setPreviewPage]=useState(1);
   const [windowStart,setWindowStart]=useState(1);
-  const [pageGroupSize,setPageGroupSize]=useState(10);
+  const PAGE_GROUP_SIZE=10;
   const [totalPages,setTotalPages]=useState(1);
   const [totalAlbums,setTotalAlbums]=useState(0);
-  useEffect(()=>{
-    const update=()=>setPageGroupSize(window.innerWidth<360?7:window.innerWidth<390?8:window.innerWidth<420?9:10);
-    update();
-    window.addEventListener('resize',update);
-    return()=>window.removeEventListener('resize',update);
-  },[]);
   const [activeAlbum, setActiveAlbum] = useState<PhotoAlbum | null>(null);
   const [photoIndex, setPhotoIndex] = useState(0);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -83,16 +77,16 @@ export default function PhotoGallery({ canRegister }: { canRegister: boolean }) 
   }
   function changePage(next:number){
     if(next===previewPage)return;
-    if(next<windowStart||next>=windowStart+pageGroupSize)
-      setWindowStart(Math.floor((next-1)/pageGroupSize)*pageGroupSize+1);
+    if(next<windowStart||next>=windowStart+PAGE_GROUP_SIZE)
+      setWindowStart(Math.floor((next-1)/PAGE_GROUP_SIZE)*PAGE_GROUP_SIZE+1);
     setInteractionPending(true);setPreviewPage(next);
   }
   function changePageGroup(direction:-1|1){
-    const next=Math.max(1,Math.min(totalPages,windowStart+direction*pageGroupSize));
+    const next=Math.max(1,Math.min(totalPages,windowStart+direction*PAGE_GROUP_SIZE));
     setWindowStart(next);
   }
   const shown=albums.slice(0,PAGE_SIZE);
-  const displayedPages=Array.from({length:Math.max(0,Math.min(pageGroupSize,totalPages-windowStart+1))},(_,i)=>windowStart+i);
+  const displayedPages=Array.from({length:Math.max(0,Math.min(PAGE_GROUP_SIZE,totalPages-windowStart+1))},(_,i)=>windowStart+i);
   const count = activeAlbum?.photos.length ?? 0;
 
   function openAlbum(album: PhotoAlbum, event: ReactMouseEvent<HTMLButtonElement>) {
@@ -261,7 +255,7 @@ export default function PhotoGallery({ canRegister }: { canRegister: boolean }) 
      <button type="button" disabled={previewPage===1} onClick={()=>changePage(Math.max(1,previewPage-1))} aria-label="이전 페이지">‹</button>
      {displayedPages.map(page=><button key={page} type="button" aria-label={page+'페이지'} aria-current={previewPage===page?'page':undefined} data-digits={String(page).length} onClick={()=>changePage(page)}>{page}</button>)}
      <button type="button" disabled={previewPage===totalPages} onClick={()=>changePage(Math.min(totalPages,previewPage+1))} aria-label="다음 페이지">›</button>
-     <button type="button" className="gallery-page-jump" disabled={windowStart+pageGroupSize>totalPages} onClick={()=>changePageGroup(1)} aria-label="다음 페이지 번호 목록">»</button>
+     <button type="button" className="gallery-page-jump" disabled={windowStart+PAGE_GROUP_SIZE>totalPages} onClick={()=>changePageGroup(1)} aria-label="다음 페이지 번호 목록">»</button>
     </nav>}
     {!loading&&!loadError&&<p className="gallery-pagination-preview-note">전체 {totalAlbums}개 앨범 · {previewPage} / {totalPages}페이지</p>}
 

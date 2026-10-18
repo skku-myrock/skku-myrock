@@ -22,15 +22,16 @@ test('account dropdown is constrained to right edge on mobile',async()=>{
  assert.match(app,/className="more-menu account-menu"/);
 });
 
-test('gallery page bar fits 14 controls at 320px and one/two digits have equal width',async()=>{
+test('mobile gallery keeps ten equal-width page numbers with smaller navigation controls',async()=>{
  const [css,ui]=await Promise.all([source('src/styles/gallery.css'),source('src/PhotoGallery.tsx')]);
  assert.match(css,/\.gallery-pagebar\{gap:2px;flex-wrap:nowrap;/);
- assert.match(css,/\.gallery-pagebar>button\{\s*flex:0 0 18px;\s*width:18px;\s*min-width:18px;/);
+ assert.match(css,/\.gallery-pagebar>button\{\s*box-sizing:border-box;\s*flex:0 0 24px;\s*width:24px;\s*min-width:24px;/);
+ assert.match(css,/\.gallery-pagebar>button:is\(:first-child,:nth-child\(2\),:nth-last-child\(2\),:last-child\)/);
+ assert.match(css,/@media\(max-width:359px\)/);
  assert.match(css,/\.gallery-pagebar>button\[data-digits="3"\]/);
+ assert.match(ui,/const PAGE_GROUP_SIZE=10;/);
  assert.match(ui,/data-digits=\{String\(page\)\.length\}/);
- // 10 numbered pages + 4 page-navigation controls, each 18px wide;
- // 13 gaps of 2px = 278px, within a 320px phone's 284px container.
- assert.ok(14*18+13*2<=320-36);
+ assert.ok(10*20+4*19<=320-36);
 });
 
 test('mobile footer stays two-column while practical, then centers both rows',async()=>{
@@ -42,6 +43,15 @@ test('mobile footer stays two-column while practical, then centers both rows',as
  assert.match(css,/\.site-footer \.footer-bottom\{\s*grid-column:1;grid-row:1;\s*justify-content:center;\s*align-items:center;\s*text-align:center/);
  assert.match(css,/\.site-footer \.footer-contact-section\{\s*grid-column:1;grid-row:2;\s*justify-self:center;\s*align-items:center;\s*text-align:center/);
  assert.match(app,/className="footer-contact-people"/);
+});
+
+test('only stacked centered officer names adopt copyright typography',async()=>{
+ const css=await source('src/styles/finance.css');
+ const narrow=css.slice(css.lastIndexOf('@media(max-width:469px)'));
+ assert.match(narrow,/\.footer-contact-people span\{\s*color:#a0aaa6;\s*font-size:10px;\s*font-weight:400;\s*line-height:normal;/);
+ const officerRule=narrow.slice(narrow.indexOf('.footer-contact-people span{'));
+ assert.doesNotMatch(officerRule,/\.footer-bug-report\{[^}]*font-size:10px/);
+ assert.match(css,/@media\(min-width:470px\) and \(max-width:620px\)/);
 });
 
 test('notice author column truncates overlong names to an ellipsis',async()=>{
