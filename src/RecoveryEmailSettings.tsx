@@ -3,13 +3,13 @@ import type {FormEvent} from 'react';
 import type {User} from 'firebase/auth';
 import {EmailAuthProvider,reauthenticateWithCredential} from 'firebase/auth';
 import {ArrowRight,Mail,X} from 'lucide-react';
-import {showToast} from './toastBus';
 
 type EmailPreviewStatus = 'unregistered'|'registered';
 type FeedbackType = 'error'|'success';
 
 export default function RecoveryEmailSettings({user}:{user:User}) {
   const [registeredEmail,setRegisteredEmail] = useState('');
+  const [resetNotice,setResetNotice] = useState(false);
   const [status,setStatus] = useState<EmailPreviewStatus>('unregistered');
   const [open,setOpen] = useState(false);
   const [email,setEmail] = useState('');
@@ -43,6 +43,7 @@ export default function RecoveryEmailSettings({user}:{user:User}) {
       const credential=EmailAuthProvider.credential(user.email,password);
       await reauthenticateWithCredential(user,credential);
       setRegisteredEmail(address);
+      setResetNotice(false);
       setStatus('registered');
       setFeedbackType('success');
       setFeedback('해당 이메일로 인증 링크가 발송되었습니다.');
@@ -61,11 +62,12 @@ export default function RecoveryEmailSettings({user}:{user:User}) {
       <p className="profile-help">비밀번호 복구용 이메일을 설정합니다.</p>
       <div className="recovery-email-status">
         <span className={registeredEmail?'recovery-email-address':''}>{registeredEmail||'등록 안 함'}</span>
+        <span className="recovery-email-notice" role="status" aria-live="polite">{resetNotice?'인증 메일을 발송했습니다':''}</span>
         {status==='unregistered'
           ?<button className="text-link recovery-email-register-link" type="button" onClick={()=>setOpen(true)}>등록하기</button>
           :<strong>등록 완료</strong>}
       </div>
-      <div className="recovery-email-actions"><button className="button button-primary recovery-reset-button" type="button" disabled={!registeredEmail} onClick={()=>showToast('해당 이메일로 비밀번호 재설정 링크를 발송하였습니다','success')}>비밀번호 재설정 <ArrowRight size={16}/></button></div>
+      <div className="recovery-email-actions"><button className="button button-primary recovery-reset-button" type="button" disabled={!registeredEmail} onClick={()=>setResetNotice(true)}>비밀번호 재설정 <ArrowRight size={16}/></button></div>
     </div>
     {open&&<div className="modal-overlay" data-async-busy={busy?'true':undefined} onMouseDown={event=>{if(event.target===event.currentTarget)close();}}>
       <div className="login-dialog recovery-email-dialog" role="dialog" aria-modal="true" aria-labelledby="recovery-email-heading">
