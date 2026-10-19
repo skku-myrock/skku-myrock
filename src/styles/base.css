@@ -337,3 +337,5 @@
 .recovery-email-status .text-link{font-size:12px;white-space:nowrap;flex-shrink:0}
 .recovery-reset-button{margin-top:21px}
 .recovery-email-dialog .form-error{margin:0!important}
+.recovery-email-status .recovery-email-register-link:hover{text-decoration:none}
+.recovery-email-dialog .recovery-email-success{margin:0;color:var(--accent-dark);font-size:12px;line-height:1.65}
