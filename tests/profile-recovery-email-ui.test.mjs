@@ -3,73 +3,69 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 const read=path=>readFile(new URL('../'+path,import.meta.url),'utf8');
 
-test('recovery email settings use a full-width card above password change',async()=>{
+test('email settings and password change span both columns in the intended order',async()=>{
   const [profile,panel,css]=await Promise.all([read('src/pages/SitePages.tsx'),read('src/RecoveryEmailSettings.tsx'),read('src/styles/base.css')]);
   assert.match(profile,/<RecoveryEmailSettings user=\{user\}\/>\s*<PasswordChange user=\{user\}\/>/);
   assert.match(css,/\.recovery-email-panel\{grid-column:1\/-1\}/);
   assert.match(panel,/<h2>이메일 설정<\/h2>/);
   assert.match(panel,/비밀번호 복구용 이메일을 설정합니다\./);
-  assert.doesNotMatch(panel,/등록은 선택사항이며/);
 });
 
-test('registration dialog copy, password-first input order, and saved-username autofill prevention',async()=>{
+test('verified and pending status labels reopen a prefilled edit dialog',async()=>{
   const panel=await read('src/RecoveryEmailSettings.tsx');
-  assert.match(panel,/<h2 id="recovery-email-heading">이메일 설정<\/h2>/);
-  assert.match(panel,/<p>비밀번호 복구용 이메일을 설정합니다<\/p>/);
-  const dialog=panel.slice(panel.indexOf('id="recovery-email-heading"'));
-  assert.ok(dialog.indexOf('<label>현재 비밀번호')>=0);
-  assert.ok(dialog.indexOf('<label>이메일')>dialog.indexOf('<label>현재 비밀번호'));
-  assert.match(dialog,/type="password" autoComplete="current-password"/);
-  assert.match(dialog,/type="email" inputMode="email" name="recovery-contact-address" autoComplete="off"/);
-  assert.match(dialog,/<form noValidate onSubmit=/);
-  assert.doesNotMatch(dialog,/autoComplete="username"/);
+  assert.match(panel,/type EmailPreviewStatus = 'unregistered'\|'registered'\|'pending'/);
+  assert.match(panel,/const editing = status !== 'unregistered'/);
+  assert.match(panel,/setEmail\(registeredEmail\)/);
+  assert.match(panel,/onClick=\{openDialog\}>등록하기<\/button>/);
+  assert.match(panel,/className="recovery-email-status-button" type="button" onClick=\{openDialog\}/);
+  assert.match(panel,/status==='pending'\?'인증 대기중':'등록 완료'/);
+  assert.match(panel,/editing\?'비밀번호 복구용 이메일을 재설정합니다\.':'비밀번호 복구용 이메일을 설정합니다\.'/);
+  assert.match(panel,/sent\?'재발송':editing\?'재설정하기':'등록하기'/);
+  assert.match(panel,/setStatus\(editing\?'pending':'registered'\)/);
+  assert.match(panel,/disabled=\{status!=='registered'\}/);
 });
 
-test('email is validated only upon submit and both errors and mock success display inline',async()=>{
+test('email editing requires an address different from the existing email before first submit',async()=>{
   const panel=await read('src/RecoveryEmailSettings.tsx');
-  assert.match(panel,/event\.preventDefault\(\)/);
+  assert.match(panel,/email\.trim\(\) !== registeredEmail/);
+  assert.match(panel,/\(sent \|\| !editing \|\| email\.trim\(\) !== registeredEmail\)/);
+  assert.match(panel,/disabled=\{!canSubmit\}/);
+  assert.match(panel,/onChange=\{event=>\{setEmail\(event\.target\.value\);setSent\(false\);clearFeedback\(\);\}\}/);
+  assert.match(panel,/type="password" autoComplete="current-password"/);
+  assert.match(panel,/type="email" inputMode="email" name="recovery-contact-address" autoComplete="off"/);
+  assert.match(panel,/<form noValidate onSubmit=/);
   assert.match(panel,/이메일 형식이 올바르지 않습니다/);
-  assert.match(panel,/비밀번호가 올바르지 않습니다\./);
+});
+
+test('register/reset becomes resend on success and stays disabled for one second',async()=>{
+  const panel=await read('src/RecoveryEmailSettings.tsx');
   assert.match(panel,/reauthenticateWithCredential\(user,credential\)/);
-  assert.match(panel,/EmailAuthProvider\.credential\(user\.email,password\)/);
+  assert.match(panel,/setSent\(true\)/);
+  assert.match(panel,/setCooldown\(true\)/);
+  assert.match(panel,/window\.setTimeout\(\(\)=>setCooldown\(false\),1000\)/);
+  assert.match(panel,/window\.clearTimeout\(timer\)/);
+  assert.match(panel,/!busy && !cooldown/);
   assert.match(panel,/setFeedback\('해당 이메일로 인증 링크가 발송되었습니다\.'\)/);
   assert.match(panel,/feedbackType==='success'\?'recovery-email-success':'form-error'/);
   assert.match(panel,/role=\{feedbackType==='error'\?'alert':'status'\}/);
-  const register=panel.slice(panel.indexOf('async function register('),panel.indexOf('\n  return <>'));
-  assert.doesNotMatch(register,/setOpen\(false\)/);
-  assert.doesNotMatch(panel,/sendPasswordResetEmail|verifyBeforeUpdateEmail|updateEmail|updateDoc|fetch\(/);
+  const handler=panel.slice(panel.indexOf('async function register('),panel.indexOf('\n  return <>'));
+  assert.doesNotMatch(handler,/setOpen\(false\)/);
+  assert.doesNotMatch(panel,/verifyBeforeUpdateEmail|sendPasswordResetEmail|updateEmail|updateDoc|fetch\(|showToast\(/);
 });
 
-test('password reset shows inline notice with stable layout and aligned profile buttons',async()=>{
+test('reset notice remains outside email box, and reset button rises without layout jump',async()=>{
   const [panel,css]=await Promise.all([read('src/RecoveryEmailSettings.tsx'),read('src/styles/base.css')]);
-  assert.match(panel,/useState<EmailPreviewStatus>\('unregistered'\)/);
-  assert.match(panel,/registeredEmail\|\|'등록 안 함'/);
-  assert.match(panel,/setRegisteredEmail\(address\)/);
-  assert.match(panel,/setStatus\('registered'\)/);
-  assert.match(panel,/<strong>등록 완료<\/strong>/);
-  assert.doesNotMatch(panel,/인증 대기중|setStatus\('pending'\)/);
-  assert.match(panel,/disabled=\{!registeredEmail\}/);
-  assert.match(panel,/className="button button-primary recovery-reset-button"/);
-  assert.match(panel,/onClick=\{\(\)=>setResetNotice\(true\)\}/);
-  assert.match(panel,/useState\(false\)/);
-  assert.match(panel,/<\/div>\s*<p className="recovery-email-notice" role="status" aria-live="polite"/);
+  assert.match(panel,/<\/div>\s*<div className="recovery-email-footer">\s*<p className="recovery-email-notice"/);
   assert.match(panel,/resetNotice\?'인증 메일을 발송했습니다':''/);
-  assert.doesNotMatch(panel,/showToast|해당 이메일로 비밀번호 재설정 링크를 발송하였습니다/);
-  assert.match(css,/\.recovery-email-actions\{display:flex;justify-content:flex-end;margin-top:12px\}/);
+  assert.match(panel,/onClick=\{\(\)=>setResetNotice\(true\)\}/);
+  assert.match(css,/\.recovery-email-footer\{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:21px;min-height:39px\}/);
+  assert.match(css,/\.recovery-email-notice\{flex:1;min-width:0;min-height:18px;margin:0;/);
+  assert.match(css,/\.recovery-email-actions\{display:flex;justify-content:flex-end;flex-shrink:0\}/);
+  assert.match(css,/\.recovery-email-status-button\{border:0;background:transparent;/);
   assert.match(css,/\.profile-layout \.profile-save,\.profile-layout \.recovery-reset-button,\.profile-layout \.password-form button\{width:142px;min-width:142px;max-width:100%;padding-inline:13px\}/);
-  assert.match(css,/\.recovery-email-status\{display:flex;justify-content:space-between;align-items:center;gap:12px;/);
-  assert.match(css,/\.recovery-email-notice\{height:18px;margin:9px 0 0;font-size:11px;line-height:18px;/);
-  assert.doesNotMatch(css,/\.recovery-email-status \.recovery-email-notice/);
-
-  assert.match(css,/\.password-form button\{align-self:flex-end\}/);
-  assert.match(css,/\.password-panel\{grid-column:1\/-1\}/);
-  const buttonStates=await read('src/styles/button-states.css');
-  assert.match(buttonStates,/button:disabled,button\[aria-disabled="true"\]/);
-  assert.doesNotMatch(panel,/sendPasswordResetEmail|verifyBeforeUpdateEmail|fetch\(/);
-  assert.match(css,/\.recovery-email-status \.recovery-email-register-link:hover\{text-decoration:none\}/);
 });
 
-test('desktop session card stretch leaves common title spacing and mobile layout unchanged',async()=>{
+test('desktop session card stretch and stacked mobile layout remain unchanged',async()=>{
   const [profile,css]=await Promise.all([read('src/pages/SitePages.tsx'),read('src/styles/base.css')]);
   assert.match(profile,/className="profile-panel profile-session-panel"/);
   assert.match(css,/@media\(min-width:621px\)\{[\s\S]*?\.profile-layout\{align-items:stretch\}/);
