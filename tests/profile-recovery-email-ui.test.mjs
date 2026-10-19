@@ -14,7 +14,8 @@ test('email settings and password change span both columns in the intended order
 test('verified and pending status labels reopen a prefilled edit dialog',async()=>{
   const panel=await read('src/RecoveryEmailSettings.tsx');
   assert.match(panel,/type EmailPreviewStatus = 'unregistered'\|'registered'\|'pending'/);
-  assert.match(panel,/const editing = status !== 'unregistered'/);
+  assert.match(panel,/const \[editing,setEditing\] = useState\(false\)/);
+  assert.match(panel,/setEditing\(status !== 'unregistered'\)/);
   assert.match(panel,/setEmail\(registeredEmail\)/);
   assert.match(panel,/onClick=\{openDialog\}>등록하기<\/button>/);
   assert.match(panel,/className="recovery-email-status-button" type="button" onClick=\{openDialog\}/);
