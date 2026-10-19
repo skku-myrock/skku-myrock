@@ -52,14 +52,14 @@ test('password reset shows inline notice with stable layout and aligned profile 
   assert.match(panel,/className="button button-primary recovery-reset-button"/);
   assert.match(panel,/onClick=\{\(\)=>setResetNotice\(true\)\}/);
   assert.match(panel,/useState\(false\)/);
-  assert.match(panel,/className="recovery-email-notice" role="status" aria-live="polite"/);
+  assert.match(panel,/<\/div>\s*<p className="recovery-email-notice" role="status" aria-live="polite"/);
   assert.match(panel,/resetNotice\?'인증 메일을 발송했습니다':''/);
   assert.doesNotMatch(panel,/showToast|해당 이메일로 비밀번호 재설정 링크를 발송하였습니다/);
-  assert.match(css,/\.recovery-email-actions\{display:flex;justify-content:flex-end;margin-top:21px\}/);
-  assert.match(css,/\.profile-layout \.profile-save,\.profile-layout \.recovery-reset-button,\.profile-layout \.password-form button\{width:156px;min-width:156px;max-width:100%\}/);
-  assert.match(css,/\.recovery-email-status\{display:grid;grid-template-columns:minmax\(0,1fr\) auto;grid-template-rows:minmax\(18px,auto\) 18px;/);
-  assert.match(css,/\.recovery-email-status \.recovery-email-notice\{grid-column:1;grid-row:2;min-height:18px;/);
-  assert.match(css,/\.recovery-email-status>strong,\.recovery-email-status>\.recovery-email-register-link\{grid-column:2;grid-row:1\/3;/);
+  assert.match(css,/\.recovery-email-actions\{display:flex;justify-content:flex-end;margin-top:12px\}/);
+  assert.match(css,/\.profile-layout \.profile-save,\.profile-layout \.recovery-reset-button,\.profile-layout \.password-form button\{width:142px;min-width:142px;max-width:100%;padding-inline:13px\}/);
+  assert.match(css,/\.recovery-email-status\{display:flex;justify-content:space-between;align-items:center;gap:12px;/);
+  assert.match(css,/\.recovery-email-notice\{height:18px;margin:9px 0 0;font-size:11px;line-height:18px;/);
+  assert.doesNotMatch(css,/\.recovery-email-status \.recovery-email-notice/);
 
   assert.match(css,/\.password-form button\{align-self:flex-end\}/);
   assert.match(css,/\.password-panel\{grid-column:1\/-1\}/);

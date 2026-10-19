@@ -330,17 +330,16 @@
   .profile-session-panel .profile-save{align-self:flex-start;margin-top:23px}
 }
 .recovery-email-panel{grid-column:1/-1}
-.recovery-email-status{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:minmax(18px,auto) 18px;column-gap:12px;row-gap:4px;align-items:center;border:1px solid var(--border);background:#f7f9f8;padding:13px 16px;font-size:12px;min-height:68px}
+.recovery-email-status{display:flex;justify-content:space-between;align-items:center;gap:12px;border:1px solid var(--border);background:#f7f9f8;padding:15px 16px;font-size:12px;min-height:53px}
 .recovery-email-status span{color:var(--muted);min-width:0;overflow-wrap:anywhere}
 .recovery-email-status .recovery-email-address{color:var(--ink);font-weight:600}
-.recovery-email-status .recovery-email-notice{grid-column:1;grid-row:2;min-height:18px;font-size:11px;line-height:18px;color:var(--accent-dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.recovery-email-status>strong,.recovery-email-status>.recovery-email-register-link{grid-column:2;grid-row:1/3;align-self:center}
+.recovery-email-notice{height:18px;margin:9px 0 0;font-size:11px;line-height:18px;color:var(--accent-dark)}
 .recovery-email-status strong{font-size:12px;color:var(--accent-dark);font-weight:600;white-space:nowrap}
 .recovery-email-status .text-link{font-size:12px;white-space:nowrap;flex-shrink:0}
-.recovery-email-actions{display:flex;justify-content:flex-end;margin-top:21px}
+.recovery-email-actions{display:flex;justify-content:flex-end;margin-top:12px}
 .recovery-email-dialog .form-error{margin:0!important}
 .recovery-email-status .recovery-email-register-link:hover{text-decoration:none}
 .recovery-email-dialog .recovery-email-success{margin:0;color:var(--accent-dark);font-size:12px;line-height:1.65}
 
 /* Match the width of the current password-reset action across profile cards. */
-.profile-layout .profile-save,.profile-layout .recovery-reset-button,.profile-layout .password-form button{width:156px;min-width:156px;max-width:100%}
+.profile-layout .profile-save,.profile-layout .recovery-reset-button,.profile-layout .password-form button{width:142px;min-width:142px;max-width:100%;padding-inline:13px}
