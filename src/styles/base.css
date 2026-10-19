@@ -333,10 +333,11 @@
 .recovery-email-status{display:flex;justify-content:space-between;align-items:center;gap:12px;border:1px solid var(--border);background:#f7f9f8;padding:15px 16px;font-size:12px;min-height:53px}
 .recovery-email-status span{color:var(--muted);min-width:0;overflow-wrap:anywhere}
 .recovery-email-status .recovery-email-address{color:var(--ink);font-weight:600}
-.recovery-email-notice{height:18px;margin:9px 0 0;font-size:11px;line-height:18px;color:var(--accent-dark)}
-.recovery-email-status strong{font-size:12px;color:var(--accent-dark);font-weight:600;white-space:nowrap}
+.recovery-email-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:21px;min-height:39px}
+.recovery-email-notice{flex:1;min-width:0;min-height:18px;margin:0;font-size:11px;line-height:18px;color:var(--accent-dark);overflow-wrap:break-word}
+.recovery-email-status-button{border:0;background:transparent;padding:0;font-size:12px;color:var(--accent-dark);font-weight:600;white-space:nowrap;cursor:pointer}
 .recovery-email-status .text-link{font-size:12px;white-space:nowrap;flex-shrink:0}
-.recovery-email-actions{display:flex;justify-content:flex-end;margin-top:12px}
+.recovery-email-actions{display:flex;justify-content:flex-end;flex-shrink:0}
 .recovery-email-dialog .form-error{margin:0!important}
 .recovery-email-status .recovery-email-register-link:hover{text-decoration:none}
 .recovery-email-dialog .recovery-email-success{margin:0;color:var(--accent-dark);font-size:12px;line-height:1.65}
