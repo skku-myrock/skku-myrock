@@ -46,8 +46,17 @@ test('registration status preview and hover style remain unchanged except underl
   assert.match(panel,/registeredEmail\|\|'등록 안 함'/);
   assert.match(panel,/setRegisteredEmail\(address\)/);
   assert.match(panel,/setStatus\('registered'\)/);
-  assert.match(panel,/status==='pending'\?'인증 대기중':'등록 완료'/);
-  assert.match(panel,/onClick=\{\(\)=>setStatus\('pending'\)\}/);
+  assert.match(panel,/<strong>등록 완료<\/strong>/);
+  assert.doesNotMatch(panel,/인증 대기중|setStatus\('pending'\)/);
+  assert.match(panel,/disabled=\{!registeredEmail\}/);
+  assert.match(panel,/className="button button-primary recovery-reset-button"/);
+  assert.match(panel,/onClick=\{\(\)=>showToast\('해당 이메일로 비밀번호 재설정 링크를 발송하였습니다','success'\)\}/);
+  assert.match(css,/\.recovery-email-actions\{display:flex;justify-content:flex-end;margin-top:21px\}/);
+  assert.match(css,/\.password-form button\{align-self:flex-end\}/);
+  assert.match(css,/\.password-panel\{grid-column:1\/-1\}/);
+  const buttonStates=await read('src/styles/button-states.css');
+  assert.match(buttonStates,/button:disabled,button\[aria-disabled="true"\]/);
+  assert.doesNotMatch(panel,/sendPasswordResetEmail|verifyBeforeUpdateEmail|fetch\(/);
   assert.match(css,/\.recovery-email-status \.recovery-email-register-link:hover\{text-decoration:none\}/);
 });
 
