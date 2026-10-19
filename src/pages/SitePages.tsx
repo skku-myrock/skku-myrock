@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import logo from '../logo-transparent.png';
 import PasswordChange from '../PasswordChange';
+import RecoveryEmailSettings from '../RecoveryEmailSettings';
 import PhotoGallery from '../PhotoGallery';
 import LoadingText from '../LoadingText';
 import {useToastSignals} from '../useToastSignals';
@@ -390,12 +391,13 @@ export function Profile({ user, profile, pending, error, notify, onSaved }: {use
         <dl className="profile-data"><div><dt>이름</dt><dd>{profile.name}</dd></div><div><dt>학번</dt><dd>{profile.studentId}</dd></div><div><dt>기수</dt><dd>{profile.generation}기</dd></div><div><dt>직책</dt><dd>{profile.positions.length?profile.positions.join(', '):'없음'}</dd></div><div><dt>권한</dt><dd>{profileRoleLabel(profile)}</dd></div></dl>
         <p className="profile-help">정보 수정이 필요할 경우 운영진에게 연락 바랍니다.</p>
       </div>
-      <div className="profile-panel"><div className="profile-title"><Users size={20}/><h2>나의 세션</h2></div>
+      <div className="profile-panel profile-session-panel"><div className="profile-title"><Users size={20}/><h2>나의 세션</h2></div>
         <p className="profile-help">본인의 세션을 선택해주세요. 세션은 중복으로 선택할 수 있습니다.</p>
         <div className="session-options">{sessions.map(item=><label className={selected.includes(item as Session)?'chosen':''} key={item}><input type="checkbox" checked={selected.includes(item as Session)} onChange={()=>toggle(item as Session)}/><span>{item}</span><Check size={17}/></label>)}</div>
         <button className="button button-primary profile-save" type="button" onClick={save} disabled={saving||selected.length===0||selected.join('|')===profile.sessions.join('|')}>{saving?'저장 중...':'세션 저장'} <ArrowRight size={15}/></button>
       </div>
       <PasswordChange user={user}/>
+       <RecoveryEmailSettings/>
     </section>
   </>;
 }
