@@ -3,8 +3,9 @@ import type {FormEvent} from 'react';
 import type {User} from 'firebase/auth';
 import {EmailAuthProvider,reauthenticateWithCredential} from 'firebase/auth';
 import {ArrowRight,Mail,X} from 'lucide-react';
+import {showToast} from './toastBus';
 
-type EmailPreviewStatus = 'unregistered'|'registered'|'pending';
+type EmailPreviewStatus = 'unregistered'|'registered';
 type FeedbackType = 'error'|'success';
 
 export default function RecoveryEmailSettings({user}:{user:User}) {
@@ -62,9 +63,9 @@ export default function RecoveryEmailSettings({user}:{user:User}) {
         <span className={registeredEmail?'recovery-email-address':''}>{registeredEmail||'등록 안 함'}</span>
         {status==='unregistered'
           ?<button className="text-link recovery-email-register-link" type="button" onClick={()=>setOpen(true)}>등록하기</button>
-          :<strong>{status==='pending'?'인증 대기중':'등록 완료'}</strong>}
+          :<strong>등록 완료</strong>}
       </div>
-      <button className="button button-secondary recovery-reset-button" type="button" onClick={()=>setStatus('pending')}>비밀번호 재설정 <ArrowRight size={15}/></button>
+      <div className="recovery-email-actions"><button className="button button-primary recovery-reset-button" type="button" disabled={!registeredEmail} onClick={()=>showToast('해당 이메일로 비밀번호 재설정 링크를 발송하였습니다','success')}>비밀번호 재설정 <ArrowRight size={16}/></button></div>
     </div>
     {open&&<div className="modal-overlay" data-async-busy={busy?'true':undefined} onMouseDown={event=>{if(event.target===event.currentTarget)close();}}>
       <div className="login-dialog recovery-email-dialog" role="dialog" aria-modal="true" aria-labelledby="recovery-email-heading">

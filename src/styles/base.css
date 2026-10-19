@@ -91,7 +91,7 @@
 .member-permission-form .form-hint{margin:0}
 .member-permission-form button{align-self:flex-start}
 .password-form{display:flex;flex-direction:column;gap:17px}
-.password-form button{align-self:flex-start}
+.password-form button{align-self:flex-end}
 .password-panel{grid-column:1/-1}
 @media(max-width:760px){.member-live-head{display:none}.member-live-row{grid-template-columns:1fr auto;gap:14px}.member-live-row>div:nth-child(3){grid-column:1;grid-row:2}.member-live-row>div:nth-child(2){grid-column:2;grid-row:1;text-align:right}.member-live-row button{grid-column:2;grid-row:2}.member-toolbar{align-items:stretch;flex-wrap:wrap}.member-toolbar .member-search{width:100%}.member-permission-form{padding:18px}.member-upload{padding:17px}}
 
@@ -335,7 +335,7 @@
 .recovery-email-status .recovery-email-address{color:var(--ink);font-weight:600}
 .recovery-email-status strong{font-size:12px;color:var(--accent-dark);font-weight:600;white-space:nowrap}
 .recovery-email-status .text-link{font-size:12px;white-space:nowrap;flex-shrink:0}
-.recovery-reset-button{margin-top:21px}
+.recovery-email-actions{display:flex;justify-content:flex-end;margin-top:21px}
 .recovery-email-dialog .form-error{margin:0!important}
 .recovery-email-status .recovery-email-register-link:hover{text-decoration:none}
 .recovery-email-dialog .recovery-email-success{margin:0;color:var(--accent-dark);font-size:12px;line-height:1.65}
