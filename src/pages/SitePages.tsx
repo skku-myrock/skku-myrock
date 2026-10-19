@@ -396,8 +396,8 @@ export function Profile({ user, profile, pending, error, notify, onSaved }: {use
         <div className="session-options">{sessions.map(item=><label className={selected.includes(item as Session)?'chosen':''} key={item}><input type="checkbox" checked={selected.includes(item as Session)} onChange={()=>toggle(item as Session)}/><span>{item}</span><Check size={17}/></label>)}</div>
         <button className="button button-primary profile-save" type="button" onClick={save} disabled={saving||selected.length===0||selected.join('|')===profile.sessions.join('|')}>{saving?'저장 중...':'세션 저장'} <ArrowRight size={15}/></button>
       </div>
+      <RecoveryEmailSettings user={user}/>
       <PasswordChange user={user}/>
-       <RecoveryEmailSettings/>
     </section>
   </>;
 }
