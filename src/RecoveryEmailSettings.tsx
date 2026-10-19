@@ -12,6 +12,7 @@ export default function RecoveryEmailSettings({user}:{user:User}) {
   const [resetNotice,setResetNotice] = useState(false);
   const [status,setStatus] = useState<EmailPreviewStatus>('unregistered');
   const [open,setOpen] = useState(false);
+  const [editing,setEditing] = useState(false);
   const [email,setEmail] = useState('');
   const [password,setPassword] = useState('');
   const [busy,setBusy] = useState(false);
@@ -19,12 +20,12 @@ export default function RecoveryEmailSettings({user}:{user:User}) {
   const [cooldown,setCooldown] = useState(false);
   const [feedback,setFeedback] = useState('');
   const [feedbackType,setFeedbackType] = useState<FeedbackType>('error');
-  const editing = status !== 'unregistered';
   const canSubmit = !busy && !cooldown && !!password && !!email.trim()
     && (sent || !editing || email.trim() !== registeredEmail);
 
   function clearFeedback(){setFeedback('');setFeedbackType('error');}
   function openDialog(){
+    setEditing(status !== 'unregistered');
     setEmail(registeredEmail);
     setPassword('');
     setSent(false);
