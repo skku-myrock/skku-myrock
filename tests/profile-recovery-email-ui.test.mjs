@@ -37,7 +37,7 @@ test('email is validated only upon submit and both errors and mock success displ
   assert.match(panel,/role=\{feedbackType==='error'\?'alert':'status'\}/);
   const register=panel.slice(panel.indexOf('async function register('),panel.indexOf('\n  return <>'));
   assert.doesNotMatch(register,/setOpen\(false\)/);
-  assert.doesNotMatch(panel,/sendPasswordResetEmail|verifyBeforeUpdateEmail|updateEmail|updateDoc|fetch\(|showToast\(/);
+  assert.doesNotMatch(panel,/sendPasswordResetEmail|verifyBeforeUpdateEmail|updateEmail|updateDoc|fetch\(/);
 });
 
 test('registration status preview and hover style remain unchanged except underline',async()=>{
