@@ -40,7 +40,7 @@ test('email is validated only upon submit and both errors and mock success displ
   assert.doesNotMatch(panel,/sendPasswordResetEmail|verifyBeforeUpdateEmail|updateEmail|updateDoc|fetch\(/);
 });
 
-test('registration status preview and hover style remain unchanged except underline',async()=>{
+test('password reset shows inline notice with stable layout and aligned profile buttons',async()=>{
   const [panel,css]=await Promise.all([read('src/RecoveryEmailSettings.tsx'),read('src/styles/base.css')]);
   assert.match(panel,/useState<EmailPreviewStatus>\('unregistered'\)/);
   assert.match(panel,/registeredEmail\|\|'등록 안 함'/);
@@ -50,8 +50,17 @@ test('registration status preview and hover style remain unchanged except underl
   assert.doesNotMatch(panel,/인증 대기중|setStatus\('pending'\)/);
   assert.match(panel,/disabled=\{!registeredEmail\}/);
   assert.match(panel,/className="button button-primary recovery-reset-button"/);
-  assert.match(panel,/onClick=\{\(\)=>showToast\('해당 이메일로 비밀번호 재설정 링크를 발송하였습니다','success'\)\}/);
+  assert.match(panel,/onClick=\{\(\)=>setResetNotice\(true\)\}/);
+  assert.match(panel,/useState\(false\)/);
+  assert.match(panel,/className="recovery-email-notice" role="status" aria-live="polite"/);
+  assert.match(panel,/resetNotice\?'인증 메일을 발송했습니다':''/);
+  assert.doesNotMatch(panel,/showToast|해당 이메일로 비밀번호 재설정 링크를 발송하였습니다/);
   assert.match(css,/\.recovery-email-actions\{display:flex;justify-content:flex-end;margin-top:21px\}/);
+  assert.match(css,/\.profile-layout \.profile-save,\.profile-layout \.recovery-reset-button,\.profile-layout \.password-form button\{width:156px;min-width:156px;max-width:100%\}/);
+  assert.match(css,/\.recovery-email-status\{display:grid;grid-template-columns:minmax\(0,1fr\) auto;grid-template-rows:minmax\(18px,auto\) 18px;/);
+  assert.match(css,/\.recovery-email-status \.recovery-email-notice\{grid-column:1;grid-row:2;min-height:18px;/);
+  assert.match(css,/\.recovery-email-status>strong,\.recovery-email-status>\.recovery-email-register-link\{grid-column:2;grid-row:1\/3;/);
+
   assert.match(css,/\.password-form button\{align-self:flex-end\}/);
   assert.match(css,/\.password-panel\{grid-column:1\/-1\}/);
   const buttonStates=await read('src/styles/button-states.css');
